@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package kassie.v1;
+
+import "google/api/annotations.proto";
+import "common.proto";
+
+option go_package = "github.com/KashifKhn/kassie/api/gen/go;kassiev1";
+
+service SchemaService {
+  rpc ListKeyspaces(ListKeyspacesRequest) returns (ListKeyspacesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/schema/keyspaces"
+    };
+  }
+
+  rpc ListTables(ListTablesRequest) returns (ListTablesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/schema/keyspaces/{keyspace}/tables"
+    };
+  }
+
+  rpc GetTableSchema(GetTableSchemaRequest) returns (GetTableSchemaResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/schema/keyspaces/{keyspace}/tables/{table}"
+    };
+  }
+}
+
+message ListKeyspacesRequest {}
+
+message ListKeyspacesResponse {
+  repeated Keyspace keyspaces = 1;
+}
+
+message ListTablesRequest {
+  string keyspace = 1;
+}
+
+message ListTablesResponse {
+  repeated Table tables = 1;
+}
+
+message GetTableSchemaRequest {
+  string keyspace = 1;
+  string table = 2;
+}
+
+message GetTableSchemaResponse {
+  TableSchema schema = 1;
+}
+
+message Keyspace {
+  string name = 1;
+  string replication_strategy = 2;
+  map<string, string> replication = 3;
+}
+
+message Table {
+  string name = 1;
+  string keyspace = 2;
+  int64 estimated_rows = 3;
+}
+
+message TableSchema {
+  string keyspace = 1;
+  string table = 2;
+  repeated Column columns = 3;
+  repeated string partition_keys = 4;
+  repeated string clustering_keys = 5;
+}

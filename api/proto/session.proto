@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package kassie.v1;
+
+import "google/api/annotations.proto";
+import "common.proto";
+
+option go_package = "github.com/KashifKhn/kassie/api/gen/go;kassiev1";
+
+service SessionService {
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/session/login"
+      body: "*"
+    };
+  }
+
+  rpc Refresh(RefreshRequest) returns (RefreshResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/session/refresh"
+      body: "*"
+    };
+  }
+
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/session/logout"
+      body: "*"
+    };
+  }
+
+  rpc GetProfiles(GetProfilesRequest) returns (GetProfilesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/profiles"
+    };
+  }
+}
+
+message LoginRequest {
+  string profile = 1;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_at = 3;
+  ProfileInfo profile = 4;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RefreshResponse {
+  string access_token = 1;
+  int64 expires_at = 2;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {}
+
+message GetProfilesRequest {}
+
+message GetProfilesResponse {
+  repeated ProfileInfo profiles = 1;
+}
+
+message ProfileInfo {
+  string name = 1;
+  repeated string hosts = 2;
+  int32 port = 3;
+  string keyspace = 4;
+  bool ssl_enabled = 5;
+}

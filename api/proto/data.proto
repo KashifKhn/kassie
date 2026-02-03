@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package kassie.v1;
+
+import "google/api/annotations.proto";
+import "common.proto";
+
+option go_package = "github.com/KashifKhn/kassie/api/gen/go;kassiev1";
+
+service DataService {
+  rpc QueryRows(QueryRowsRequest) returns (QueryRowsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/data/query"
+      body: "*"
+    };
+  }
+
+  rpc GetNextPage(GetNextPageRequest) returns (GetNextPageResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/data/next"
+      body: "*"
+    };
+  }
+
+  rpc FilterRows(FilterRowsRequest) returns (FilterRowsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/data/filter"
+      body: "*"
+    };
+  }
+}
+
+message QueryRowsRequest {
+  string keyspace = 1;
+  string table = 2;
+  int32 page_size = 3;
+}
+
+message QueryRowsResponse {
+  repeated Row rows = 1;
+  string cursor_id = 2;
+  bool has_more = 3;
+  int64 total_fetched = 4;
+}
+
+message GetNextPageRequest {
+  string cursor_id = 1;
+}
+
+message GetNextPageResponse {
+  repeated Row rows = 1;
+  string cursor_id = 2;
+  bool has_more = 3;
+}
+
+message FilterRowsRequest {
+  string keyspace = 1;
+  string table = 2;
+  string where_clause = 3;
+  int32 page_size = 4;
+}
+
+message FilterRowsResponse {
+  repeated Row rows = 1;
+  string cursor_id = 2;
+  bool has_more = 3;
+}
+
+message Row {
+  map<string, CellValue> cells = 1;
+}
