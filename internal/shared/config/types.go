@@ -109,9 +109,9 @@ func (c *Config) Validate() error {
 }
 
 func (c *Config) GetProfile(name string) (*Profile, error) {
-	for _, p := range c.Profiles {
-		if p.Name == name {
-			return &p, nil
+	for i := range c.Profiles {
+		if c.Profiles[i].Name == name {
+			return &c.Profiles[i], nil
 		}
 	}
 	return nil, ErrProfileNotFound
