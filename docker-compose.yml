@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  scylla:
+    image: scylladb/scylla:latest
+    container_name: kassie-scylla
+    ports:
+      - "9042:9042"
+      - "19042:19042"
+    command: --smp 1 --memory 1G
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  kassie:
+    build: .
+    container_name: kassie-server
+    ports:
+      - "50051:50051"
+      - "8080:8080"
+    depends_on:
+      scylla:
+        condition: service_healthy
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./kassie.config.json:/app/kassie.config.json

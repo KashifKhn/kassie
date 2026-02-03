@@ -1,0 +1,94 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: kassie
+    main: ./cmd/kassie
+    binary: kassie
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/KashifKhn/kassie/internal/shared/version.Version={{.Version}}
+      - -X github.com/KashifKhn/kassie/internal/shared/version.Commit={{.Commit}}
+      - -X github.com/KashifKhn/kassie/internal/shared/version.BuildDate={{.Date}}
+
+archives:
+  - id: kassie
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+
+brews:
+  - name: kassie
+    repository:
+      owner: KashifKhn
+      name: homebrew-kassie
+    homepage: https://github.com/KashifKhn/kassie
+    description: Modern database explorer for Cassandra & ScyllaDB
+    license: MIT
+    install: |
+      bin.install "kassie"
+    test: |
+      system "#{bin}/kassie", "version"
+
+dockers:
+  - image_templates:
+      - "ghcr.io/kashifkhn/kassie:{{ .Version }}-amd64"
+      - "ghcr.io/kashifkhn/kassie:latest-amd64"
+    use: buildx
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "ghcr.io/kashifkhn/kassie:{{ .Version }}-arm64"
+      - "ghcr.io/kashifkhn/kassie:latest-arm64"
+    use: buildx
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/arm64"
+
+docker_manifests:
+  - name_template: "ghcr.io/kashifkhn/kassie:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/kashifkhn/kassie:{{ .Version }}-amd64"
+      - "ghcr.io/kashifkhn/kassie:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/kashifkhn/kassie:latest"
+    image_templates:
+      - "ghcr.io/kashifkhn/kassie:latest-amd64"
+      - "ghcr.io/kashifkhn/kassie:latest-arm64"

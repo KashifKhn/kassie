@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "profiles": [
+    {
+      "name": "local",
+      "hosts": ["127.0.0.1"],
+      "port": 9042,
+      "keyspace": "",
+      "auth": {
+        "username": "",
+        "password": ""
+      },
+      "ssl": {
+        "enabled": false
+      }
+    }
+  ],
+  "defaults": {
+    "default_profile": "local",
+    "page_size": 100,
+    "timeout_ms": 5000
+  },
+  "clients": {
+    "tui": {
+      "theme": "default",
+      "vim_mode": false
+    },
+    "web": {
+      "auto_open_browser": true,
+      "default_port": 8080
+    }
+  }
+}
