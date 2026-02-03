@@ -1,0 +1,64 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+kassie
+kassie-*
+
+# Generated code
+api/gen/
+
+# Web build artifacts
+web/node_modules/
+web/dist/
+web/.vite/
+n_docs/
+
+# Go
+go.work
+go.work.sum
+
+# Config with secrets
+.env
+.env.*
+kassie.config.json
+
+# Logs
+*.log
+logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+Thumbs.db
+
+# Vim
+[._]*.s[a-v][a-z]
+!*.svg
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+tags
+[._]*.un~
+
+# Test artifacts
+coverage.out
+coverage.html
