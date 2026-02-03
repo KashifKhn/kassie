@@ -44,7 +44,7 @@ func TestLoaderGetConfigPath(t *testing.T) {
 			name: "explicit path exists",
 			setupFiles: func() *Loader {
 				path := filepath.Join(tmpDir, "explicit.json")
-				os.WriteFile(path, []byte("{}"), 0644)
+				_ = os.WriteFile(path, []byte("{}"), 0644)
 				return NewLoaderWithPath(path)
 			},
 			wantErr: nil,
@@ -65,7 +65,7 @@ func TestLoaderGetConfigPath(t *testing.T) {
 			setupFiles: func() *Loader {
 				loader := NewLoader()
 				loader.primaryPath = filepath.Join(tmpDir, "primary.json")
-				os.WriteFile(loader.primaryPath, []byte("{}"), 0644)
+				_ = os.WriteFile(loader.primaryPath, []byte("{}"), 0644)
 				return loader
 			},
 			wantErr: nil,
@@ -79,7 +79,7 @@ func TestLoaderGetConfigPath(t *testing.T) {
 				loader := NewLoader()
 				loader.primaryPath = filepath.Join(tmpDir, "nonexistent_primary.json")
 				loader.fallbackPath = filepath.Join(tmpDir, "fallback.json")
-				os.WriteFile(loader.fallbackPath, []byte("{}"), 0644)
+				_ = os.WriteFile(loader.fallbackPath, []byte("{}"), 0644)
 				return loader
 			},
 			wantErr: nil,
@@ -156,7 +156,7 @@ func TestLoaderLoadFromPath(t *testing.T) {
 			setupFile: func() string {
 				path := filepath.Join(tmpDir, "valid.json")
 				data, _ := json.Marshal(validConfig)
-				os.WriteFile(path, data, 0644)
+				_ = os.WriteFile(path, data, 0644)
 				return path
 			},
 			wantErr: nil,
@@ -179,7 +179,7 @@ func TestLoaderLoadFromPath(t *testing.T) {
 			name: "empty file",
 			setupFile: func() string {
 				path := filepath.Join(tmpDir, "empty.json")
-				os.WriteFile(path, []byte(""), 0644)
+				_ = os.WriteFile(path, []byte(""), 0644)
 				return path
 			},
 			wantErr: ErrInvalidJSON,
@@ -188,7 +188,7 @@ func TestLoaderLoadFromPath(t *testing.T) {
 			name: "invalid json",
 			setupFile: func() string {
 				path := filepath.Join(tmpDir, "invalid.json")
-				os.WriteFile(path, []byte("{invalid json}"), 0644)
+				_ = os.WriteFile(path, []byte("{invalid json}"), 0644)
 				return path
 			},
 			wantErr: ErrInvalidJSON,
@@ -197,7 +197,7 @@ func TestLoaderLoadFromPath(t *testing.T) {
 			name: "valid json but invalid config structure",
 			setupFile: func() string {
 				path := filepath.Join(tmpDir, "invalid_structure.json")
-				os.WriteFile(path, []byte(`{"version": "1.0"}`), 0644)
+				_ = os.WriteFile(path, []byte(`{"version": "1.0"}`), 0644)
 				return path
 			},
 			checkError: func(err error) bool {
@@ -215,7 +215,7 @@ func TestLoaderLoadFromPath(t *testing.T) {
 				}
 				path := filepath.Join(tmpDir, "validation_error.json")
 				data, _ := json.Marshal(invalidConfig)
-				os.WriteFile(path, data, 0644)
+				_ = os.WriteFile(path, data, 0644)
 				return path
 			},
 			checkError: func(err error) bool {
@@ -249,7 +249,7 @@ func TestLoaderLoadFromPath(t *testing.T) {
 				}
 				path := filepath.Join(tmpDir, "with_env.json")
 				data, _ := json.Marshal(configWithEnv)
-				os.WriteFile(path, data, 0644)
+				_ = os.WriteFile(path, data, 0644)
 				return path
 			},
 			wantErr: nil,
@@ -279,7 +279,7 @@ func TestLoaderLoadFromPath(t *testing.T) {
 				}
 				path := filepath.Join(tmpDir, "missing_env.json")
 				data, _ := json.Marshal(configWithEnv)
-				os.WriteFile(path, data, 0644)
+				_ = os.WriteFile(path, data, 0644)
 				return path
 			},
 			checkError: func(err error) bool {
@@ -457,7 +457,7 @@ func TestLoaderExists(t *testing.T) {
 			name: "explicit path exists",
 			setup: func() *Loader {
 				path := filepath.Join(tmpDir, "exists.json")
-				os.WriteFile(path, []byte("{}"), 0644)
+				_ = os.WriteFile(path, []byte("{}"), 0644)
 				return NewLoaderWithPath(path)
 			},
 			want: true,
@@ -475,7 +475,7 @@ func TestLoaderExists(t *testing.T) {
 			setup: func() *Loader {
 				loader := NewLoader()
 				loader.primaryPath = filepath.Join(tmpDir, "primary.json")
-				os.WriteFile(loader.primaryPath, []byte("{}"), 0644)
+				_ = os.WriteFile(loader.primaryPath, []byte("{}"), 0644)
 				return loader
 			},
 			want: true,
@@ -486,7 +486,7 @@ func TestLoaderExists(t *testing.T) {
 				loader := NewLoader()
 				loader.primaryPath = filepath.Join(tmpDir, "nonexistent_primary.json")
 				loader.fallbackPath = filepath.Join(tmpDir, "fallback.json")
-				os.WriteFile(loader.fallbackPath, []byte("{}"), 0644)
+				_ = os.WriteFile(loader.fallbackPath, []byte("{}"), 0644)
 				return loader
 			},
 			want: true,
@@ -536,10 +536,10 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	configDir := filepath.Join(tmpDir, ".config", "kassie")
-	os.MkdirAll(configDir, 0755)
+	_ = os.MkdirAll(configDir, 0755)
 	configPath := filepath.Join(configDir, "config.json")
 	data, _ := json.Marshal(validConfig)
-	os.WriteFile(configPath, data, 0644)
+	_ = os.WriteFile(configPath, data, 0644)
 
 	os.Setenv("HOME", tmpDir)
 
@@ -572,7 +572,7 @@ func TestLoadConfigFromPath(t *testing.T) {
 
 	path := filepath.Join(tmpDir, "custom.json")
 	data, _ := json.Marshal(validConfig)
-	os.WriteFile(path, data, 0644)
+	_ = os.WriteFile(path, data, 0644)
 
 	config, err := LoadConfigFromPath(path)
 	if err != nil {
@@ -652,7 +652,7 @@ func TestFileExists(t *testing.T) {
 			name: "file exists",
 			setup: func() string {
 				path := filepath.Join(tmpDir, "exists.txt")
-				os.WriteFile(path, []byte("content"), 0644)
+				_ = os.WriteFile(path, []byte("content"), 0644)
 				return path
 			},
 			want: true,
@@ -668,7 +668,7 @@ func TestFileExists(t *testing.T) {
 			name: "path is directory",
 			setup: func() string {
 				dir := filepath.Join(tmpDir, "directory")
-				os.Mkdir(dir, 0755)
+				_ = os.Mkdir(dir, 0755)
 				return dir
 			},
 			want: false,
