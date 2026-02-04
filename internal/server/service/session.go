@@ -9,6 +9,7 @@ import (
 	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/state"
 	"github.com/KashifKhn/kassie/internal/shared/config"
+	"github.com/KashifKhn/kassie/internal/shared/ctxutil"
 	"github.com/google/uuid"
 )
 
@@ -86,11 +87,8 @@ func (s *SessionService) Refresh(ctx context.Context, req *pb.RefreshRequest) (*
 }
 
 func (s *SessionService) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error) {
-	sessionID := ctx.Value("session_id")
-	if sessionID != nil {
-		if sid, ok := sessionID.(string); ok {
-			s.store.Delete(sid)
-		}
+	if sessionID, ok := ctxutil.GetSessionID(ctx); ok {
+		s.store.Delete(sessionID)
 	}
 
 	return &pb.LogoutResponse{}, nil
@@ -116,17 +114,12 @@ func (s *SessionService) GetProfiles(ctx context.Context, req *pb.GetProfilesReq
 }
 
 func GetSessionFromContext(ctx context.Context, store *state.Store) (*state.Session, error) {
-	sessionID := ctx.Value("session_id")
-	if sessionID == nil {
+	sessionID, ok := ctxutil.GetSessionID(ctx)
+	if !ok {
 		return nil, fmt.Errorf("no session in context")
 	}
 
-	sid, ok := sessionID.(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid session ID type")
-	}
-
-	session, err := store.Get(sid)
+	session, err := store.Get(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("session not found or expired: %w", err)
 	}
