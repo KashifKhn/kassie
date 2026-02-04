@@ -7,6 +7,7 @@ import (
 
 	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
+	"github.com/KashifKhn/kassie/internal/shared/version"
 	"github.com/spf13/cobra"
 )
 
@@ -16,9 +17,6 @@ var (
 	logLevel  string
 	appConfig *config.Config
 	appLogger *logger.Logger
-	Version   = "dev"
-	Commit    = "none"
-	BuildDate = "unknown"
 )
 
 func NewRootCmd() *cobra.Command {
@@ -35,9 +33,9 @@ your Cassandra/ScyllaDB clusters with ease.`,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if showVersion {
-				fmt.Printf("Kassie v%s\n", Version)
-				fmt.Printf("Commit: %s\n", Commit)
-				fmt.Printf("Built: %s\n", BuildDate)
+				fmt.Printf("Kassie v%s\n", version.Version)
+				fmt.Printf("Commit: %s\n", version.Commit)
+				fmt.Printf("Built: %s\n", version.BuildDate)
 				return nil
 			}
 			return cmd.Help()
@@ -69,9 +67,9 @@ func newVersionCmd() *cobra.Command {
 		Aliases: []string{"v"},
 		Short:   "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Kassie v%s\n", Version)
-			fmt.Printf("Commit: %s\n", Commit)
-			fmt.Printf("Built: %s\n", BuildDate)
+			fmt.Printf("Kassie v%s\n", version.Version)
+			fmt.Printf("Commit: %s\n", version.Commit)
+			fmt.Printf("Built: %s\n", version.BuildDate)
 		},
 	}
 }

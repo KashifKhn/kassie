@@ -24,7 +24,13 @@ build-server:
 
 web:
 	@echo "Building web UI..."
-	cd web && npm install && npm run build
+	@if [ -d "web" ]; then \
+		cd web && npm install && npm run build; \
+	else \
+		echo "Web directory not found, skipping..."; \
+		mkdir -p internal/web/dist; \
+		echo "Web UI not available" > internal/web/dist/index.html; \
+	fi
 
 dev-tui:
 	@echo "Running TUI in development..."
