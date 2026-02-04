@@ -22,6 +22,8 @@ var (
 )
 
 func NewRootCmd() *cobra.Command {
+	var showVersion bool
+
 	cmd := &cobra.Command{
 		Use:   "kassie",
 		Short: "Database Explorer for Cassandra & ScyllaDB",
@@ -31,7 +33,19 @@ Provides both TUI (Terminal UI) and Web interfaces for exploring and querying
 your Cassandra/ScyllaDB clusters with ease.`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if showVersion {
+				fmt.Printf("Kassie v%s\n", Version)
+				fmt.Printf("Commit: %s\n", Commit)
+				fmt.Printf("Built: %s\n", BuildDate)
+				return nil
+			}
+			return cmd.Help()
+		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if showVersion {
+				return nil
+			}
 			return initConfig()
 		},
 	}
@@ -39,6 +53,7 @@ your Cassandra/ScyllaDB clusters with ease.`,
 	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default: ~/.config/kassie/config.json)")
 	cmd.PersistentFlags().StringVar(&profile, "profile", "", "database profile to use")
 	cmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "log level (debug, info, warn, error)")
+	cmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "print version information")
 
 	cmd.AddCommand(newServerCmd())
 	cmd.AddCommand(newWebCmd())
@@ -50,8 +65,9 @@ your Cassandra/ScyllaDB clusters with ease.`,
 
 func newVersionCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "version",
-		Short: "Print version information",
+		Use:     "version",
+		Aliases: []string{"v"},
+		Short:   "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("Kassie v%s\n", Version)
 			fmt.Printf("Commit: %s\n", Commit)
