@@ -1,0 +1,39 @@
+# Build artifacts
+kassie
+kassie-*
+dist/
+*.exe
+*.test
+
+# Generated code (will be regenerated in Docker)
+api/gen/
+
+# Web
+web/node_modules/
+web/dist/
+internal/web/
+
+# Development
+.git/
+.github/
+n_docs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+logs/
+.env
+.env.*
+
+# Docs (except README)
+*.md
+!README.md

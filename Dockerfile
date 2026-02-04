@@ -2,7 +2,7 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /build
 
-RUN apk add --no-cache git make protobuf protobuf-dev
+RUN apk add --no-cache git make protobuf protobuf-dev bash
 
 COPY go.mod go.sum ./
 RUN go mod download
