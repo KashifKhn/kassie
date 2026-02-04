@@ -28,6 +28,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Install protoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Install tools
+        run: make setup
+
+      - name: Generate proto
+        run: make proto
+
       - name: Install dependencies
         run: go mod download
 

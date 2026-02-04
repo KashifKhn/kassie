@@ -3,7 +3,6 @@ syntax = "proto3";
 package kassie.v1;
 
 import "google/api/annotations.proto";
-import "common.proto";
 
 option go_package = "github.com/KashifKhn/kassie/api/gen/go;kassiev1";
 

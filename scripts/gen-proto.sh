@@ -15,6 +15,7 @@ mkdir -p ${GO_OUT_DIR}
 
 protoc \
   --proto_path=${PROTO_DIR} \
+  --proto_path=third_party/googleapis \
   --proto_path=$(go list -m -f '{{.Dir}}' google.golang.org/protobuf)/.. \
   --proto_path=$(go list -m -f '{{.Dir}}' github.com/grpc-ecosystem/grpc-gateway/v2) \
   --go_out=${GO_OUT_DIR} \
