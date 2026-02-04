@@ -12,6 +12,7 @@ require (
 
 require (
 	github.com/gocql/gocql v1.7.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
