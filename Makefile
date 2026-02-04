@@ -57,7 +57,7 @@ lint:
 fmt:
 	@echo "Formatting code..."
 	go fmt ./...
-	cd web && npm run format
+	@if [ -f web/package.json ]; then cd web && npm run format; fi
 
 clean:
 	@echo "Cleaning build artifacts..."
