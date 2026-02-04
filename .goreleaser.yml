@@ -66,29 +66,3 @@ brews:
       bin.install "kassie"
     test: |
       system "#{bin}/kassie", "version"
-
-dockers:
-  - image_templates:
-      - "ghcr.io/kashifkhn/kassie:{{ .Version }}-amd64"
-      - "ghcr.io/kashifkhn/kassie:latest-amd64"
-    use: buildx
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - "--platform=linux/amd64"
-  - image_templates:
-      - "ghcr.io/kashifkhn/kassie:{{ .Version }}-arm64"
-      - "ghcr.io/kashifkhn/kassie:latest-arm64"
-    use: buildx
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - "--platform=linux/arm64"
-
-docker_manifests:
-  - name_template: "ghcr.io/kashifkhn/kassie:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/kashifkhn/kassie:{{ .Version }}-amd64"
-      - "ghcr.io/kashifkhn/kassie:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/kashifkhn/kassie:latest"
-    image_templates:
-      - "ghcr.io/kashifkhn/kassie:latest-amd64"
-      - "ghcr.io/kashifkhn/kassie:latest-arm64"
