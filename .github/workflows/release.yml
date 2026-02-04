@@ -69,7 +69,9 @@ jobs:
 
       - name: Extract tag name
         id: tag
-        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "REPO=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -77,6 +79,6 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.TAG }}
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ steps.tag.outputs.REPO }}:${{ steps.tag.outputs.TAG }}
+            ghcr.io/${{ steps.tag.outputs.REPO }}:latest
           platforms: linux/amd64,linux/arm64
