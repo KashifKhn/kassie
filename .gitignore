@@ -16,6 +16,7 @@ api/gen/
 web/node_modules/
 web/dist/
 web/.vite/
+internal/web/
 n_docs/
 
 # Go

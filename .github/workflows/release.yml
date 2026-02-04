@@ -40,16 +40,6 @@ jobs:
       - name: Generate proto
         run: make proto
 
-      - name: Build web assets
-        run: |
-          if [ -d "web" ]; then
-            make web
-          else
-            echo "Web directory not found, skipping web build (server-only release)"
-            mkdir -p internal/web/dist
-            echo "Web UI not available in this release" > internal/web/dist/index.html
-          fi
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:

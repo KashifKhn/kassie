@@ -27,9 +27,7 @@ web:
 	@if [ -d "web" ]; then \
 		cd web && npm install && npm run build; \
 	else \
-		echo "Web directory not found, skipping..."; \
-		mkdir -p internal/web/dist; \
-		echo "Web UI not available" > internal/web/dist/index.html; \
+		echo "Web directory not found, skipping (Phase 5 not implemented yet)"; \
 	fi
 
 dev-tui:
