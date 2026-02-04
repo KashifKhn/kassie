@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/KashifKhn/kassie/internal/cli"
 )
 
-const version = "0.1.0"
-
 func main() {
-	fmt.Printf("Kassie v%s - Database Explorer for Cassandra & ScyllaDB\n", version)
-	fmt.Println("Phase 1: Foundation - Services Implemented")
-	os.Exit(0)
+	if err := cli.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 }
