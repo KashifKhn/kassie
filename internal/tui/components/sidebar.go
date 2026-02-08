@@ -201,12 +201,11 @@ func (s *Sidebar) View(width, height int) string {
 	lines = append(lines, s.theme.Header.Render("Keyspaces"))
 
 	if s.searchActive {
-		s.searchInput.Width = width - 8
+		s.searchInput.Width = width - 6
 		searchBar := s.searchInput.View()
 		searchStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("51")).
-			Width(width)
+			BorderForeground(lipgloss.Color("51"))
 		lines = append(lines, searchStyle.Render(searchBar))
 	} else {
 		helpText := "j/k navigate, Enter open, / or Ctrl+F search"
