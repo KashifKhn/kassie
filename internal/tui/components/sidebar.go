@@ -3,10 +3,12 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/KashifKhn/kassie/internal/client"
 	"github.com/KashifKhn/kassie/internal/tui/styles"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -14,12 +16,15 @@ import (
 type Sidebar struct {
 	theme styles.Theme
 
-	keyspaces []keyspaceNode
-	selected  int
-	scroll    int
-	height    int
-	loading   bool
-	status    string
+	keyspaces    []keyspaceNode
+	selected     int
+	scroll       int
+	height       int
+	loading      bool
+	status       string
+	searchInput  textinput.Model
+	searchActive bool
+	searchQuery  string
 }
 
 type keyspaceNode struct {
@@ -51,10 +56,17 @@ type tablesMsg struct {
 }
 
 func NewSidebar(theme styles.Theme) Sidebar {
+	input := textinput.New()
+	input.Placeholder = "Search tables..."
+	input.Prompt = "🔍 "
+	input.CharLimit = 100
+	input.Width = 30
+
 	return Sidebar{
-		theme:   theme,
-		loading: true,
-		status:  "Loading keyspaces...",
+		theme:       theme,
+		loading:     true,
+		status:      "Loading keyspaces...",
+		searchInput: input,
 	}
 }
 
@@ -63,16 +75,49 @@ func (s Sidebar) Init(c *client.Client) tea.Cmd {
 }
 
 func (s Sidebar) Update(msg tea.Msg, c *client.Client) (Sidebar, tea.Cmd) {
+	var cmd tea.Cmd
+
 	switch m := msg.(type) {
 	case tea.KeyMsg:
+		if s.searchActive {
+			switch m.String() {
+			case "esc":
+				s.searchActive = false
+				s.searchQuery = ""
+				s.searchInput.SetValue("")
+				s.searchInput.Blur()
+				return s, nil
+			case "enter":
+				s.searchActive = false
+				s.searchQuery = strings.TrimSpace(s.searchInput.Value())
+				s.searchInput.Blur()
+				s.selected = 0
+				return s, nil
+			default:
+				s.searchInput, cmd = s.searchInput.Update(msg)
+				return s, cmd
+			}
+		}
+
 		switch m.String() {
+		case "ctrl+f", "/":
+			s.searchActive = true
+			s.searchInput.Focus()
+			return s, nil
+		case "esc":
+			if s.searchQuery != "" {
+				s.searchQuery = ""
+				s.searchInput.SetValue("")
+				s.selected = 0
+				return s, nil
+			}
 		case "j", "down":
-			count := len(s.flatItems())
+			count := len(s.filteredItems())
 			if count > 0 {
 				s.selected = minInt(s.selected+1, count-1)
 			}
 		case "k", "up":
-			if len(s.flatItems()) > 0 {
+			if len(s.filteredItems()) > 0 {
 				s.selected = maxInt(s.selected-1, 0)
 			}
 		case "enter":
@@ -106,9 +151,13 @@ func (s *Sidebar) View(width, height int) string {
 
 	s.height = height
 
-	items := s.flatItems()
+	items := s.filteredItems()
 	if len(items) == 0 {
-		items = []string{s.theme.Dim.Render("No keyspaces")}
+		if s.searchQuery != "" {
+			items = []string{s.theme.Dim.Render("No matches")}
+		} else {
+			items = []string{s.theme.Dim.Render("No keyspaces")}
+		}
 	}
 
 	headerLines := 2
@@ -116,7 +165,15 @@ func (s *Sidebar) View(width, height int) string {
 	if s.status != "" {
 		statusLines = 1
 	}
-	listHeight := height - headerLines - statusLines
+	searchLines := 0
+	if s.searchActive {
+		searchLines = 1
+	}
+	if s.searchQuery != "" && !s.searchActive {
+		searchLines = 1
+	}
+
+	listHeight := height - headerLines - statusLines - searchLines
 	if listHeight < 0 {
 		listHeight = 0
 	}
@@ -131,9 +188,31 @@ func (s *Sidebar) View(width, height int) string {
 		items = items[s.scroll:minInt(s.scroll+listHeight, len(items))]
 	}
 
-	lines := make([]string, 0, len(items)+2)
+	lines := make([]string, 0, len(items)+4)
 	lines = append(lines, s.theme.Header.Render("Keyspaces"))
-	lines = append(lines, s.theme.Dim.Render("j/k navigate, Enter open"))
+
+	helpText := "j/k navigate, Enter open"
+	if !s.searchActive {
+		helpText += ", / search"
+	}
+	lines = append(lines, s.theme.Dim.Render(helpText))
+
+	if s.searchActive {
+		s.searchInput.Width = width - 4
+		searchBar := s.searchInput.View()
+		searchStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("51")).
+			Padding(0, 1)
+		lines = append(lines, searchStyle.Render(searchBar))
+	} else if s.searchQuery != "" {
+		queryStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("226")).
+			Italic(true)
+		clearHint := s.theme.Dim.Render(" (Esc to clear)")
+		lines = append(lines, queryStyle.Render("🔍 "+s.searchQuery)+clearHint)
+	}
+
 	lines = append(lines, items...)
 
 	if s.status != "" {
@@ -275,6 +354,88 @@ func (s Sidebar) flatItems() []string {
 	}
 
 	return items
+}
+
+func (s Sidebar) filteredItems() []string {
+	if s.searchQuery == "" {
+		return s.flatItems()
+	}
+
+	query := strings.ToLower(s.searchQuery)
+	items := make([]string, 0)
+	selectedStyle := s.theme.Selected
+
+	itemIndex := 0
+	for _, ks := range s.keyspaces {
+		keyspaceMatches := strings.Contains(strings.ToLower(ks.name), query)
+		tableMatches := false
+
+		if ks.expanded || keyspaceMatches {
+			for _, tbl := range ks.tables {
+				if strings.Contains(strings.ToLower(tbl), query) {
+					tableMatches = true
+					break
+				}
+			}
+		}
+
+		if keyspaceMatches || tableMatches {
+			prefix := "> "
+			if ks.expanded {
+				prefix = "v "
+			}
+
+			ksText := prefix + ks.name
+			if keyspaceMatches {
+				ksText = s.highlightMatch(ksText, query)
+			}
+			ksRendered := s.theme.SidebarKey.Render(ksText)
+
+			if itemIndex == s.selected {
+				ksRendered = selectedStyle.Render(ksRendered)
+			}
+			items = append(items, ksRendered)
+			itemIndex++
+
+			if ks.expanded {
+				for _, tbl := range ks.tables {
+					tblMatches := strings.Contains(strings.ToLower(tbl), query)
+					if s.searchQuery == "" || tblMatches || keyspaceMatches {
+						tblText := "    * " + tbl
+						if tblMatches {
+							tblText = "    * " + s.highlightMatch(tbl, query)
+						}
+						tblRendered := s.theme.SidebarTbl.Render(tblText)
+
+						if itemIndex == s.selected {
+							tblRendered = selectedStyle.Render(tblRendered)
+						}
+						items = append(items, tblRendered)
+						itemIndex++
+					}
+				}
+			}
+		}
+	}
+
+	return items
+}
+
+func (s Sidebar) highlightMatch(text, query string) string {
+	lower := strings.ToLower(text)
+	lowerQuery := strings.ToLower(query)
+	idx := strings.Index(lower, lowerQuery)
+
+	if idx == -1 {
+		return text
+	}
+
+	matchStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Bold(true)
+	before := text[:idx]
+	match := text[idx : idx+len(query)]
+	after := text[idx+len(query):]
+
+	return before + matchStyle.Render(match) + after
 }
 
 func clampInt(value, min, max int) int {
