@@ -376,19 +376,18 @@ func (s Sidebar) filteredItems() []string {
 	for _, ks := range s.keyspaces {
 		keyspaceMatches := strings.Contains(strings.ToLower(ks.name), query)
 		tableMatches := false
+		matchingTables := make([]string, 0)
 
-		if ks.expanded || keyspaceMatches {
-			for _, tbl := range ks.tables {
-				if strings.Contains(strings.ToLower(tbl), query) {
-					tableMatches = true
-					break
-				}
+		for _, tbl := range ks.tables {
+			if strings.Contains(strings.ToLower(tbl), query) {
+				tableMatches = true
+				matchingTables = append(matchingTables, tbl)
 			}
 		}
 
 		if keyspaceMatches || tableMatches {
 			prefix := "> "
-			if ks.expanded {
+			if ks.expanded || tableMatches {
 				prefix = "v "
 			}
 
@@ -404,10 +403,15 @@ func (s Sidebar) filteredItems() []string {
 			items = append(items, ksRendered)
 			itemIndex++
 
-			if ks.expanded {
-				for _, tbl := range ks.tables {
+			if ks.expanded || tableMatches {
+				tablesToShow := ks.tables
+				if tableMatches && !ks.expanded {
+					tablesToShow = matchingTables
+				}
+
+				for _, tbl := range tablesToShow {
 					tblMatches := strings.Contains(strings.ToLower(tbl), query)
-					if s.searchQuery == "" || tblMatches || keyspaceMatches {
+					if tableMatches || keyspaceMatches {
 						tblText := "    * " + tbl
 						if tblMatches {
 							tblText = "    * " + s.highlightMatch(tbl, query)
