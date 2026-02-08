@@ -21,16 +21,16 @@ type CopyErrorMsg struct {
 type ExplorerView struct {
 	theme styles.Theme
 
-	sidebar        components.Sidebar
-	grid           components.DataGrid
-	inspect        components.Inspector
-	filter         components.FilterBar
-	status         components.StatusBar
-	active         pane
-	profile        string
-	message        string
-	schemaCache    *cache.SchemaCache
-	sidebarVisible bool
+	sidebar     components.Sidebar
+	grid        components.DataGrid
+	inspect     components.Inspector
+	filter      components.FilterBar
+	status      components.StatusBar
+	active      pane
+	profile     string
+	message     string
+	schemaCache *cache.SchemaCache
+	viewMode    viewMode
 }
 
 type pane int
@@ -41,18 +41,26 @@ const (
 	paneInspector
 )
 
+type viewMode int
+
+const (
+	viewModeFull viewMode = iota
+	viewModeNoSidebar
+	viewModeGridOnly
+)
+
 func NewExplorerView(theme styles.Theme) ExplorerView {
 	schemaCache := cache.NewSchemaCache(10 * time.Minute)
 	return ExplorerView{
-		theme:          theme,
-		sidebar:        components.NewSidebar(theme),
-		grid:           components.NewDataGrid(theme, schemaCache),
-		inspect:        components.NewInspector(theme),
-		filter:         components.NewFilterBar(theme),
-		status:         components.NewStatusBar(theme),
-		active:         paneSidebar,
-		schemaCache:    schemaCache,
-		sidebarVisible: true,
+		theme:       theme,
+		sidebar:     components.NewSidebar(theme),
+		grid:        components.NewDataGrid(theme, schemaCache),
+		inspect:     components.NewInspector(theme),
+		filter:      components.NewFilterBar(theme),
+		status:      components.NewStatusBar(theme),
+		active:      paneSidebar,
+		schemaCache: schemaCache,
+		viewMode:    viewModeFull,
 	}
 }
 
@@ -178,7 +186,8 @@ func (v ExplorerView) View(width, height int) string {
 
 	var leftWidth, middleWidth, rightWidth int
 
-	if v.sidebarVisible {
+	switch v.viewMode {
+	case viewModeFull:
 		leftWidth = maxInt(24, width/4)
 		middleWidth = maxInt(30, width/2)
 		rightWidth = width - leftWidth - middleWidth
@@ -186,7 +195,7 @@ func (v ExplorerView) View(width, height int) string {
 			middleWidth = maxInt(30, width-leftWidth-20)
 			rightWidth = width - leftWidth - middleWidth
 		}
-	} else {
+	case viewModeNoSidebar:
 		leftWidth = 0
 		middleWidth = maxInt(30, width*2/3)
 		rightWidth = width - middleWidth
@@ -194,6 +203,10 @@ func (v ExplorerView) View(width, height int) string {
 			middleWidth = width - 20
 			rightWidth = 20
 		}
+	case viewModeGridOnly:
+		leftWidth = 0
+		middleWidth = width
+		rightWidth = 0
 	}
 
 	border := v.theme.Panel
@@ -213,26 +226,29 @@ func (v ExplorerView) View(width, height int) string {
 	middleBorder := border
 	rightBorder := border
 
-	if v.active == paneSidebar && v.sidebarVisible {
+	if v.active == paneSidebar && v.viewMode == viewModeFull {
 		leftBorder = v.theme.PanelHot
 	}
 	if v.active == paneGrid {
 		middleBorder = v.theme.PanelHot
 	}
-	if v.active == paneInspector {
+	if v.active == paneInspector && v.viewMode != viewModeGridOnly {
 		rightBorder = v.theme.PanelHot
 	}
 
 	var row string
-	if v.sidebarVisible {
+	switch v.viewMode {
+	case viewModeFull:
 		left := leftBorder.Width(leftWidth).Height(contentHeight).Render(v.sidebar.View(leftWidth-2, contentHeight-2))
 		middle := middleBorder.Width(middleWidth).Height(contentHeight).Render(v.grid.View(middleWidth-2, contentHeight-2))
 		right := rightBorder.Width(rightWidth).Height(contentHeight).Render(v.inspect.View(rightWidth-2, contentHeight-2))
 		row = lipgloss.JoinHorizontal(lipgloss.Top, left, middle, right)
-	} else {
+	case viewModeNoSidebar:
 		middle := middleBorder.Width(middleWidth).Height(contentHeight).Render(v.grid.View(middleWidth-2, contentHeight-2))
 		right := rightBorder.Width(rightWidth).Height(contentHeight).Render(v.inspect.View(rightWidth-2, contentHeight-2))
 		row = lipgloss.JoinHorizontal(lipgloss.Top, middle, right)
+	case viewModeGridOnly:
+		row = middleBorder.Width(middleWidth).Height(contentHeight).Render(v.grid.View(middleWidth-2, contentHeight-2))
 	}
 
 	statusText := v.grid.Status()
@@ -244,10 +260,13 @@ func (v ExplorerView) View(width, height int) string {
 	}
 
 	statusHint := fmt.Sprintf("Pane: %s | Tab switch", v.paneLabel())
-	if !v.sidebarVisible {
-		statusHint += " | Ctrl+B show sidebar"
-	} else {
-		statusHint += " | Ctrl+B hide sidebar"
+	switch v.viewMode {
+	case viewModeFull:
+		statusHint += " | Ctrl+B: hide sidebar"
+	case viewModeNoSidebar:
+		statusHint += " | Ctrl+B: fullscreen grid"
+	case viewModeGridOnly:
+		statusHint += " | Ctrl+B: show all"
 	}
 
 	status := v.status.View(width, v.profile, v.grid.Keyspace(), v.grid.Table(), statusText+" | "+statusHint)
@@ -269,46 +288,54 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 
 	switch key.String() {
 	case "ctrl+b":
-		v.sidebarVisible = !v.sidebarVisible
-		if !v.sidebarVisible && v.active == paneSidebar {
+		v.viewMode = (v.viewMode + 1) % 3
+		if v.viewMode == viewModeNoSidebar && v.active == paneSidebar {
+			v.active = paneGrid
+		} else if v.viewMode == viewModeGridOnly {
 			v.active = paneGrid
 		}
 	case "tab":
-		if v.sidebarVisible {
+		switch v.viewMode {
+		case viewModeFull:
 			v.active = (v.active + 1) % 3
-		} else {
+		case viewModeNoSidebar:
 			if v.active == paneGrid {
 				v.active = paneInspector
 			} else {
 				v.active = paneGrid
 			}
+		case viewModeGridOnly:
 		}
 	case "shift+tab":
-		if v.sidebarVisible {
+		switch v.viewMode {
+		case viewModeFull:
 			v.active = (v.active + 2) % 3
-		} else {
+		case viewModeNoSidebar:
 			if v.active == paneGrid {
 				v.active = paneInspector
 			} else {
 				v.active = paneGrid
 			}
+		case viewModeGridOnly:
 		}
 	case "ctrl+h":
-		if v.sidebarVisible {
+		if v.viewMode == viewModeFull {
 			v.active = paneSidebar
 		}
 	case "ctrl+l":
 		v.active = paneGrid
 	case "ctrl+i":
-		v.active = paneInspector
+		if v.viewMode != viewModeGridOnly {
+			v.active = paneInspector
+		}
 	case "ctrl+f":
-		if v.active == paneSidebar && v.sidebarVisible {
+		if v.active == paneSidebar && v.viewMode == viewModeFull {
 			v.sidebar, cmd = v.sidebar.ActivateSearch()
 		} else if v.active == paneGrid {
 			v.grid = v.grid.ActivateSearch()
 		}
 	case "/":
-		if v.active == paneSidebar && v.sidebarVisible {
+		if v.active == paneSidebar && v.viewMode == viewModeFull {
 			v.sidebar, cmd = v.sidebar.ActivateSearch()
 		} else if v.active == paneGrid {
 			v.filter = v.filter.Activate(v.grid.Filter())
