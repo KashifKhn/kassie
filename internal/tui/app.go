@@ -58,25 +58,34 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, cmd
 	case views.ShowHelpMsg:
 		a.updateHelp()
+		a.state.PreviousView = a.state.View
 		a.state.View = ViewHelp
 		return a, nil
 	case tea.KeyMsg:
+		if m.String() == "?" {
+			a.updateHelp()
+			a.state.PreviousView = a.state.View
+			a.state.View = ViewHelp
+			return a, nil
+		}
 		if a.state.View == ViewHelp && (m.String() == "q" || m.String() == "esc" || m.String() == "?") {
-			a.state.View = ViewExplorer
+			a.state.View = a.state.PreviousView
 			return a, nil
 		}
 		if m.String() == "q" && a.state.View == ViewExplorer {
+			return a, tea.Quit
+		}
+		if m.String() == "ctrl+c" {
 			return a, tea.Quit
 		}
 	case tea.WindowSizeMsg:
 		a.state = a.state.WithSize(m.Width, m.Height)
 	}
 
-	switch m := msg.(type) {
-	case tea.KeyMsg:
-		if m.String() == "ctrl+c" || m.String() == "q" {
-			return a, tea.Quit
-		}
+	if a.state.View == ViewHelp {
+		var cmd tea.Cmd
+		a.help, cmd = a.help.Update(msg)
+		return a, cmd
 	}
 
 	if a.state.View == ViewConnection {
@@ -119,7 +128,7 @@ func (a *App) updateHelp() {
 
 	lines := []string{
 		titleStyle.Render("╔═══════════════════════════════════════════════════════════════════╗"),
-		titleStyle.Render("║                      KASSIE TUI HELP                             ║"),
+		titleStyle.Render("║                      KASSIE TUI HELP                              ║"),
 		titleStyle.Render("╚═══════════════════════════════════════════════════════════════════╝"),
 		"",
 		headerStyle.Render("━━━ NAVIGATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"),

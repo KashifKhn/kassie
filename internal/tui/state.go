@@ -9,20 +9,22 @@ const (
 )
 
 type AppState struct {
-	View     View
-	Width    int
-	Height   int
-	Profile  string
-	Keyspace string
-	Table    string
-	Status   string
-	Err      error
+	View         View
+	PreviousView View
+	Width        int
+	Height       int
+	Profile      string
+	Keyspace     string
+	Table        string
+	Status       string
+	Err          error
 }
 
 func NewState() AppState {
 	return AppState{
-		View:   ViewConnection,
-		Status: "Ready",
+		View:         ViewConnection,
+		PreviousView: ViewConnection,
+		Status:       "Ready",
 	}
 }
 
