@@ -17,18 +17,20 @@ import (
 type DataGrid struct {
 	theme styles.Theme
 
-	keyspace  string
-	table     string
-	filter    string
-	columns   []string
-	rows      []rowData
-	selected  int
-	colOffset int
-	cursorID  string
-	hasMore   bool
-	pageSize  int32
-	loading   bool
-	status    string
+	keyspace        string
+	table           string
+	filter          string
+	columns         []string
+	rows            []rowData
+	selected        int
+	viewportOffset  int
+	colOffset       int
+	cursorID        string
+	hasMore         bool
+	pageSize        int32
+	loading         bool
+	status          string
+	cachedColWidths []int
 }
 
 type RowSelectedMsg struct {
@@ -74,11 +76,13 @@ func (g DataGrid) LoadTable(c *client.Client, keyspace, table string) (DataGrid,
 	g.columns = nil
 	g.rows = nil
 	g.selected = 0
+	g.viewportOffset = 0
 	g.colOffset = 0
 	g.cursorID = ""
 	g.hasMore = false
 	g.loading = true
 	g.status = fmt.Sprintf("Loading %s.%s...", keyspace, table)
+	g.cachedColWidths = nil
 
 	return g, tea.Batch(
 		g.fetchSchemaCmd(c, keyspace, table),
@@ -93,11 +97,13 @@ func (g DataGrid) ApplyFilter(c *client.Client, where string) (DataGrid, tea.Cmd
 
 	g.filter = where
 	g.selected = 0
+	g.viewportOffset = 0
 	g.colOffset = 0
 	g.cursorID = ""
 	g.hasMore = false
 	g.loading = true
 	g.rows = nil
+	g.cachedColWidths = nil
 	if where == "" {
 		g.status = "Loading all rows..."
 		return g, g.fetchRowsCmd(c, g.keyspace, g.table, g.pageSize)
@@ -126,6 +132,19 @@ func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
 			}
 		case "k", "up":
 			g.selected = maxInt(g.selected-1, 0)
+		case "d":
+			if len(g.rows) > 0 {
+				g.selected = minInt(g.selected+10, len(g.rows)-1)
+			}
+		case "u":
+			g.selected = maxInt(g.selected-10, 0)
+		case "g":
+			g.selected = 0
+			g.viewportOffset = 0
+		case "G":
+			if len(g.rows) > 0 {
+				g.selected = len(g.rows) - 1
+			}
 		case "h", "left":
 			g.colOffset = maxInt(g.colOffset-1, 0)
 		case "l", "right":
@@ -148,12 +167,14 @@ func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
 		}
 	case schemaMsg:
 		g.columns = columnsFromSchema(m.Schema)
+		g.cachedColWidths = nil
 	case rowsMsg:
 		g.loading = false
 		g.cursorID = m.CursorID
 		g.hasMore = m.HasMore
 		g.filter = m.Filter
 		g.rows = convertRows(m.Rows)
+		g.cachedColWidths = nil
 		if len(g.rows) == 0 {
 			g.status = "No rows"
 		} else {
@@ -184,7 +205,10 @@ func (g DataGrid) View(width, height int) string {
 		columns = columnsFromRows(g.rows)
 	}
 
-	colWidths := computeColWidths(columns, g.rows)
+	if g.cachedColWidths == nil {
+		g.cachedColWidths = computeColWidths(columns, g.rows)
+	}
+	colWidths := g.cachedColWidths
 	visibleColumns, visibleWidths := fitColumns(columns, colWidths, g.colOffset, gridWidth)
 
 	lines := make([]string, 0, height)
@@ -196,7 +220,17 @@ func (g DataGrid) View(width, height int) string {
 		maxRows = 0
 	}
 
-	for i := 0; i < len(g.rows) && i < maxRows; i++ {
+	if g.selected < g.viewportOffset {
+		g.viewportOffset = g.selected
+	}
+	if g.selected >= g.viewportOffset+maxRows {
+		g.viewportOffset = g.selected - maxRows + 1
+	}
+
+	startRow := g.viewportOffset
+	endRow := minInt(startRow+maxRows, len(g.rows))
+
+	for i := startRow; i < endRow; i++ {
 		row := g.rows[i]
 		selected := i == g.selected
 		lines = append(lines, renderRow(visibleColumns, visibleWidths, row, g.theme, selected))
@@ -206,11 +240,21 @@ func (g DataGrid) View(width, height int) string {
 	if g.loading {
 		footer = g.theme.Status.Render("Loading...")
 	}
+
+	if len(g.rows) > maxRows {
+		scrollPercent := 0
+		if len(g.rows) > 1 {
+			scrollPercent = (g.selected * 100) / (len(g.rows) - 1)
+		}
+		scrollInfo := fmt.Sprintf(" [%d/%d - %d%%]", g.selected+1, len(g.rows), scrollPercent)
+		footer = g.theme.Status.Render(footer + scrollInfo)
+	}
+
 	if g.hasMore {
 		footer = g.theme.Status.Render(footer + "  (n next)")
 	}
 	if len(g.columns) > 0 {
-		footer = g.theme.Status.Render(footer + "  (h/l scroll, Tab for pane)")
+		footer = g.theme.Status.Render(footer + "  (g/G top/bottom, d/u page)")
 	}
 	lines = append(lines, "", footer)
 
