@@ -11,6 +11,7 @@ import (
 	"github.com/KashifKhn/kassie/internal/client"
 	"github.com/KashifKhn/kassie/internal/tui/cache"
 	"github.com/KashifKhn/kassie/internal/tui/styles"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -33,6 +34,12 @@ type DataGrid struct {
 	status          string
 	cachedColWidths []int
 	schemaCache     *cache.SchemaCache
+
+	searchActive bool
+	searchInput  textinput.Model
+	searchQuery  string
+	matchedRows  []int
+	matchIndex   int
 }
 
 type RowSelectedMsg struct {
@@ -61,11 +68,16 @@ type rowData struct {
 }
 
 func NewDataGrid(theme styles.Theme, schemaCache *cache.SchemaCache) DataGrid {
+	searchInput := textinput.New()
+	searchInput.Placeholder = "Search in results..."
+	searchInput.Width = 40
+
 	return DataGrid{
 		theme:       theme,
 		pageSize:    50,
 		status:      "Select a table",
 		schemaCache: schemaCache,
+		searchInput: searchInput,
 	}
 }
 
@@ -130,6 +142,32 @@ func (g DataGrid) Refresh(c *client.Client) (DataGrid, tea.Cmd) {
 }
 
 func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
+	if g.searchActive {
+		switch m := msg.(type) {
+		case tea.KeyMsg:
+			switch m.String() {
+			case "enter":
+				g = g.performSearch()
+				g = g.DeactivateSearch()
+				return g, nil
+			case "esc":
+				g = g.DeactivateSearch()
+				g.searchQuery = ""
+				g.matchedRows = nil
+				g.matchIndex = 0
+				return g, nil
+			default:
+				var cmd tea.Cmd
+				g.searchInput, cmd = g.searchInput.Update(msg)
+				return g, cmd
+			}
+		default:
+			var cmd tea.Cmd
+			g.searchInput, cmd = g.searchInput.Update(msg)
+			return g, cmd
+		}
+	}
+
 	switch m := msg.(type) {
 	case tea.KeyMsg:
 		switch m.String() {
@@ -159,10 +197,16 @@ func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
 				g.colOffset = minInt(g.colOffset+1, len(g.columns)-1)
 			}
 		case "n":
-			if g.hasMore && g.cursorID != "" {
+			if len(g.matchedRows) > 0 {
+				g = g.nextMatch()
+			} else if g.hasMore && g.cursorID != "" {
 				g.loading = true
 				g.status = "Loading next page..."
 				return g, g.fetchNextPageCmd(c, g.cursorID, g.filter)
+			}
+		case "N":
+			if len(g.matchedRows) > 0 {
+				g = g.prevMatch()
 			}
 		case "r":
 			return g.Refresh(c)
@@ -182,6 +226,9 @@ func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
 		g.filter = m.Filter
 		g.rows = convertRows(m.Rows)
 		g.cachedColWidths = nil
+		g.searchQuery = ""
+		g.matchedRows = nil
+		g.matchIndex = 0
 		if len(g.rows) == 0 {
 			g.status = "No rows"
 		} else {
@@ -220,6 +267,17 @@ func (g DataGrid) View(width, height int) string {
 
 	lines := make([]string, 0, height)
 	lines = append(lines, header, "")
+
+	if g.searchActive {
+		searchBar := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("51")).
+			Padding(0, 1).
+			Width(width - 4).
+			Render("🔍 " + g.searchInput.View())
+		lines = append(lines, searchBar, "")
+	}
+
 	lines = append(lines, renderRow(visibleColumns, visibleWidths, rowData{}, g.theme, false))
 
 	maxRows := height - len(lines) - 1
@@ -237,15 +295,26 @@ func (g DataGrid) View(width, height int) string {
 	startRow := g.viewportOffset
 	endRow := minInt(startRow+maxRows, len(g.rows))
 
+	matchedSet := make(map[int]bool)
+	for _, idx := range g.matchedRows {
+		matchedSet[idx] = true
+	}
+
 	for i := startRow; i < endRow; i++ {
 		row := g.rows[i]
 		selected := i == g.selected
-		lines = append(lines, renderRow(visibleColumns, visibleWidths, row, g.theme, selected))
+		isMatched := matchedSet[i]
+		lines = append(lines, g.renderRowWithHighlight(visibleColumns, visibleWidths, row, selected, isMatched))
 	}
 
 	footer := g.theme.Status.Render(g.status)
 	if g.loading {
 		footer = g.theme.Status.Render("Loading...")
+	}
+
+	if len(g.matchedRows) > 0 {
+		matchInfo := fmt.Sprintf(" [Match %d/%d]", g.matchIndex+1, len(g.matchedRows))
+		footer = g.theme.Status.Render(footer + matchInfo)
 	}
 
 	if len(g.rows) > maxRows {
@@ -261,7 +330,7 @@ func (g DataGrid) View(width, height int) string {
 		footer = g.theme.Status.Render(footer + "  (n next)")
 	}
 	if len(g.columns) > 0 {
-		footer = g.theme.Status.Render(footer + "  (g/G top/bottom, d/u page)")
+		footer = g.theme.Status.Render(footer + "  (ctrl+f search)")
 	}
 	lines = append(lines, "", footer)
 
@@ -290,6 +359,71 @@ func (g DataGrid) CacheStats() (hits, misses, size int) {
 		return g.schemaCache.Stats()
 	}
 	return 0, 0, 0
+}
+
+func (g DataGrid) IsSearchActive() bool {
+	return g.searchActive
+}
+
+func (g DataGrid) ActivateSearch() DataGrid {
+	g.searchActive = true
+	g.searchInput.Focus()
+	g.searchInput.SetValue(g.searchQuery)
+	return g
+}
+
+func (g DataGrid) DeactivateSearch() DataGrid {
+	g.searchActive = false
+	g.searchInput.Blur()
+	return g
+}
+
+func (g DataGrid) performSearch() DataGrid {
+	g.searchQuery = strings.TrimSpace(g.searchInput.Value())
+	g.matchedRows = nil
+	g.matchIndex = 0
+
+	if g.searchQuery == "" {
+		return g
+	}
+
+	query := strings.ToLower(g.searchQuery)
+	for i, row := range g.rows {
+		for _, value := range row.cell {
+			if strings.Contains(strings.ToLower(value), query) {
+				g.matchedRows = append(g.matchedRows, i)
+				break
+			}
+		}
+	}
+
+	if len(g.matchedRows) > 0 {
+		g.selected = g.matchedRows[0]
+	}
+
+	return g
+}
+
+func (g DataGrid) nextMatch() DataGrid {
+	if len(g.matchedRows) == 0 {
+		return g
+	}
+
+	g.matchIndex = (g.matchIndex + 1) % len(g.matchedRows)
+	g.selected = g.matchedRows[g.matchIndex]
+
+	return g
+}
+
+func (g DataGrid) prevMatch() DataGrid {
+	if len(g.matchedRows) == 0 {
+		return g
+	}
+
+	g.matchIndex = (g.matchIndex - 1 + len(g.matchedRows)) % len(g.matchedRows)
+	g.selected = g.matchedRows[g.matchIndex]
+
+	return g
 }
 
 func (g DataGrid) fetchSchemaCmd(c *client.Client, keyspace, table string) tea.Cmd {
@@ -510,6 +644,33 @@ func renderRow(columns []string, widths []int, row rowData, theme styles.Theme, 
 	}
 	if row.cell == nil {
 		return theme.Header.Render(line)
+	}
+	return line
+}
+
+func (g DataGrid) renderRowWithHighlight(columns []string, widths []int, row rowData, selected, matched bool) string {
+	parts := make([]string, 0, len(columns))
+	for i, col := range columns {
+		cell := col
+		if row.cell != nil {
+			cell = row.cell[col]
+			if cell == "" {
+				cell = "-"
+			}
+		}
+		cell = truncate(cell, widths[i]-2)
+		parts = append(parts, pad(cell, widths[i]))
+	}
+
+	line := strings.Join(parts, " │ ")
+	if selected {
+		return g.theme.Selected.Render(line)
+	}
+	if row.cell == nil {
+		return g.theme.Header.Render(line)
+	}
+	if matched {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Render(line)
 	}
 	return line
 }

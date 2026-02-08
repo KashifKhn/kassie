@@ -120,6 +120,12 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 		return v, cmd
 	}
 
+	if v.grid.IsSearchActive() {
+		var cmd tea.Cmd
+		v.grid, cmd = v.grid.Update(msg, c)
+		return v, cmd
+	}
+
 	if _, ok := msg.(tea.KeyMsg); !ok {
 		var cmd tea.Cmd
 		var cmd2 tea.Cmd
@@ -243,6 +249,12 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 		v.active = paneGrid
 	case "ctrl+i":
 		v.active = paneInspector
+	case "ctrl+f":
+		if v.active == paneSidebar {
+			v.sidebar, cmd = v.sidebar.ActivateSearch()
+		} else if v.active == paneGrid {
+			v.grid = v.grid.ActivateSearch()
+		}
 	case "/":
 		if v.active == paneSidebar {
 			v.sidebar, cmd = v.sidebar.ActivateSearch()
