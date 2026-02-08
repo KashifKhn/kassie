@@ -21,15 +21,16 @@ type CopyErrorMsg struct {
 type ExplorerView struct {
 	theme styles.Theme
 
-	sidebar     components.Sidebar
-	grid        components.DataGrid
-	inspect     components.Inspector
-	filter      components.FilterBar
-	status      components.StatusBar
-	active      pane
-	profile     string
-	message     string
-	schemaCache *cache.SchemaCache
+	sidebar        components.Sidebar
+	grid           components.DataGrid
+	inspect        components.Inspector
+	filter         components.FilterBar
+	status         components.StatusBar
+	active         pane
+	profile        string
+	message        string
+	schemaCache    *cache.SchemaCache
+	sidebarVisible bool
 }
 
 type pane int
@@ -43,14 +44,15 @@ const (
 func NewExplorerView(theme styles.Theme) ExplorerView {
 	schemaCache := cache.NewSchemaCache(10 * time.Minute)
 	return ExplorerView{
-		theme:       theme,
-		sidebar:     components.NewSidebar(theme),
-		grid:        components.NewDataGrid(theme, schemaCache),
-		inspect:     components.NewInspector(theme),
-		filter:      components.NewFilterBar(theme),
-		status:      components.NewStatusBar(theme),
-		active:      paneSidebar,
-		schemaCache: schemaCache,
+		theme:          theme,
+		sidebar:        components.NewSidebar(theme),
+		grid:           components.NewDataGrid(theme, schemaCache),
+		inspect:        components.NewInspector(theme),
+		filter:         components.NewFilterBar(theme),
+		status:         components.NewStatusBar(theme),
+		active:         paneSidebar,
+		schemaCache:    schemaCache,
+		sidebarVisible: true,
 	}
 }
 
@@ -174,12 +176,24 @@ func (v ExplorerView) View(width, height int) string {
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, v.theme.Dim.Render("Resize terminal"))
 	}
 
-	leftWidth := maxInt(24, width/4)
-	middleWidth := maxInt(30, width/2)
-	rightWidth := width - leftWidth - middleWidth
-	if rightWidth < 20 {
-		middleWidth = maxInt(30, width-leftWidth-20)
+	var leftWidth, middleWidth, rightWidth int
+
+	if v.sidebarVisible {
+		leftWidth = maxInt(24, width/4)
+		middleWidth = maxInt(30, width/2)
 		rightWidth = width - leftWidth - middleWidth
+		if rightWidth < 20 {
+			middleWidth = maxInt(30, width-leftWidth-20)
+			rightWidth = width - leftWidth - middleWidth
+		}
+	} else {
+		leftWidth = 0
+		middleWidth = maxInt(30, width*2/3)
+		rightWidth = width - middleWidth
+		if rightWidth < 20 {
+			middleWidth = width - 20
+			rightWidth = 20
+		}
 	}
 
 	border := v.theme.Panel
@@ -198,7 +212,8 @@ func (v ExplorerView) View(width, height int) string {
 	leftBorder := border
 	middleBorder := border
 	rightBorder := border
-	if v.active == paneSidebar {
+
+	if v.active == paneSidebar && v.sidebarVisible {
 		leftBorder = v.theme.PanelHot
 	}
 	if v.active == paneGrid {
@@ -208,11 +223,18 @@ func (v ExplorerView) View(width, height int) string {
 		rightBorder = v.theme.PanelHot
 	}
 
-	left := leftBorder.Width(leftWidth).Height(contentHeight).Render(v.sidebar.View(leftWidth-2, contentHeight-2))
-	middle := middleBorder.Width(middleWidth).Height(contentHeight).Render(v.grid.View(middleWidth-2, contentHeight-2))
-	right := rightBorder.Width(rightWidth).Height(contentHeight).Render(v.inspect.View(rightWidth-2, contentHeight-2))
+	var row string
+	if v.sidebarVisible {
+		left := leftBorder.Width(leftWidth).Height(contentHeight).Render(v.sidebar.View(leftWidth-2, contentHeight-2))
+		middle := middleBorder.Width(middleWidth).Height(contentHeight).Render(v.grid.View(middleWidth-2, contentHeight-2))
+		right := rightBorder.Width(rightWidth).Height(contentHeight).Render(v.inspect.View(rightWidth-2, contentHeight-2))
+		row = lipgloss.JoinHorizontal(lipgloss.Top, left, middle, right)
+	} else {
+		middle := middleBorder.Width(middleWidth).Height(contentHeight).Render(v.grid.View(middleWidth-2, contentHeight-2))
+		right := rightBorder.Width(rightWidth).Height(contentHeight).Render(v.inspect.View(rightWidth-2, contentHeight-2))
+		row = lipgloss.JoinHorizontal(lipgloss.Top, middle, right)
+	}
 
-	row := lipgloss.JoinHorizontal(lipgloss.Top, left, middle, right)
 	statusText := v.grid.Status()
 	if statusText == "" {
 		statusText = "Ready"
@@ -220,7 +242,14 @@ func (v ExplorerView) View(width, height int) string {
 	if v.message != "" {
 		statusText = v.message
 	}
+
 	statusHint := fmt.Sprintf("Pane: %s | Tab switch", v.paneLabel())
+	if !v.sidebarVisible {
+		statusHint += " | Ctrl+B show sidebar"
+	} else {
+		statusHint += " | Ctrl+B hide sidebar"
+	}
+
 	status := v.status.View(width, v.profile, v.grid.Keyspace(), v.grid.Table(), statusText+" | "+statusHint)
 
 	parts := []string{row}
@@ -239,24 +268,47 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 	}
 
 	switch key.String() {
+	case "ctrl+b":
+		v.sidebarVisible = !v.sidebarVisible
+		if !v.sidebarVisible && v.active == paneSidebar {
+			v.active = paneGrid
+		}
 	case "tab":
-		v.active = (v.active + 1) % 3
+		if v.sidebarVisible {
+			v.active = (v.active + 1) % 3
+		} else {
+			if v.active == paneGrid {
+				v.active = paneInspector
+			} else {
+				v.active = paneGrid
+			}
+		}
 	case "shift+tab":
-		v.active = (v.active + 2) % 3
+		if v.sidebarVisible {
+			v.active = (v.active + 2) % 3
+		} else {
+			if v.active == paneGrid {
+				v.active = paneInspector
+			} else {
+				v.active = paneGrid
+			}
+		}
 	case "ctrl+h":
-		v.active = paneSidebar
+		if v.sidebarVisible {
+			v.active = paneSidebar
+		}
 	case "ctrl+l":
 		v.active = paneGrid
 	case "ctrl+i":
 		v.active = paneInspector
 	case "ctrl+f":
-		if v.active == paneSidebar {
+		if v.active == paneSidebar && v.sidebarVisible {
 			v.sidebar, cmd = v.sidebar.ActivateSearch()
 		} else if v.active == paneGrid {
 			v.grid = v.grid.ActivateSearch()
 		}
 	case "/":
-		if v.active == paneSidebar {
+		if v.active == paneSidebar && v.sidebarVisible {
 			v.sidebar, cmd = v.sidebar.ActivateSearch()
 		} else if v.active == paneGrid {
 			v.filter = v.filter.Activate(v.grid.Filter())
