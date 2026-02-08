@@ -9,6 +9,7 @@ import (
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/client"
+	"github.com/KashifKhn/kassie/internal/tui/cache"
 	"github.com/KashifKhn/kassie/internal/tui/styles"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -31,6 +32,7 @@ type DataGrid struct {
 	loading         bool
 	status          string
 	cachedColWidths []int
+	schemaCache     *cache.SchemaCache
 }
 
 type RowSelectedMsg struct {
@@ -42,7 +44,8 @@ type dataErrMsg struct {
 }
 
 type schemaMsg struct {
-	Schema *pb.TableSchema
+	Schema    *pb.TableSchema
+	FromCache bool
 }
 
 type rowsMsg struct {
@@ -57,11 +60,12 @@ type rowData struct {
 	cell map[string]string
 }
 
-func NewDataGrid(theme styles.Theme) DataGrid {
+func NewDataGrid(theme styles.Theme, schemaCache *cache.SchemaCache) DataGrid {
 	return DataGrid{
-		theme:    theme,
-		pageSize: 50,
-		status:   "Select a table",
+		theme:       theme,
+		pageSize:    50,
+		status:      "Select a table",
+		schemaCache: schemaCache,
 	}
 }
 
@@ -115,6 +119,9 @@ func (g DataGrid) ApplyFilter(c *client.Client, where string) (DataGrid, tea.Cmd
 func (g DataGrid) Refresh(c *client.Client) (DataGrid, tea.Cmd) {
 	if g.keyspace == "" || g.table == "" {
 		return g, nil
+	}
+	if g.schemaCache != nil {
+		g.schemaCache.Invalidate(g.keyspace, g.table)
 	}
 	if g.filter != "" {
 		return g.ApplyFilter(c, g.filter)
@@ -278,8 +285,21 @@ func (g DataGrid) Filter() string {
 	return g.filter
 }
 
+func (g DataGrid) CacheStats() (hits, misses, size int) {
+	if g.schemaCache != nil {
+		return g.schemaCache.Stats()
+	}
+	return 0, 0, 0
+}
+
 func (g DataGrid) fetchSchemaCmd(c *client.Client, keyspace, table string) tea.Cmd {
 	return func() tea.Msg {
+		if g.schemaCache != nil {
+			if cached, found := g.schemaCache.Get(keyspace, table); found {
+				return schemaMsg{Schema: cached, FromCache: true}
+			}
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -287,7 +307,12 @@ func (g DataGrid) fetchSchemaCmd(c *client.Client, keyspace, table string) tea.C
 		if err != nil {
 			return dataErrMsg{Err: err}
 		}
-		return schemaMsg{Schema: schema}
+
+		if g.schemaCache != nil {
+			g.schemaCache.Set(keyspace, table, schema)
+		}
+
+		return schemaMsg{Schema: schema, FromCache: false}
 	}
 }
 

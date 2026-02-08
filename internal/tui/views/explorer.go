@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/KashifKhn/kassie/internal/client"
+	"github.com/KashifKhn/kassie/internal/tui/cache"
 	"github.com/KashifKhn/kassie/internal/tui/components"
 	"github.com/KashifKhn/kassie/internal/tui/styles"
 	tea "github.com/charmbracelet/bubbletea"
@@ -20,14 +21,15 @@ type CopyErrorMsg struct {
 type ExplorerView struct {
 	theme styles.Theme
 
-	sidebar components.Sidebar
-	grid    components.DataGrid
-	inspect components.Inspector
-	filter  components.FilterBar
-	status  components.StatusBar
-	active  pane
-	profile string
-	message string
+	sidebar     components.Sidebar
+	grid        components.DataGrid
+	inspect     components.Inspector
+	filter      components.FilterBar
+	status      components.StatusBar
+	active      pane
+	profile     string
+	message     string
+	schemaCache *cache.SchemaCache
 }
 
 type pane int
@@ -39,20 +41,22 @@ const (
 )
 
 func NewExplorerView(theme styles.Theme) ExplorerView {
+	schemaCache := cache.NewSchemaCache(10 * time.Minute)
 	return ExplorerView{
-		theme:   theme,
-		sidebar: components.NewSidebar(theme),
-		grid:    components.NewDataGrid(theme),
-		inspect: components.NewInspector(theme),
-		filter:  components.NewFilterBar(theme),
-		status:  components.NewStatusBar(theme),
-		active:  paneSidebar,
+		theme:       theme,
+		sidebar:     components.NewSidebar(theme),
+		grid:        components.NewDataGrid(theme, schemaCache),
+		inspect:     components.NewInspector(theme),
+		filter:      components.NewFilterBar(theme),
+		status:      components.NewStatusBar(theme),
+		active:      paneSidebar,
+		schemaCache: schemaCache,
 	}
 }
 
 func (v ExplorerView) Reload(c *client.Client) (ExplorerView, tea.Cmd) {
 	v.sidebar = components.NewSidebar(v.theme)
-	v.grid = components.NewDataGrid(v.theme)
+	v.grid = components.NewDataGrid(v.theme, v.schemaCache)
 	v.inspect = components.NewInspector(v.theme)
 	v.filter = components.NewFilterBar(v.theme)
 	v.active = paneSidebar
