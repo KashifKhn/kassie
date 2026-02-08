@@ -648,7 +648,7 @@ func fitColumns(columns []string, widths []int, offset int, maxWidth int) ([]str
 func renderRow(columns []string, widths []int, row rowData, theme styles.Theme, selected bool, schema *pb.TableSchema) string {
 	parts := make([]string, 0, len(columns))
 	for i, col := range columns {
-		cell := col
+		var cell string
 		if row.cell != nil {
 			cell = row.cell[col]
 			if cell == "" {

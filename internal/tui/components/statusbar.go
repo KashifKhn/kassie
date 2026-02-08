@@ -18,12 +18,14 @@ func NewStatusBar(theme styles.Theme) StatusBar {
 func (s StatusBar) View(width int, profile, keyspace, table, status string) string {
 	left := profile
 	if keyspace != "" && table != "" {
-		left = fmt.Sprintf("%s | %s.%s", profile, keyspace, table)
+		left = fmt.Sprintf("%s › %s › %s", profile, keyspace, table)
+	} else if keyspace != "" {
+		left = fmt.Sprintf("%s › %s", profile, keyspace)
 	}
 	if left == "" {
 		left = "Not connected"
 	}
 
-	content := fmt.Sprintf("%s | %s", left, status)
+	content := fmt.Sprintf("%s │ %s", left, status)
 	return lipgloss.NewStyle().Width(width).Render(s.theme.Status.Render(content))
 }
