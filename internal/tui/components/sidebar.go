@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/junegunn/fzf/src/algo"
+	"github.com/junegunn/fzf/src/util"
 )
 
 type Sidebar struct {
@@ -95,12 +98,13 @@ func (s Sidebar) Update(msg tea.Msg, c *client.Client) (Sidebar, tea.Cmd) {
 				return s, nil
 			case "enter":
 				s.searchActive = false
-				s.searchQuery = strings.TrimSpace(s.searchInput.Value())
 				s.searchInput.Blur()
 				s.selected = 0
 				return s, nil
 			default:
 				s.searchInput, cmd = s.searchInput.Update(msg)
+				s.searchQuery = strings.TrimSpace(s.searchInput.Value())
+				s.selected = 0
 				return s, cmd
 			}
 		}
@@ -363,38 +367,78 @@ func (s Sidebar) flatItems() []string {
 	return items
 }
 
+type fuzzyMatch struct {
+	keyspaceIdx int
+	tableIdx    int
+	score       int
+	positions   []int
+	isKeyspace  bool
+}
+
 func (s Sidebar) filteredItems() []string {
 	if s.searchQuery == "" {
 		return s.flatItems()
 	}
 
-	query := strings.ToLower(s.searchQuery)
-	items := make([]string, 0)
-	selectedStyle := s.theme.Selected
+	pattern := []rune(s.searchQuery)
+	caseSensitive := false
+	normalize := false
 
-	itemIndex := 0
-	for _, ks := range s.keyspaces {
-		keyspaceMatches := strings.Contains(strings.ToLower(ks.name), query)
-		tableMatches := false
-		matchingTables := make([]string, 0)
+	matches := make([]fuzzyMatch, 0)
 
-		for _, tbl := range ks.tables {
-			if strings.Contains(strings.ToLower(tbl), query) {
-				tableMatches = true
-				matchingTables = append(matchingTables, tbl)
+	for ksIdx, ks := range s.keyspaces {
+		ksChars := util.RunesToChars([]rune(ks.name))
+		result, pos := algo.FuzzyMatchV2(caseSensitive, normalize, true, &ksChars, pattern, true, nil)
+
+		if result.Score > 0 {
+			positions := []int{}
+			if pos != nil {
+				positions = *pos
 			}
+			matches = append(matches, fuzzyMatch{
+				keyspaceIdx: ksIdx,
+				tableIdx:    -1,
+				score:       result.Score,
+				positions:   positions,
+				isKeyspace:  true,
+			})
 		}
 
-		if keyspaceMatches || tableMatches {
-			prefix := "> "
-			if ks.expanded || tableMatches {
-				prefix = "v "
-			}
+		for tblIdx, tbl := range ks.tables {
+			tblChars := util.RunesToChars([]rune(tbl))
+			result, pos := algo.FuzzyMatchV2(caseSensitive, normalize, true, &tblChars, pattern, true, nil)
 
-			ksText := prefix + ks.name
-			if keyspaceMatches {
-				ksText = s.highlightMatch(ksText, query)
+			if result.Score > 0 {
+				positions := []int{}
+				if pos != nil {
+					positions = *pos
+				}
+				matches = append(matches, fuzzyMatch{
+					keyspaceIdx: ksIdx,
+					tableIdx:    tblIdx,
+					score:       result.Score,
+					positions:   positions,
+					isKeyspace:  false,
+				})
 			}
+		}
+	}
+
+	sort.Slice(matches, func(i, j int) bool {
+		return matches[i].score > matches[j].score
+	})
+
+	items := make([]string, 0)
+	selectedStyle := s.theme.Selected
+	itemIndex := 0
+	lastKeyspaceIdx := -1
+
+	for _, match := range matches {
+		if match.isKeyspace {
+			ks := s.keyspaces[match.keyspaceIdx]
+			prefix := "v "
+
+			ksText := prefix + s.highlightFuzzyMatch(ks.name, match.positions)
 			ksRendered := s.theme.SidebarKey.Render(ksText)
 
 			if itemIndex == s.selected {
@@ -402,51 +446,66 @@ func (s Sidebar) filteredItems() []string {
 			}
 			items = append(items, ksRendered)
 			itemIndex++
+			lastKeyspaceIdx = match.keyspaceIdx
+		} else {
+			if match.keyspaceIdx != lastKeyspaceIdx {
+				ks := s.keyspaces[match.keyspaceIdx]
+				prefix := "v "
+				ksText := prefix + ks.name
+				ksRendered := s.theme.SidebarKey.Render(ksText)
 
-			if ks.expanded || tableMatches {
-				tablesToShow := ks.tables
-				if tableMatches && !ks.expanded {
-					tablesToShow = matchingTables
+				if itemIndex == s.selected {
+					ksRendered = selectedStyle.Render(ksRendered)
 				}
-
-				for _, tbl := range tablesToShow {
-					tblMatches := strings.Contains(strings.ToLower(tbl), query)
-					if tableMatches || keyspaceMatches {
-						tblText := "    * " + tbl
-						if tblMatches {
-							tblText = "    * " + s.highlightMatch(tbl, query)
-						}
-						tblRendered := s.theme.SidebarTbl.Render(tblText)
-
-						if itemIndex == s.selected {
-							tblRendered = selectedStyle.Render(tblRendered)
-						}
-						items = append(items, tblRendered)
-						itemIndex++
-					}
-				}
+				items = append(items, ksRendered)
+				itemIndex++
+				lastKeyspaceIdx = match.keyspaceIdx
 			}
+
+			tbl := s.keyspaces[match.keyspaceIdx].tables[match.tableIdx]
+			tblText := "    * " + s.highlightFuzzyMatch(tbl, match.positions)
+			tblRendered := s.theme.SidebarTbl.Render(tblText)
+
+			if itemIndex == s.selected {
+				tblRendered = selectedStyle.Render(tblRendered)
+			}
+			items = append(items, tblRendered)
+			itemIndex++
 		}
+	}
+
+	if len(items) == 0 {
+		items = []string{s.theme.Dim.Render("No matches")}
 	}
 
 	return items
 }
 
-func (s Sidebar) highlightMatch(text, query string) string {
-	lower := strings.ToLower(text)
-	lowerQuery := strings.ToLower(query)
-	idx := strings.Index(lower, lowerQuery)
-
-	if idx == -1 {
+func (s Sidebar) highlightFuzzyMatch(text string, positions []int) string {
+	if len(positions) == 0 {
 		return text
 	}
 
 	matchStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Bold(true)
-	before := text[:idx]
-	match := text[idx : idx+len(query)]
-	after := text[idx+len(query):]
+	runes := []rune(text)
+	result := ""
 
-	return before + matchStyle.Render(match) + after
+	posSet := make(map[int]bool)
+	for _, pos := range positions {
+		if pos >= 0 && pos < len(runes) {
+			posSet[pos] = true
+		}
+	}
+
+	for i, r := range runes {
+		if posSet[i] {
+			result += matchStyle.Render(string(r))
+		} else {
+			result += string(r)
+		}
+	}
+
+	return result
 }
 
 func clampInt(value, min, max int) int {
