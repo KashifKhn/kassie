@@ -74,6 +74,12 @@ func (s Sidebar) Init(c *client.Client) tea.Cmd {
 	return s.fetchKeyspacesCmd(c)
 }
 
+func (s Sidebar) ActivateSearch() (Sidebar, tea.Cmd) {
+	s.searchActive = true
+	s.searchInput.Focus()
+	return s, nil
+}
+
 func (s Sidebar) Update(msg tea.Msg, c *client.Client) (Sidebar, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -100,7 +106,7 @@ func (s Sidebar) Update(msg tea.Msg, c *client.Client) (Sidebar, tea.Cmd) {
 		}
 
 		switch m.String() {
-		case "ctrl+f", "/":
+		case "ctrl+f":
 			s.searchActive = true
 			s.searchInput.Focus()
 			return s, nil
@@ -193,7 +199,7 @@ func (s *Sidebar) View(width, height int) string {
 
 	helpText := "j/k navigate, Enter open"
 	if !s.searchActive {
-		helpText += ", / search"
+		helpText += ", / or Ctrl+F search"
 	}
 	lines = append(lines, s.theme.Dim.Render(helpText))
 

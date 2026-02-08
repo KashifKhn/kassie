@@ -240,7 +240,11 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 	case "ctrl+i":
 		v.active = paneInspector
 	case "/":
-		v.filter = v.filter.Activate(v.grid.Filter())
+		if v.active == paneSidebar {
+			v.sidebar, cmd = v.sidebar.ActivateSearch()
+		} else if v.active == paneGrid {
+			v.filter = v.filter.Activate(v.grid.Filter())
+		}
 	case "?":
 		return v, tea.Batch(cmd, func() tea.Msg { return ShowHelpMsg{} })
 	}
