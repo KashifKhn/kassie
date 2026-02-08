@@ -166,14 +166,17 @@ func (s *Sidebar) View(width, height int) string {
 		}
 	}
 
-	headerLines := 2
+	headerLines := 1
+	if !s.searchActive {
+		headerLines = 2
+	}
 	statusLines := 0
 	if s.status != "" {
 		statusLines = 1
 	}
 	searchLines := 0
 	if s.searchActive {
-		searchLines = 1
+		searchLines = 3
 	}
 	if s.searchQuery != "" && !s.searchActive {
 		searchLines = 1
@@ -197,26 +200,25 @@ func (s *Sidebar) View(width, height int) string {
 	lines := make([]string, 0, len(items)+4)
 	lines = append(lines, s.theme.Header.Render("Keyspaces"))
 
-	helpText := "j/k navigate, Enter open"
-	if !s.searchActive {
-		helpText += ", / or Ctrl+F search"
-	}
-	lines = append(lines, s.theme.Dim.Render(helpText))
-
 	if s.searchActive {
-		s.searchInput.Width = width - 4
+		s.searchInput.Width = width - 8
 		searchBar := s.searchInput.View()
 		searchStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("51")).
-			Padding(0, 1)
+			Width(width)
 		lines = append(lines, searchStyle.Render(searchBar))
-	} else if s.searchQuery != "" {
-		queryStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("226")).
-			Italic(true)
-		clearHint := s.theme.Dim.Render(" (Esc to clear)")
-		lines = append(lines, queryStyle.Render("🔍 "+s.searchQuery)+clearHint)
+	} else {
+		helpText := "j/k navigate, Enter open, / or Ctrl+F search"
+		lines = append(lines, s.theme.Dim.Render(helpText))
+
+		if s.searchQuery != "" {
+			queryStyle := lipgloss.NewStyle().
+				Foreground(lipgloss.Color("226")).
+				Italic(true)
+			clearHint := s.theme.Dim.Render(" (Esc to clear)")
+			lines = append(lines, queryStyle.Render("🔍 "+s.searchQuery)+clearHint)
+		}
 	}
 
 	lines = append(lines, items...)
