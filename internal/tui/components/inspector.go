@@ -14,21 +14,52 @@ import (
 )
 
 type Inspector struct {
-	theme      styles.Theme
-	row        *pb.Row
-	json       string
-	scrollPos  int
-	totalLines int
+	theme       styles.Theme
+	row         *pb.Row
+	json        string
+	scrollPos   int
+	totalLines  int
+	displayMode displayMode
 }
 
+type displayMode int
+
+const (
+	displayModeTable displayMode = iota
+	displayModePrettyJSON
+	displayModeCompactJSON
+)
+
 func NewInspector(theme styles.Theme) Inspector {
-	return Inspector{theme: theme}
+	return Inspector{
+		theme:       theme,
+		displayMode: displayModeTable,
+	}
+}
+
+func (i *Inspector) CycleDisplayMode() {
+	i.displayMode = (i.displayMode + 1) % 3
+	i.scrollPos = 0
+	if i.row != nil {
+		i.updateContent()
+	}
 }
 
 func (i *Inspector) SetRow(row *pb.Row) {
 	i.row = row
-	i.json = formatRowJSON(row)
 	i.scrollPos = 0
+	i.updateContent()
+}
+
+func (i *Inspector) updateContent() {
+	switch i.displayMode {
+	case displayModeTable:
+		i.json = formatRowTable(i.row, i.theme)
+	case displayModePrettyJSON:
+		i.json = formatRowJSON(i.row)
+	case displayModeCompactJSON:
+		i.json = formatRowCompact(i.row)
+	}
 	i.totalLines = strings.Count(i.json, "\n") + 1
 }
 
@@ -116,7 +147,17 @@ func (i Inspector) View(width, height int) string {
 		Foreground(lipgloss.Color("51")).
 		MarginBottom(1)
 
-	header := headerStyle.Render("JSON Inspector")
+	modeName := ""
+	switch i.displayMode {
+	case displayModeTable:
+		modeName = "Table"
+	case displayModePrettyJSON:
+		modeName = "Pretty JSON"
+	case displayModeCompactJSON:
+		modeName = "Compact JSON"
+	}
+
+	header := headerStyle.Render(fmt.Sprintf("Inspector [%s]", modeName))
 	contentHeight := height - 3
 
 	if contentHeight < 1 {
@@ -140,7 +181,7 @@ func (i Inspector) View(width, height int) string {
 
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
-		Render("j/k scroll • d/u page • ctrl+c copy")
+		Render("j/k scroll • d/u page • t toggle view • ctrl+c copy")
 
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -196,4 +237,111 @@ func cellToInspectable(cell *pb.CellValue) any {
 	default:
 		return nil
 	}
+}
+
+func formatRowTable(row *pb.Row, theme styles.Theme) string {
+	if row == nil || row.Cells == nil {
+		return ""
+	}
+
+	keys := make([]string, 0, len(row.Cells))
+	for key := range row.Cells {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	maxKeyLen := 0
+	for _, key := range keys {
+		if len(key) > maxKeyLen {
+			maxKeyLen = len(key)
+		}
+	}
+
+	keyStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("51")).
+		Bold(true)
+
+	nullStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240")).
+		Italic(true)
+
+	stringStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
+	numberStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
+	boolStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+
+	var lines []string
+	lines = append(lines, lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240")).
+		Render("┌"+strings.Repeat("─", maxKeyLen+2)+"┬"+strings.Repeat("─", 40)+"┐"))
+
+	for _, key := range keys {
+		cell := row.Cells[key]
+		value := cellToInspectable(cell)
+
+		keyPadded := padRight(key, maxKeyLen)
+		keyRendered := keyStyle.Render(keyPadded)
+
+		var valueRendered string
+		if value == nil {
+			valueRendered = nullStyle.Render("null")
+		} else {
+			switch v := value.(type) {
+			case string:
+				if len(v) > 38 {
+					v = v[:35] + "..."
+				}
+				valueRendered = stringStyle.Render(fmt.Sprintf("\"%s\"", v))
+			case int64:
+				valueRendered = numberStyle.Render(fmt.Sprintf("%d", v))
+			case float64:
+				valueRendered = numberStyle.Render(fmt.Sprintf("%g", v))
+			case bool:
+				valueRendered = boolStyle.Render(fmt.Sprintf("%t", v))
+			default:
+				valueRendered = fmt.Sprintf("%v", v)
+			}
+		}
+
+		line := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("│ ") +
+			keyRendered +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" │ ") +
+			valueRendered
+		lines = append(lines, line)
+	}
+
+	lines = append(lines, lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240")).
+		Render("└"+strings.Repeat("─", maxKeyLen+2)+"┴"+strings.Repeat("─", 40)+"┘"))
+
+	return strings.Join(lines, "\n")
+}
+
+func formatRowCompact(row *pb.Row) string {
+	if row == nil || row.Cells == nil {
+		return ""
+	}
+
+	keys := make([]string, 0, len(row.Cells))
+	for key := range row.Cells {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	data := make(map[string]any, len(keys))
+	for _, key := range keys {
+		data[key] = cellToInspectable(row.Cells[key])
+	}
+
+	value, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Sprintf("failed to format row: %v", err)
+	}
+	return string(value)
+}
+
+func padRight(s string, length int) string {
+	if len(s) >= length {
+		return s
+	}
+	return s + strings.Repeat(" ", length-len(s))
 }

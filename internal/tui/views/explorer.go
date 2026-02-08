@@ -155,6 +155,8 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 		keyMsg, ok := msg.(tea.KeyMsg)
 		if ok {
 			switch keyMsg.String() {
+			case "t":
+				v.inspect.CycleDisplayMode()
 			case "j", "down":
 				v.inspect.ScrollDown()
 			case "k", "up":
