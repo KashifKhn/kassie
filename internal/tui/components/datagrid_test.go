@@ -318,7 +318,7 @@ func TestDataGrid_ColumnWidthCaching(t *testing.T) {
 		t.Error("expected cachedColWidths to be nil initially")
 	}
 
-	widths := computeColWidths(g.columns, g.rows)
+	widths := computeColWidths(g.columns, g.rows, nil)
 	g.cachedColWidths = widths
 
 	if g.cachedColWidths == nil {
@@ -403,7 +403,7 @@ func TestComputeColWidths(t *testing.T) {
 		},
 	}
 
-	widths := computeColWidths(columns, rows)
+	widths := computeColWidths(columns, rows, nil)
 
 	if len(widths) != 2 {
 		t.Errorf("expected 2 widths, got %d", len(widths))
@@ -423,7 +423,7 @@ func TestComputeColWidths(t *testing.T) {
 }
 
 func TestComputeColWidths_EmptyColumns(t *testing.T) {
-	widths := computeColWidths([]string{}, []rowData{})
+	widths := computeColWidths([]string{}, []rowData{}, nil)
 
 	if widths != nil {
 		t.Error("expected nil widths for empty columns")

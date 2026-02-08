@@ -34,6 +34,7 @@ type DataGrid struct {
 	status          string
 	cachedColWidths []int
 	schemaCache     *cache.SchemaCache
+	schema          *pb.TableSchema
 
 	searchActive bool
 	searchInput  textinput.Model
@@ -217,6 +218,7 @@ func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
 			}
 		}
 	case schemaMsg:
+		g.schema = m.Schema
 		g.columns = columnsFromSchema(m.Schema)
 		g.cachedColWidths = nil
 	case rowsMsg:
@@ -260,7 +262,7 @@ func (g DataGrid) View(width, height int) string {
 	}
 
 	if g.cachedColWidths == nil {
-		g.cachedColWidths = computeColWidths(columns, g.rows)
+		g.cachedColWidths = computeColWidths(columns, g.rows, g.schema)
 	}
 	colWidths := g.cachedColWidths
 	visibleColumns, visibleWidths := fitColumns(columns, colWidths, g.colOffset, gridWidth)
@@ -278,7 +280,7 @@ func (g DataGrid) View(width, height int) string {
 		lines = append(lines, searchBar, "")
 	}
 
-	lines = append(lines, renderRow(visibleColumns, visibleWidths, rowData{}, g.theme, false))
+	lines = append(lines, renderRow(visibleColumns, visibleWidths, rowData{}, g.theme, false, g.schema))
 
 	maxRows := height - len(lines) - 1
 	if maxRows < 0 {
@@ -564,7 +566,7 @@ func cellToString(cell *pb.CellValue) string {
 	}
 }
 
-func computeColWidths(columns []string, rows []rowData) []int {
+func computeColWidths(columns []string, rows []rowData, schema *pb.TableSchema) []int {
 	if len(columns) == 0 {
 		return nil
 	}
@@ -574,7 +576,8 @@ func computeColWidths(columns []string, rows []rowData) []int {
 
 	for i := range widths {
 		col := columns[i]
-		widths[i] = minInt(maxInt(widths[i], len(col)+2), maxWidth)
+		displayName := addKeyIndicator(col, schema)
+		widths[i] = minInt(maxInt(widths[i], len(displayName)+2), maxWidth)
 		for _, row := range rows {
 			value := row.cell[col]
 			if value == "" {
@@ -624,7 +627,7 @@ func fitColumns(columns []string, widths []int, offset int, maxWidth int) ([]str
 	return cols, ws
 }
 
-func renderRow(columns []string, widths []int, row rowData, theme styles.Theme, selected bool) string {
+func renderRow(columns []string, widths []int, row rowData, theme styles.Theme, selected bool, schema *pb.TableSchema) string {
 	parts := make([]string, 0, len(columns))
 	for i, col := range columns {
 		cell := col
@@ -633,6 +636,8 @@ func renderRow(columns []string, widths []int, row rowData, theme styles.Theme, 
 			if cell == "" {
 				cell = "-"
 			}
+		} else {
+			cell = addKeyIndicator(col, schema)
 		}
 		cell = truncate(cell, widths[i]-2)
 		parts = append(parts, pad(cell, widths[i]))
@@ -693,4 +698,24 @@ func pad(value string, width int) string {
 		return value
 	}
 	return value + strings.Repeat(" ", width-len(value))
+}
+
+func addKeyIndicator(colName string, schema *pb.TableSchema) string {
+	if schema == nil {
+		return colName
+	}
+
+	for _, col := range schema.Columns {
+		if col.Name == colName {
+			if col.IsPartitionKey {
+				return "🔑 " + colName
+			}
+			if col.IsClusteringKey {
+				return "🔗 " + colName
+			}
+			break
+		}
+	}
+
+	return colName
 }
