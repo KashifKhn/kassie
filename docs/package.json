@@ -1,0 +1,22 @@
+{
+  "name": "kassie-docs",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Documentation for Kassie - Database Explorer for Cassandra & ScyllaDB",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "keywords": [
+    "kassie",
+    "cassandra",
+    "scylladb",
+    "documentation"
+  ],
+  "author": "KashifKhn",
+  "license": "MIT",
+  "devDependencies": {
+    "vitepress": "^1.0.0"
+  }
+}
