@@ -72,7 +72,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.state.View = a.state.PreviousView
 			return a, nil
 		}
-		if m.String() == "q" && a.state.View == ViewExplorer {
+		if m.String() == "q" {
 			return a, tea.Quit
 		}
 		if m.String() == "ctrl+c" {
