@@ -19,15 +19,16 @@ import (
 type Sidebar struct {
 	theme styles.Theme
 
-	keyspaces    []keyspaceNode
-	selected     int
-	scroll       int
-	height       int
-	loading      bool
-	status       string
-	searchInput  textinput.Model
-	searchActive bool
-	searchQuery  string
+	keyspaces           []keyspaceNode
+	selected            int
+	scroll              int
+	height              int
+	loading             bool
+	status              string
+	searchInput         textinput.Model
+	searchActive        bool
+	searchQuery         string
+	showSystemKeyspaces bool
 }
 
 type keyspaceNode struct {
@@ -113,6 +114,10 @@ func (s Sidebar) Update(msg tea.Msg, c *client.Client) (Sidebar, tea.Cmd) {
 		case "ctrl+f":
 			s.searchActive = true
 			s.searchInput.Focus()
+			return s, nil
+		case "s":
+			s.showSystemKeyspaces = !s.showSystemKeyspaces
+			s.selected = 0
 			return s, nil
 		case "esc":
 			if s.searchQuery != "" {
@@ -213,6 +218,11 @@ func (s *Sidebar) View(width, height int) string {
 		lines = append(lines, searchStyle.Render(searchBar))
 	} else {
 		helpText := "j/k navigate, Enter open, / or Ctrl+F search"
+		if !s.showSystemKeyspaces {
+			helpText += ", s show system"
+		} else {
+			helpText += ", s hide system"
+		}
 		lines = append(lines, s.theme.Dim.Render(helpText))
 
 		if s.searchQuery != "" {
@@ -346,6 +356,9 @@ func (s Sidebar) flatItems() []string {
 	items := make([]string, 0)
 	selectedStyle := s.theme.Selected
 	for _, ks := range s.keyspaces {
+		if !s.showSystemKeyspaces && s.isSystemKeyspace(ks.name) {
+			continue
+		}
 		prefix := "> "
 		if ks.expanded {
 			prefix = "v "
@@ -365,6 +378,10 @@ func (s Sidebar) flatItems() []string {
 	}
 
 	return items
+}
+
+func (s Sidebar) isSystemKeyspace(name string) bool {
+	return strings.HasPrefix(name, "system") || strings.HasPrefix(name, "dse_")
 }
 
 type fuzzyMatch struct {
@@ -387,6 +404,10 @@ func (s Sidebar) filteredItems() []string {
 	matches := make([]fuzzyMatch, 0)
 
 	for ksIdx, ks := range s.keyspaces {
+		if !s.showSystemKeyspaces && s.isSystemKeyspace(ks.name) {
+			continue
+		}
+
 		ksChars := util.RunesToChars([]rune(ks.name))
 		result, pos := algo.FuzzyMatchV2(caseSensitive, normalize, true, &ksChars, pattern, true, nil)
 
