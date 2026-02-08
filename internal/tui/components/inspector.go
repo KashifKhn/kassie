@@ -318,7 +318,6 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 
 	for _, rd := range rows {
 		keyPadded := padRight(rd.key, maxKeyLen)
-		keyRendered := keyStyle.Render(keyPadded)
 
 		valueStr := rd.value
 		if len(valueStr) > maxValueLen {
@@ -326,23 +325,30 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 		}
 		valuePadded := padRight(valueStr, maxValueLen)
 
-		var valueRendered string
+		var styleToUse lipgloss.Style
 		if rd.raw == nil {
-			valueRendered = nullStyle.Render(valuePadded)
+			styleToUse = nullStyle
 		} else {
 			switch rd.raw.(type) {
 			case string:
-				valueRendered = stringStyle.Render(valuePadded)
+				styleToUse = stringStyle
 			case int64, float64:
-				valueRendered = numberStyle.Render(valuePadded)
+				styleToUse = numberStyle
 			case bool:
-				valueRendered = boolStyle.Render(valuePadded)
+				styleToUse = boolStyle
 			default:
-				valueRendered = valuePadded
+				styleToUse = lipgloss.NewStyle()
 			}
 		}
 
-		line := borderStyle.Render("│ ") + keyRendered + borderStyle.Render(" │ ") + valueRendered + borderStyle.Render(" │")
+		leftBorder := borderStyle.Render("│ ")
+		rightBorder := borderStyle.Render(" │")
+		separator := borderStyle.Render(" │ ")
+
+		keyCell := keyStyle.Render(keyPadded)
+		valueCell := styleToUse.Render(valuePadded)
+
+		line := leftBorder + keyCell + separator + valueCell + rightBorder
 		lines = append(lines, line)
 	}
 
