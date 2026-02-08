@@ -29,6 +29,12 @@ type Sidebar struct {
 	searchActive        bool
 	searchQuery         string
 	showSystemKeyspaces bool
+	filteredMapping     []itemMapping
+}
+
+type itemMapping struct {
+	ksIndex  int
+	tblIndex int
 }
 
 type keyspaceNode struct {
@@ -100,8 +106,7 @@ func (s Sidebar) Update(msg tea.Msg, c *client.Client) (Sidebar, tea.Cmd) {
 			case "enter":
 				s.searchActive = false
 				s.searchInput.Blur()
-				s.selected = 0
-				return s, nil
+				return s.handleSelect(c)
 			default:
 				s.searchInput, cmd = s.searchInput.Update(msg)
 				s.searchQuery = strings.TrimSpace(s.searchInput.Value())
@@ -392,8 +397,9 @@ type fuzzyMatch struct {
 	isKeyspace  bool
 }
 
-func (s Sidebar) filteredItems() []string {
+func (s *Sidebar) filteredItems() []string {
 	if s.searchQuery == "" {
+		s.filteredMapping = nil
 		return s.flatItems()
 	}
 
@@ -450,6 +456,7 @@ func (s Sidebar) filteredItems() []string {
 	})
 
 	items := make([]string, 0)
+	s.filteredMapping = make([]itemMapping, 0)
 	selectedStyle := s.theme.Selected
 	itemIndex := 0
 	lastKeyspaceIdx := -1
@@ -466,6 +473,7 @@ func (s Sidebar) filteredItems() []string {
 				ksRendered = selectedStyle.Render(ksRendered)
 			}
 			items = append(items, ksRendered)
+			s.filteredMapping = append(s.filteredMapping, itemMapping{ksIndex: match.keyspaceIdx, tblIndex: -1})
 			itemIndex++
 			lastKeyspaceIdx = match.keyspaceIdx
 		} else {
@@ -479,6 +487,7 @@ func (s Sidebar) filteredItems() []string {
 					ksRendered = selectedStyle.Render(ksRendered)
 				}
 				items = append(items, ksRendered)
+				s.filteredMapping = append(s.filteredMapping, itemMapping{ksIndex: match.keyspaceIdx, tblIndex: -1})
 				itemIndex++
 				lastKeyspaceIdx = match.keyspaceIdx
 			}
@@ -491,12 +500,14 @@ func (s Sidebar) filteredItems() []string {
 				tblRendered = selectedStyle.Render(tblRendered)
 			}
 			items = append(items, tblRendered)
+			s.filteredMapping = append(s.filteredMapping, itemMapping{ksIndex: match.keyspaceIdx, tblIndex: match.tableIdx})
 			itemIndex++
 		}
 	}
 
 	if len(items) == 0 {
 		items = []string{s.theme.Dim.Render("No matches")}
+		s.filteredMapping = nil
 	}
 
 	return items
@@ -540,8 +551,16 @@ func clampInt(value, min, max int) int {
 }
 
 func (s Sidebar) selectedIndex() (int, int, bool) {
+	if s.searchQuery != "" && s.selected < len(s.filteredMapping) {
+		mapping := s.filteredMapping[s.selected]
+		return mapping.ksIndex, mapping.tblIndex, true
+	}
+
 	index := s.selected
 	for ksIndex, ks := range s.keyspaces {
+		if !s.showSystemKeyspaces && s.isSystemKeyspace(ks.name) {
+			continue
+		}
 		if index == 0 {
 			return ksIndex, -1, true
 		}
