@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/KashifKhn/kassie/internal/client"
 	"github.com/KashifKhn/kassie/internal/tui/components"
@@ -9,6 +10,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+type CopySuccessMsg struct{}
+
+type CopyErrorMsg struct {
+	Err error
+}
 
 type ExplorerView struct {
 	theme styles.Theme
@@ -20,6 +27,7 @@ type ExplorerView struct {
 	status  components.StatusBar
 	active  pane
 	profile string
+	message string
 }
 
 type pane int
@@ -64,6 +72,15 @@ func (v ExplorerView) Init(c *client.Client) tea.Cmd {
 
 func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.Cmd) {
 	switch m := msg.(type) {
+	case CopySuccessMsg:
+		v.message = "✓ Copied to clipboard"
+		return v, v.clearMessageAfter(2)
+	case CopyErrorMsg:
+		v.message = fmt.Sprintf("✗ Copy failed: %v", m.Err)
+		return v, v.clearMessageAfter(3)
+	case clearMessageMsg:
+		v.message = ""
+		return v, nil
 	case components.TableSelectedMsg:
 		var cmd tea.Cmd
 		v.grid, cmd = v.grid.LoadTable(c, m.Keyspace, m.Table)
@@ -115,7 +132,23 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 	case paneGrid:
 		v.grid, cmd = v.grid.Update(msg, c)
 	case paneInspector:
-		cmd = nil
+		keyMsg, ok := msg.(tea.KeyMsg)
+		if ok {
+			switch keyMsg.String() {
+			case "j", "down":
+				v.inspect.ScrollDown()
+			case "k", "up":
+				v.inspect.ScrollUp()
+			case "d":
+				height := 20
+				v.inspect.PageDown(height)
+			case "u":
+				height := 20
+				v.inspect.PageUp(height)
+			case "ctrl+c":
+				return v, v.copyToClipboardCmd()
+			}
+		}
 	}
 
 	v, cmd = v.handleNavigation(msg, cmd)
@@ -174,6 +207,9 @@ func (v ExplorerView) View(width, height int) string {
 	if statusText == "" {
 		statusText = "Ready"
 	}
+	if v.message != "" {
+		statusText = v.message
+	}
 	statusHint := fmt.Sprintf("Pane: %s | Tab switch", v.paneLabel())
 	status := v.status.View(width, v.profile, v.grid.Keyspace(), v.grid.Table(), statusText+" | "+statusHint)
 
@@ -184,12 +220,6 @@ func (v ExplorerView) View(width, height int) string {
 	parts = append(parts, status)
 
 	return lipgloss.JoinVertical(lipgloss.Left, parts...)
-}
-
-func (v ExplorerView) panelContent(title string, width int) string {
-	header := v.theme.Accent.Render(title)
-	body := v.theme.Dim.Render("Coming soon")
-	return lipgloss.JoinVertical(lipgloss.Left, header, "", body)
 }
 
 func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, tea.Cmd) {
@@ -242,4 +272,21 @@ func maxInt(a, b int) int {
 		return a
 	}
 	return b
+}
+
+type clearMessageMsg struct{}
+
+func (v ExplorerView) clearMessageAfter(seconds int) tea.Cmd {
+	return tea.Tick(time.Duration(seconds)*time.Second, func(t time.Time) tea.Msg {
+		return clearMessageMsg{}
+	})
+}
+
+func (v ExplorerView) copyToClipboardCmd() tea.Cmd {
+	return func() tea.Msg {
+		if err := v.inspect.CopyToClipboard(); err != nil {
+			return CopyErrorMsg{Err: err}
+		}
+		return CopySuccessMsg{}
+	}
 }

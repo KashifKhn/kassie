@@ -3,6 +3,7 @@ package views
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/KashifKhn/kassie/internal/client"
@@ -10,6 +11,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+type tickMsg time.Time
 
 type ConnectedMsg struct {
 	Profile string
@@ -24,12 +27,15 @@ type connectionErrMsg struct {
 }
 
 type ConnectionView struct {
-	theme    styles.Theme
-	profiles []string
-	status   string
-	selected int
-	loading  bool
-	ready    bool
+	theme         styles.Theme
+	profiles      []string
+	status        string
+	selected      int
+	loading       bool
+	ready         bool
+	spinnerFrame  int
+	lastErrorTime time.Time
+	retryCount    int
 }
 
 func NewConnectionView(theme styles.Theme) ConnectionView {
@@ -44,11 +50,18 @@ func (v ConnectionView) Init(c *client.Client) tea.Cmd {
 	return tea.Batch(
 		v.fetchProfilesCmd(c),
 		v.loadExistingProfile(c),
+		v.tickCmd(),
 	)
 }
 
 func (v ConnectionView) Update(msg tea.Msg, c *client.Client, width, height int) (ConnectionView, tea.Cmd) {
 	switch m := msg.(type) {
+	case tickMsg:
+		if v.loading {
+			v.spinnerFrame = (v.spinnerFrame + 1) % 10
+			return v, v.tickCmd()
+		}
+		return v, nil
 	case tea.KeyMsg:
 		switch m.String() {
 		case "j", "down":
@@ -62,7 +75,16 @@ func (v ConnectionView) Update(msg tea.Msg, c *client.Client, width, height int)
 				profile := v.profiles[v.selected]
 				v.status = fmt.Sprintf("Connecting to %s...", profile)
 				v.loading = true
-				return v, v.loginCmd(c, profile)
+				v.retryCount = 0
+				return v, tea.Batch(v.loginCmd(c, profile), v.tickCmd())
+			}
+		case "r":
+			if !v.ready && !v.loading && len(v.profiles) > 0 && time.Since(v.lastErrorTime) > time.Second {
+				profile := v.profiles[v.selected]
+				v.status = fmt.Sprintf("Retrying connection to %s...", profile)
+				v.loading = true
+				v.retryCount++
+				return v, tea.Batch(v.loginCmd(c, profile), v.tickCmd())
 			}
 		}
 	case profilesMsg:
@@ -77,8 +99,9 @@ func (v ConnectionView) Update(msg tea.Msg, c *client.Client, width, height int)
 		}
 	case connectionErrMsg:
 		v.loading = false
-		v.ready = false
-		v.status = fmt.Sprintf("Error: %s", m.Err)
+		v.ready = true
+		v.lastErrorTime = time.Now()
+		v.status = parseError(m.Err)
 	case ProfileLoadedMsg:
 		v.status = fmt.Sprintf("Using profile: %s", m.Profile)
 		v.ready = true
@@ -87,31 +110,137 @@ func (v ConnectionView) Update(msg tea.Msg, c *client.Client, width, height int)
 	return v, nil
 }
 
+func (v ConnectionView) tickCmd() tea.Cmd {
+	return tea.Tick(100*time.Millisecond, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
+
 func (v ConnectionView) View(width, height int) string {
 	if width <= 0 || height <= 0 {
 		return ""
 	}
 
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("15")).
+		Align(lipgloss.Center)
+
+	subtitleStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("245")).
+		Align(lipgloss.Center)
+
+	dividerStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240"))
+
+	profileBoxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		Padding(0, 2)
+
+	selectedProfileStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("51")).
+		Bold(true)
+
+	loadingSpinnerFrames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+	spinnerFrame := loadingSpinnerFrames[v.spinnerFrame]
+
+	title := titleStyle.Render("┌───────────────────────────┐\n│        K A S S I E        │\n└───────────────────────────┘")
+
+	subtitle := subtitleStyle.Render("Database Explorer for Cassandra & ScyllaDB")
+
+	var statusLine string
+	var statusStyle lipgloss.Style
+
+	if v.loading {
+		statusStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("226")).
+			Width(width - 4)
+		statusLine = statusStyle.Render(fmt.Sprintf("%s %s", spinnerFrame, v.status))
+	} else if !v.ready {
+		statusStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("196")).
+			Bold(true).
+			Width(width - 4)
+
+		errMsg := v.status
+		if len(errMsg) > width-10 {
+			errMsg = errMsg[:width-13] + "..."
+		}
+		statusLine = statusStyle.Render("✗ " + errMsg)
+	} else {
+		statusStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("245")).
+			Width(width - 4)
+		statusLine = statusStyle.Render("↓ " + v.status)
+	}
+
 	items := make([]string, 0, len(v.profiles))
 	for i, p := range v.profiles {
-		label := p
+		prefix := "  "
+		style := lipgloss.NewStyle().Foreground(lipgloss.Color("250"))
 		if i == v.selected {
-			label = v.theme.Accent.Render("> " + label)
-		} else {
-			label = "  " + label
+			prefix = "▶ "
+			style = selectedProfileStyle
 		}
-		items = append(items, label)
+		items = append(items, style.Render(prefix+p))
 	}
 
+	var profileSection string
 	if len(items) == 0 {
-		items = append(items, v.theme.Dim.Render("No profiles"))
+		profileSection = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240")).
+			Italic(true).
+			Render("No profiles configured")
+	} else {
+		list := lipgloss.JoinVertical(lipgloss.Left, items...)
+		profileSection = profileBoxStyle.Render(list)
 	}
 
-	header := v.theme.Title.Render("Kassie")
-	list := lipgloss.JoinVertical(lipgloss.Left, items...)
-	status := v.theme.Status.Render(v.status)
+	divider := dividerStyle.Render("─────────────────────────────")
 
-	content := lipgloss.JoinVertical(lipgloss.Left, header, "", list, "", status)
+	helpText := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240")).
+		Align(lipgloss.Center)
+
+	var helpStr string
+	if !v.ready && !v.loading {
+		helpStr = "j/k navigate • r retry • q quit"
+		if v.retryCount > 0 {
+			helpStr = fmt.Sprintf("j/k navigate • r retry (%d) • q quit", v.retryCount)
+		}
+	} else {
+		helpStr = "j/k navigate • enter connect • q quit"
+	}
+
+	helpRendered := helpText.Render(helpStr)
+
+	contentWidth := 50
+	if width < 60 {
+		contentWidth = width - 10
+	}
+
+	container := lipgloss.NewStyle().
+		Width(contentWidth).
+		Align(lipgloss.Center)
+
+	content := container.Render(lipgloss.JoinVertical(
+		lipgloss.Left,
+		"",
+		title,
+		"",
+		subtitle,
+		"",
+		divider,
+		"",
+		profileSection,
+		"",
+		statusLine,
+		"",
+		"",
+		helpRendered,
+	))
+
 	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, content)
 }
 
@@ -177,4 +306,37 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func parseError(err error) string {
+	if err == nil {
+		return "Unknown error"
+	}
+
+	errStr := err.Error()
+
+	if strings.Contains(errStr, "unable to discover protocol version") {
+		return "Cannot connect - Check if Cassandra/ScyllaDB is running"
+	}
+	if strings.Contains(errStr, "connection refused") {
+		return "Connection refused - Database not reachable"
+	}
+	if strings.Contains(errStr, "timeout") {
+		return "Connection timeout - Database too slow or unreachable"
+	}
+	if strings.Contains(errStr, "authentication") || strings.Contains(errStr, "credentials") {
+		return "Authentication failed - Check username/password"
+	}
+	if strings.Contains(errStr, "no hosts available") {
+		return "No hosts available - Check configuration"
+	}
+	if strings.Contains(errStr, "profile not found") {
+		return "Profile not found in config"
+	}
+
+	if len(errStr) > 80 {
+		return errStr[:77] + "..."
+	}
+
+	return errStr
 }
