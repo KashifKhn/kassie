@@ -16,9 +16,10 @@ type FilterAppliedMsg struct {
 type FilterCanceledMsg struct{}
 
 type FilterBar struct {
-	theme  styles.Theme
-	input  textinput.Model
-	active bool
+	theme         styles.Theme
+	input         textinput.Model
+	active        bool
+	validationErr string
 }
 
 func NewFilterBar(theme styles.Theme) FilterBar {
@@ -36,6 +37,7 @@ func NewFilterBar(theme styles.Theme) FilterBar {
 
 func (f FilterBar) Activate(current string) FilterBar {
 	f.active = true
+	f.validationErr = ""
 	f.input.SetValue(current)
 	f.input.CursorEnd()
 	f.input.Width = maxInt(10, f.input.Width)
@@ -68,11 +70,17 @@ func (f FilterBar) Update(msg tea.Msg) (FilterBar, tea.Cmd) {
 		switch m.String() {
 		case "enter":
 			value := f.Value()
+			if err := validateFilter(value); err != "" {
+				f.validationErr = err
+				return f, nil
+			}
 			f = f.Deactivate()
 			return f, func() tea.Msg { return FilterAppliedMsg{Where: value} }
 		case "esc":
 			f = f.Deactivate()
 			return f, func() tea.Msg { return FilterCanceledMsg{} }
+		default:
+			f.validationErr = ""
 		}
 	}
 
@@ -90,10 +98,92 @@ func (f FilterBar) View(width int) string {
 	}
 
 	bar := f.input.View()
+
+	if f.validationErr != "" {
+		errorStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("196")).
+			Bold(true)
+		bar += "\n" + errorStyle.Render("✗ "+f.validationErr)
+	}
+
 	innerWidth := width - 2
 	if innerWidth < 0 {
 		innerWidth = 0
 	}
 	content := lipgloss.NewStyle().Width(innerWidth).Render(bar)
-	return lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("238")).Width(width).Render(content)
+
+	borderColor := lipgloss.Color("238")
+	if f.validationErr != "" {
+		borderColor = lipgloss.Color("196")
+	}
+
+	return lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		Width(width).
+		Render(content)
+}
+
+func validateFilter(where string) string {
+	where = strings.TrimSpace(where)
+
+	if where == "" {
+		return ""
+	}
+
+	upper := strings.ToUpper(where)
+
+	dangerousKeywords := []string{"DROP", "DELETE", "TRUNCATE", "ALTER", "CREATE", "INSERT", "UPDATE"}
+	for _, kw := range dangerousKeywords {
+		if containsWholeWord(upper, kw) {
+			return "Dangerous keyword '" + kw + "' not allowed in filters"
+		}
+	}
+
+	singleQuotes := strings.Count(where, "'")
+	if singleQuotes%2 != 0 {
+		return "Unbalanced single quotes"
+	}
+
+	doubleQuotes := strings.Count(where, "\"")
+	if doubleQuotes%2 != 0 {
+		return "Unbalanced double quotes"
+	}
+
+	openParens := strings.Count(where, "(")
+	closeParens := strings.Count(where, ")")
+	if openParens != closeParens {
+		return "Unbalanced parentheses"
+	}
+
+	validOperators := []string{"=", ">", "<", ">=", "<=", "!=", " IN ", " CONTAINS ", " LIKE ", " AND ", " OR "}
+	hasOperator := false
+	for _, op := range validOperators {
+		if strings.Contains(upper, strings.ToUpper(op)) {
+			hasOperator = true
+			break
+		}
+	}
+
+	if !hasOperator {
+		return "WHERE clause must contain a valid operator (=, >, <, IN, etc.)"
+	}
+
+	return ""
+}
+
+func containsWholeWord(s, word string) bool {
+	idx := strings.Index(s, word)
+	if idx == -1 {
+		return false
+	}
+
+	before := idx == 0 || !isAlphaNum(rune(s[idx-1]))
+	after := idx+len(word) >= len(s) || !isAlphaNum(rune(s[idx+len(word)]))
+
+	return before && after
+}
+
+func isAlphaNum(r rune) bool {
+	return (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_'
 }
