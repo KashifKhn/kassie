@@ -251,10 +251,51 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 	sort.Strings(keys)
 
 	maxKeyLen := 0
+	maxValueLen := 0
+
+	type rowData struct {
+		key   string
+		value string
+		raw   any
+	}
+
+	rows := make([]rowData, 0, len(keys))
+
 	for _, key := range keys {
 		if len(key) > maxKeyLen {
 			maxKeyLen = len(key)
 		}
+
+		cell := row.Cells[key]
+		value := cellToInspectable(cell)
+
+		var valueStr string
+		if value == nil {
+			valueStr = "null"
+		} else {
+			switch v := value.(type) {
+			case string:
+				valueStr = fmt.Sprintf("\"%s\"", v)
+			case int64:
+				valueStr = fmt.Sprintf("%d", v)
+			case float64:
+				valueStr = fmt.Sprintf("%g", v)
+			case bool:
+				valueStr = fmt.Sprintf("%t", v)
+			default:
+				valueStr = fmt.Sprintf("%v", v)
+			}
+		}
+
+		if len(valueStr) > maxValueLen {
+			maxValueLen = len(valueStr)
+		}
+
+		rows = append(rows, rowData{key: key, value: valueStr, raw: value})
+	}
+
+	if maxValueLen > 60 {
+		maxValueLen = 60
 	}
 
 	keyStyle := lipgloss.NewStyle().
@@ -268,50 +309,45 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 	stringStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
 	numberStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
 	boolStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 
 	var lines []string
-	lines = append(lines, lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240")).
-		Render("┌"+strings.Repeat("─", maxKeyLen+2)+"┬"+strings.Repeat("─", 40)+"┐"))
 
-	for _, key := range keys {
-		cell := row.Cells[key]
-		value := cellToInspectable(cell)
+	topBorder := "┌" + strings.Repeat("─", maxKeyLen+2) + "┬" + strings.Repeat("─", maxValueLen+2) + "┐"
+	lines = append(lines, borderStyle.Render(topBorder))
 
-		keyPadded := padRight(key, maxKeyLen)
+	for _, rd := range rows {
+		keyPadded := padRight(rd.key, maxKeyLen)
 		keyRendered := keyStyle.Render(keyPadded)
 
+		valueStr := rd.value
+		if len(valueStr) > maxValueLen {
+			valueStr = valueStr[:maxValueLen-3] + "..."
+		}
+		valuePadded := padRight(valueStr, maxValueLen)
+
 		var valueRendered string
-		if value == nil {
-			valueRendered = nullStyle.Render("null")
+		if rd.raw == nil {
+			valueRendered = nullStyle.Render(valuePadded)
 		} else {
-			switch v := value.(type) {
+			switch rd.raw.(type) {
 			case string:
-				if len(v) > 38 {
-					v = v[:35] + "..."
-				}
-				valueRendered = stringStyle.Render(fmt.Sprintf("\"%s\"", v))
-			case int64:
-				valueRendered = numberStyle.Render(fmt.Sprintf("%d", v))
-			case float64:
-				valueRendered = numberStyle.Render(fmt.Sprintf("%g", v))
+				valueRendered = stringStyle.Render(valuePadded)
+			case int64, float64:
+				valueRendered = numberStyle.Render(valuePadded)
 			case bool:
-				valueRendered = boolStyle.Render(fmt.Sprintf("%t", v))
+				valueRendered = boolStyle.Render(valuePadded)
 			default:
-				valueRendered = fmt.Sprintf("%v", v)
+				valueRendered = valuePadded
 			}
 		}
 
-		line := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("│ ") +
-			keyRendered +
-			lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" │ ") +
-			valueRendered
+		line := borderStyle.Render("│ ") + keyRendered + borderStyle.Render(" │ ") + valueRendered + borderStyle.Render(" │")
 		lines = append(lines, line)
 	}
 
-	lines = append(lines, lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240")).
-		Render("└"+strings.Repeat("─", maxKeyLen+2)+"┴"+strings.Repeat("─", 40)+"┘"))
+	bottomBorder := "└" + strings.Repeat("─", maxKeyLen+2) + "┴" + strings.Repeat("─", maxValueLen+2) + "┘"
+	lines = append(lines, borderStyle.Render(bottomBorder))
 
 	return strings.Join(lines, "\n")
 }

@@ -75,9 +75,6 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.String() == "q" {
 			return a, tea.Quit
 		}
-		if m.String() == "ctrl+c" {
-			return a, tea.Quit
-		}
 	case tea.WindowSizeMsg:
 		a.state = a.state.WithSize(m.Width, m.Height)
 	}
@@ -98,6 +95,13 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		a.explorer, cmd = a.explorer.Update(msg, a.client)
 		return a, cmd
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == "ctrl+c" {
+			return a, tea.Quit
+		}
 	}
 
 	return a, nil
