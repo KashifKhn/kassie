@@ -2,7 +2,11 @@ package components
 
 import (
 	"context"
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -45,6 +49,11 @@ type DataGrid struct {
 
 type RowSelectedMsg struct {
 	Row *pb.Row
+}
+
+type exportSuccessMsg struct {
+	FilePath string
+	Format   string
 }
 
 type dataErrMsg struct {
@@ -209,6 +218,10 @@ func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
 			if len(g.matchedRows) > 0 {
 				g = g.prevMatch()
 			}
+		case "ctrl+e":
+			if len(g.rows) > 0 {
+				return g, g.exportCmd("json")
+			}
 		case "r":
 			return g.Refresh(c)
 		case "enter":
@@ -240,6 +253,8 @@ func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
 	case dataErrMsg:
 		g.loading = false
 		g.status = fmt.Sprintf("Error: %s", m.Err)
+	case exportSuccessMsg:
+		g.status = fmt.Sprintf("Exported to %s (%s)", m.FilePath, m.Format)
 	}
 
 	return g, nil
@@ -333,6 +348,9 @@ func (g DataGrid) View(width, height int) string {
 	}
 	if len(g.columns) > 0 {
 		footer = g.theme.Status.Render(footer + "  (ctrl+f search)")
+	}
+	if len(g.rows) > 0 {
+		footer = g.theme.Status.Render(footer + "  (ctrl+e export)")
 	}
 	lines = append(lines, "", footer)
 
@@ -718,4 +736,89 @@ func addKeyIndicator(colName string, schema *pb.TableSchema) string {
 	}
 
 	return colName
+}
+
+func (g DataGrid) exportCmd(format string) tea.Cmd {
+	return func() tea.Msg {
+		if len(g.rows) == 0 {
+			return dataErrMsg{Err: fmt.Errorf("no data to export")}
+		}
+
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return dataErrMsg{Err: err}
+		}
+
+		timestamp := time.Now().Format("20060102-150405")
+		fileName := fmt.Sprintf("kassie-%s-%s-%s.%s", g.keyspace, g.table, timestamp, format)
+		filePath := filepath.Join(homeDir, fileName)
+
+		var exportErr error
+		switch format {
+		case "json":
+			exportErr = g.exportJSON(filePath)
+		case "csv":
+			exportErr = g.exportCSV(filePath)
+		default:
+			return dataErrMsg{Err: fmt.Errorf("unsupported export format: %s", format)}
+		}
+
+		if exportErr != nil {
+			return dataErrMsg{Err: exportErr}
+		}
+
+		return exportSuccessMsg{FilePath: filePath, Format: format}
+	}
+}
+
+func (g DataGrid) exportJSON(filePath string) error {
+	data := make([]map[string]interface{}, 0, len(g.rows))
+	for _, row := range g.rows {
+		rowMap := make(map[string]interface{})
+		for key, val := range row.cell {
+			if val == "null" {
+				rowMap[key] = nil
+			} else {
+				rowMap[key] = val
+			}
+		}
+		data = append(data, rowMap)
+	}
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(data)
+}
+
+func (g DataGrid) exportCSV(filePath string) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	if err := writer.Write(g.columns); err != nil {
+		return err
+	}
+
+	for _, row := range g.rows {
+		record := make([]string, len(g.columns))
+		for i, col := range g.columns {
+			record[i] = row.cell[col]
+		}
+		if err := writer.Write(record); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
