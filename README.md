@@ -12,15 +12,37 @@ Modern database explorer for Cassandra & ScyllaDB with TUI and Web interfaces.
 
 ## Installation
 
+### Quick Install (Linux/macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh
+```
+
+### Manual Installation
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/KashifKhn/kassie/releases).
+
+### Go Install
+
 ```bash
 go install github.com/KashifKhn/kassie@latest
 ```
 
-Or with Homebrew:
+### Homebrew
 
 ```bash
 brew tap KashifKhn/kassie
 brew install kassie
+```
+
+### Upgrade
+
+Keep Kassie up-to-date with the built-in upgrade command:
+
+```bash
+kassie upgrade                    # Upgrade to latest version
+kassie upgrade --check            # Check for updates only
+kassie upgrade --version v0.2.0   # Upgrade to specific version
 ```
 
 ## Usage
