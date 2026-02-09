@@ -8,8 +8,14 @@ Kassie looks for configuration in the following order:
 
 1. Path specified via `--config` flag
 2. `~/.config/kassie/config.json` (primary location)
-3. `./kassie.config.json` (current directory)
-4. Built-in defaults
+3. Built-in defaults (if no config file found)
+
+::: info Note
+Unlike earlier documentation, Kassie does **not** check for `./kassie.config.json` in the current directory. If you need a project-specific config, use the `--config` flag:
+```bash
+kassie tui --config ./project-config.json
+```
+:::
 
 ## Basic Configuration
 
@@ -50,10 +56,9 @@ Here's a full configuration with all available options:
         "enabled": false,
         "cert_path": "",
         "key_path": "",
-        "ca_path": ""
-      },
-      "timeout_ms": 10000,
-      "consistency": "LOCAL_QUORUM"
+        "ca_path": "",
+        "insecure_skip_verify": false
+      }
     },
     {
       "name": "production",
@@ -72,10 +77,9 @@ Here's a full configuration with all available options:
         "enabled": true,
         "cert_path": "/path/to/client.crt",
         "key_path": "/path/to/client.key",
-        "ca_path": "/path/to/ca.crt"
-      },
-      "timeout_ms": 30000,
-      "consistency": "QUORUM"
+        "ca_path": "/path/to/ca.crt",
+        "insecure_skip_verify": true
+      }
     }
   ],
   "defaults": {
@@ -119,8 +123,6 @@ Each profile in the `profiles` array can have:
 | `keyspace` | string | No | "system" | Default keyspace |
 | `auth` | object | No | - | Authentication credentials |
 | `ssl` | object | No | - | SSL/TLS configuration |
-| `timeout_ms` | integer | No | 10000 | Query timeout in milliseconds |
-| `consistency` | string | No | "LOCAL_QUORUM" | Default consistency level |
 
 ### Authentication
 
@@ -146,7 +148,8 @@ Each profile in the `profiles` array can have:
     "enabled": true,
     "cert_path": "/path/to/client.crt",
     "key_path": "/path/to/client.key",
-    "ca_path": "/path/to/ca.crt"
+    "ca_path": "/path/to/ca.crt",
+    "insecure_skip_verify": false
   }
 }
 ```
@@ -157,6 +160,7 @@ Each profile in the `profiles` array can have:
 | `cert_path` | string | No | Client certificate path |
 | `key_path` | string | No | Client key path |
 | `ca_path` | string | No | CA certificate path |
+| `insecure_skip_verify` | boolean | No | Skip certificate chain verification (insecure) |
 
 ::: warning
 When `ssl.enabled` is `true`, you must provide valid certificate paths.
@@ -195,8 +199,12 @@ When `ssl.enabled` is `true`, you must provide valid certificate paths.
 
 | Field | Type | Options | Description |
 |-------|------|---------|-------------|
-| `theme` | string | `default`, `dracula`, `nord`, `gruvbox` | Color scheme |
+| `theme` | string | `default` | Color scheme (additional themes coming soon) |
 | `vim_mode` | boolean | - | Enable Vim-style navigation |
+
+::: info Theme Development
+Currently only the `default` theme is fully implemented. Additional themes (`dracula`, `nord`, `gruvbox`) are planned for future releases.
+:::
 
 ### Web Client Configuration
 
@@ -313,28 +321,6 @@ kassie tui --profile staging
 kassie tui --profile production
 ```
 
-## Consistency Levels
-
-Supported consistency levels:
-
-- `ANY`
-- `ONE`
-- `TWO`
-- `THREE`
-- `QUORUM`
-- `ALL`
-- `LOCAL_QUORUM`
-- `EACH_QUORUM`
-- `LOCAL_ONE`
-
-Example:
-
-```json
-{
-  "consistency": "LOCAL_QUORUM"
-}
-```
-
 ## Advanced Configuration
 
 ### Connection Pooling
@@ -346,15 +332,7 @@ Kassie manages connection pools automatically. Each profile gets its own pool wi
 
 ### Timeout Configuration
 
-Configure timeouts per profile:
-
-```json
-{
-  "timeout_ms": 30000
-}
-```
-
-Or globally in defaults:
+Configure timeouts globally in defaults:
 
 ```json
 {
@@ -363,8 +341,6 @@ Or globally in defaults:
   }
 }
 ```
-
-Profile-specific timeouts override global defaults.
 
 ### Page Size
 
