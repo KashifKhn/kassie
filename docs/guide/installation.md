@@ -34,7 +34,7 @@ curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | 
 If you have Go installed (1.24+):
 
 ```bash
-go install github.com/KashifKhn/kassie@latest
+go install github.com/kashifKhn/kassie@latest
 ```
 
 Make sure `$GOPATH/bin` is in your PATH:
@@ -46,7 +46,7 @@ export PATH=$PATH:$(go env GOPATH)/bin
 To install a specific version:
 
 ```bash
-go install github.com/KashifKhn/kassie@v0.1.1
+go install github.com/kashifKhn/kassie@v0.1.1
 ```
 
 ## Homebrew (Coming Soon)
@@ -63,7 +63,7 @@ brew install kassie
 
 ## Pre-built Binaries
 
-Download pre-built binaries from [GitHub Releases](https://github.com/KashifKhn/kassie/releases):
+Download pre-built binaries from [GitHub Releases](https://github.com/kashifKhn/kassie/releases):
 
 ::: tip Asset Naming
 Release assets use the format: `kassie_VERSION_OS_ARCH.tar.gz`  
@@ -73,7 +73,7 @@ Example: `kassie_0.1.1_linux_amd64.tar.gz`
 ### Linux (amd64)
 
 ```bash
-curl -L https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_linux_amd64.tar.gz | tar -xz
+curl -L https://github.com/kashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_linux_amd64.tar.gz | tar -xz
 chmod +x kassie
 sudo mv kassie /usr/local/bin/
 ```
@@ -81,7 +81,7 @@ sudo mv kassie /usr/local/bin/
 ### Linux (arm64)
 
 ```bash
-curl -L https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_linux_arm64.tar.gz | tar -xz
+curl -L https://github.com/kashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_linux_arm64.tar.gz | tar -xz
 chmod +x kassie
 sudo mv kassie /usr/local/bin/
 ```
@@ -89,7 +89,7 @@ sudo mv kassie /usr/local/bin/
 ### macOS (Intel)
 
 ```bash
-curl -L https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_darwin_amd64.tar.gz | tar -xz
+curl -L https://github.com/kashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_darwin_amd64.tar.gz | tar -xz
 chmod +x kassie
 sudo mv kassie /usr/local/bin/
 ```
@@ -97,19 +97,19 @@ sudo mv kassie /usr/local/bin/
 ### macOS (Apple Silicon)
 
 ```bash
-curl -L https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_darwin_arm64.tar.gz | tar -xz
+curl -L https://github.com/kashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_darwin_arm64.tar.gz | tar -xz
 chmod +x kassie
 sudo mv kassie /usr/local/bin/
 ```
 
 ### Windows (amd64)
 
-Download the `.zip` file from [releases](https://github.com/KashifKhn/kassie/releases/latest) and extract it.
+Download the `.zip` file from [releases](https://github.com/kashifKhn/kassie/releases/latest) and extract it.
 
 Or using PowerShell:
 
 ```powershell
-Invoke-WebRequest -Uri https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_windows_amd64.zip -OutFile kassie.zip
+Invoke-WebRequest -Uri https://github.com/kashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_windows_amd64.zip -OutFile kassie.zip
 Expand-Archive -Path kassie.zip -DestinationPath .
 Move-Item kassie.exe C:\Windows\System32\
 ```
@@ -168,7 +168,7 @@ If you want to build Kassie yourself:
 
 ```bash
 # Clone repository
-git clone https://github.com/KashifKhn/kassie.git
+git clone https://github.com/kashifKhn/kassie.git
 cd kassie
 
 # Setup dependencies
@@ -353,7 +353,7 @@ brew upgrade kassie
 If installed via `go install`, simply run:
 
 ```bash
-go install github.com/KashifKhn/kassie@latest
+go install github.com/kashifKhn/kassie@latest
 ```
 
 ## Next Steps
@@ -395,8 +395,8 @@ chmod +x /path/to/kassie
 If `go install` fails with SSL errors:
 
 ```bash
-go env -w GOPRIVATE=github.com/KashifKhn/kassie
-go install github.com/KashifKhn/kassie@latest
+go env -w GOPRIVATE=github.com/kashifKhn/kassie
+go install github.com/kashifKhn/kassie@latest
 ```
 
 For more help, see [Troubleshooting](/guide/troubleshooting).

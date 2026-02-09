@@ -274,7 +274,7 @@ Currently only the `default` theme is fully implemented. The color scheme is opt
 - `nord`: Arctic-inspired colors
 - `gruvbox`: Retro groove theme
 
-Follow [GitHub issue #XX](https://github.com/KashifKhn/kassie/issues) for theme development progress.
+Follow [GitHub issue #XX](https://github.com/kashifKhn/kassie/issues) for theme development progress.
 :::
 
 ## Vim Mode
@@ -367,4 +367,4 @@ Mouse support depends on your terminal. Keyboard navigation always works.
 
 - [Configuration](/guide/configuration) - Customize your setup
 - [Keyboard Shortcuts Reference](/reference/keyboard-shortcuts) - Complete shortcut list
-- [Examples](/examples/basic-queries) - See practical examples
+- [Examples](/examples/) - See practical examples

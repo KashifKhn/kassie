@@ -48,10 +48,7 @@ Configure profiles for different environments.
 
 ## Example Guides
 
-- [Basic Queries](/examples/basic-queries) - Simple query examples
-- [Advanced Filtering](/examples/advanced-filtering) - Complex filters
-- [Custom Configurations](/examples/custom-configs) - Configuration examples
-- [Scripting](/examples/scripting) - Automation examples
+More detailed examples coming soon. For now, see the inline examples above and refer to the [Guide](/guide/) section for step-by-step tutorials.
 
 ## More Examples
 

@@ -14,7 +14,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: View on GitHub
-      link: https://github.com/KashifKhn/kassie
+      link: https://github.com/kashifKhn/kassie
 
 features:
   - icon: 🖥️
@@ -70,7 +70,7 @@ kassie tui
 ```
 
 ```bash [Go Install]
-go install github.com/KashifKhn/kassie@latest
+go install github.com/kashifKhn/kassie@latest
 kassie tui
 ```
 

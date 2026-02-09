@@ -632,7 +632,7 @@ kassie tui --log-level debug
 If you can't resolve your issue:
 
 1. **Check existing issues**
-   - [GitHub Issues](https://github.com/KashifKhn/kassie/issues)
+   - [GitHub Issues](https://github.com/kashifKhn/kassie/issues)
    - Search for your error message
 
 2. **Open a new issue**
@@ -678,4 +678,4 @@ See [Error Codes Reference](/reference/error-codes) for complete list.
 
 - [Configuration Guide](/guide/configuration) - Review config options
 - [TUI Usage](/guide/tui-usage) - Learn TUI features
-- [Development Setup](/development/setup) - Build from source for debugging
+- [Contributing](/development/contributing) - Build from source for debugging
