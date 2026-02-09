@@ -4,11 +4,11 @@ import versionInfo from '../version.json'
 export default defineConfig({
   title: 'Kassie',
   description: 'Modern Database Explorer for Cassandra & ScyllaDB',
-  base: '/kassie/',
+  base: '/',
   ignoreDeadLinks: true,
   
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/kassie/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
     ['meta', { name: 'theme-color', content: '#5f67ee' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:locale', content: 'en' }],
