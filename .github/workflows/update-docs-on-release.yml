@@ -1,0 +1,36 @@
+name: Update Docs on Release
+
+on:
+  release:
+    types: [published, created, released]
+
+permissions:
+  actions: write
+
+jobs:
+  trigger-docs-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger docs deployment
+        run: |
+          echo "🎉 New release published: ${{ github.event.release.tag_name }}"
+          echo "📝 Release name: ${{ github.event.release.name }}"
+          echo "🔗 Release URL: ${{ github.event.release.html_url }}"
+          echo ""
+          echo "Triggering documentation deployment workflow..."
+
+      - name: Trigger deploy-docs workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-docs.yml',
+              ref: 'main',
+            });
+            console.log('✅ Documentation deployment triggered successfully!');
