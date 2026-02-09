@@ -224,9 +224,10 @@ SSL/TLS to Cassandra/ScyllaDB:
 
 ## Learn More
 
-- [Client-Server Model](/architecture/client-server) - Detailed architecture *(Coming Soon)*
-- [Authentication](/architecture/authentication) - Auth system design *(Coming Soon)*
-- [State Management](/architecture/state-management) - State handling *(Coming Soon)*
-- [Protocol Design](/architecture/protocol) - gRPC protocol details *(Coming Soon)*
+Additional architecture documentation pages coming soon:
+- Client-Server Model - Detailed architecture
+- Authentication - Auth system design
+- State Management - State handling
+- Protocol Design - gRPC protocol details
 
-For the complete architecture document, see [n_docs/ARCHITECTURE.md](https://github.com/KashifKhn/kassie/blob/main/n_docs/ARCHITECTURE.md) in the repository.
+For the complete architecture document, see [n_docs/ARCHITECTURE.md](https://github.com/kashifKhn/kassie/blob/main/n_docs/ARCHITECTURE.md) in the repository.

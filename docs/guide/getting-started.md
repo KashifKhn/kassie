@@ -21,7 +21,7 @@ curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | 
 ```
 
 ```bash [Go Install]
-go install github.com/KashifKhn/kassie@latest
+go install github.com/kashifKhn/kassie@latest
 ```
 
 ```bash [Homebrew (Coming Soon)]
@@ -196,4 +196,4 @@ Now that you're up and running:
 If you run into issues:
 - Check the [Troubleshooting Guide](/guide/troubleshooting)
 - Run with debug logging: `kassie tui --log-level debug`
-- [Open an issue](https://github.com/KashifKhn/kassie/issues) on GitHub
+- [Open an issue](https://github.com/kashifKhn/kassie/issues) on GitHub

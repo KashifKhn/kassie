@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Visit http://localhost:5173
+Visit `http://localhost:5173` to preview the documentation.
 
 ## Deploy to GitHub Pages
 

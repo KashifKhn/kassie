@@ -388,7 +388,7 @@ Fix: Use only letters, numbers, and underscores in profile names.
 
 ## Configuration Examples
 
-See [Custom Configurations](/examples/custom-configs) for more examples:
+See the [Examples](/examples/) section for more configuration examples:
 - Multi-datacenter setup
 - SSL/TLS with client certificates
 - Authentication with LDAP

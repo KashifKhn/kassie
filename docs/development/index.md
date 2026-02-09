@@ -6,7 +6,7 @@ Contributing to Kassie and building from source.
 
 ```bash
 # Clone repository
-git clone https://github.com/KashifKhn/kassie.git
+git clone https://github.com/kashifKhn/kassie.git
 cd kassie
 
 # Setup dependencies
@@ -24,11 +24,13 @@ make test
 
 ## Development Guides
 
-- [Setup](/development/setup) - Development environment setup
-- [Building](/development/building) - Build from source
-- [Testing](/development/testing) - Testing guide
-- [Contributing](/development/contributing) - Contribution guidelines
-- [Architecture Decisions](/development/architecture-decisions) - Design decisions
+- [Contributing](/development/contributing) - Contribution guidelines including setup, building, and testing
+
+Additional detailed guides coming soon:
+- Development environment setup
+- Build system details  
+- Testing strategies
+- Architecture decision records
 
 ## Prerequisites
 

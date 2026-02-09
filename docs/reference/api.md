@@ -566,13 +566,13 @@ No rate limits are currently enforced. Future versions may implement per-session
 For gRPC clients, import the proto definitions from:
 
 ```
-github.com/KashifKhn/kassie/api/proto/*.proto
+github.com/kashifKhn/kassie/api/proto/*.proto
 ```
 
 **Example (Go):**
 ```go
 import (
-    kassiev1 "github.com/KashifKhn/kassie/api/gen/go"
+    kassiev1 "github.com/kashifKhn/kassie/api/gen/go"
     "google.golang.org/grpc"
 )
 

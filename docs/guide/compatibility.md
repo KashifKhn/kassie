@@ -216,10 +216,10 @@ Test coverage:
 ## Community Support
 
 **Untested Configurations**:
-If you successfully run Kassie on an unlisted platform or database version, please [open an issue](https://github.com/KashifKhn/kassie/issues) or [discussion](https://github.com/KashifKhn/kassie/discussions) to share your experience!
+If you successfully run Kassie on an unlisted platform or database version, please [open an issue](https://github.com/kashifKhn/kassie/issues) or [discussion](https://github.com/kashifKhn/kassie/discussions) to share your experience!
 
 **Compatibility Issues**:
-Found a compatibility problem? [Report it on GitHub](https://github.com/KashifKhn/kassie/issues/new).
+Found a compatibility problem? [Report it on GitHub](https://github.com/kashifKhn/kassie/issues/new).
 
 ---
 
