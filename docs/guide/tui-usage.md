@@ -254,23 +254,28 @@ Kassie uses Cassandra's paging state tokens for efficient pagination. No data is
 
 ## Themes
 
-Kassie supports multiple color themes. Configure in `config.json`:
+Kassie supports color themes. Configure in `config.json`:
 
 ```json
 {
   "clients": {
     "tui": {
-      "theme": "dracula"
+      "theme": "default"
     }
   }
 }
 ```
 
-**Available themes**:
-- `default`: Light background with blue accents
+::: info Theme Development
+Currently only the `default` theme is fully implemented. The color scheme is optimized for both light and dark terminal backgrounds.
+
+**Coming Soon:**
 - `dracula`: Dark purple theme
 - `nord`: Arctic-inspired colors
 - `gruvbox`: Retro groove theme
+
+Follow [GitHub issue #XX](https://github.com/KashifKhn/kassie/issues) for theme development progress.
+:::
 
 ## Vim Mode
 
@@ -338,6 +343,13 @@ Your terminal may not support Unicode. Try:
 export LANG=en_US.UTF-8
 kassie tui
 ```
+
+**Tested terminals**:
+- **macOS**: iTerm2 (recommended), Terminal.app, Alacritty, Kitty
+- **Linux**: GNOME Terminal, Konsole, Alacritty, Kitty, Tilix
+- **Windows**: Windows Terminal (recommended), ConEmu, Mintty
+
+See [Compatibility Guide](/guide/compatibility#terminal-compatibility) for full terminal compatibility matrix.
 
 ### Colors are wrong
 

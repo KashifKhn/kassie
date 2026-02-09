@@ -2,25 +2,31 @@
 
 Kassie can be installed in multiple ways. Choose the method that works best for you.
 
-## Homebrew (macOS & Linux)
+## Curl Install Script (Recommended)
 
-The easiest way to install on macOS and Linux:
+Quick installation via curl for Linux and macOS:
 
 ```bash
-brew tap KashifKhn/kassie
-brew install kassie
+curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh
 ```
 
-Verify the installation:
+This script will:
+1. Detect your OS and architecture
+2. Download the latest release from GitHub
+3. Install to `/usr/local/bin` or `~/.local/bin`
+4. Configure your PATH automatically
+5. Verify the installation
+
+To install a specific version:
 
 ```bash
-kassie version
+curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh -s -- --version 0.1.1
 ```
 
-To update:
+To skip PATH modification:
 
 ```bash
-brew upgrade kassie
+curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh -s -- --no-modify-path
 ```
 
 ## Go Install
@@ -40,77 +46,79 @@ export PATH=$PATH:$(go env GOPATH)/bin
 To install a specific version:
 
 ```bash
-go install github.com/KashifKhn/kassie@v1.0.0
+go install github.com/KashifKhn/kassie@v0.1.1
 ```
 
-## Curl Install Script
+## Homebrew (Coming Soon)
 
-Quick installation via curl:
-
-```bash
-curl -sSL https://kassie.dev/install.sh | bash
-```
-
-This script will:
-1. Detect your OS and architecture
-2. Download the appropriate binary
-3. Install it to `/usr/local/bin`
-4. Verify the installation
-
-To specify a custom install location:
+::: info Coming Soon
+Homebrew tap is planned for a future release. Use the curl install script or Go install for now.
+:::
 
 ```bash
-curl -sSL https://kassie.dev/install.sh | bash -s -- --prefix=/custom/path
+# Coming soon
+brew tap KashifKhn/kassie
+brew install kassie
 ```
 
 ## Pre-built Binaries
 
 Download pre-built binaries from [GitHub Releases](https://github.com/KashifKhn/kassie/releases):
 
+::: tip Asset Naming
+Release assets use the format: `kassie_VERSION_OS_ARCH.tar.gz`  
+Example: `kassie_0.1.1_linux_amd64.tar.gz`
+:::
+
 ### Linux (amd64)
 
 ```bash
-wget https://github.com/KashifKhn/kassie/releases/download/v1.0.0/kassie-linux-amd64
-chmod +x kassie-linux-amd64
-sudo mv kassie-linux-amd64 /usr/local/bin/kassie
+curl -L https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_linux_amd64.tar.gz | tar -xz
+chmod +x kassie
+sudo mv kassie /usr/local/bin/
 ```
 
 ### Linux (arm64)
 
 ```bash
-wget https://github.com/KashifKhn/kassie/releases/download/v1.0.0/kassie-linux-arm64
-chmod +x kassie-linux-arm64
-sudo mv kassie-linux-arm64 /usr/local/bin/kassie
+curl -L https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_linux_arm64.tar.gz | tar -xz
+chmod +x kassie
+sudo mv kassie /usr/local/bin/
 ```
 
 ### macOS (Intel)
 
 ```bash
-wget https://github.com/KashifKhn/kassie/releases/download/v1.0.0/kassie-darwin-amd64
-chmod +x kassie-darwin-amd64
-sudo mv kassie-darwin-amd64 /usr/local/bin/kassie
+curl -L https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_darwin_amd64.tar.gz | tar -xz
+chmod +x kassie
+sudo mv kassie /usr/local/bin/
 ```
 
 ### macOS (Apple Silicon)
 
 ```bash
-wget https://github.com/KashifKhn/kassie/releases/download/v1.0.0/kassie-darwin-arm64
-chmod +x kassie-darwin-arm64
-sudo mv kassie-darwin-arm64 /usr/local/bin/kassie
+curl -L https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_darwin_arm64.tar.gz | tar -xz
+chmod +x kassie
+sudo mv kassie /usr/local/bin/
 ```
 
 ### Windows (amd64)
 
-Download `kassie-windows-amd64.exe` from releases and add it to your PATH.
+Download the `.zip` file from [releases](https://github.com/KashifKhn/kassie/releases/latest) and extract it.
 
 Or using PowerShell:
 
 ```powershell
-Invoke-WebRequest -Uri https://github.com/KashifKhn/kassie/releases/download/v1.0.0/kassie-windows-amd64.exe -OutFile kassie.exe
+Invoke-WebRequest -Uri https://github.com/KashifKhn/kassie/releases/download/v0.1.1/kassie_0.1.1_windows_amd64.zip -OutFile kassie.zip
+Expand-Archive -Path kassie.zip -DestinationPath .
 Move-Item kassie.exe C:\Windows\System32\
 ```
 
 ## Docker
+
+::: warning Web UI Under Development
+Docker images currently support TUI and server modes. Web UI support is coming in Phase 5.
+:::
 
 Run Kassie in a container:
 
@@ -128,6 +136,7 @@ docker run -it \
   ghcr.io/kashifkhn/kassie:latest tui
 ```
 
+<!-- Web UI mode coming soon
 ### Web UI
 
 ```bash
@@ -135,6 +144,7 @@ docker run -p 8080:8080 ghcr.io/kashifkhn/kassie:latest web
 ```
 
 Visit `http://localhost:8080` in your browser.
+-->
 
 ### Server Mode
 
@@ -149,7 +159,7 @@ If you want to build Kassie yourself:
 
 ### Prerequisites
 
-- Go 1.24 or later
+- Go 1.24+
 - Node.js 20+ (for web UI)
 - protoc (Protocol Buffer compiler)
 - Make
@@ -204,11 +214,7 @@ kassie version
 
 Expected output:
 
-```
-Kassie v1.0.0
-Commit: abc1234
-Built: 2024-01-15T10:30:00Z
-```
+<VersionInfo />
 
 Test connectivity:
 
@@ -234,7 +240,7 @@ Install to user directory without sudo:
 
 ```bash
 mkdir -p ~/bin
-mv kassie-linux-amd64 ~/bin/kassie
+mv kassie ~/bin/kassie
 export PATH=$PATH:~/bin
 ```
 
@@ -246,6 +252,109 @@ Add Kassie to your PATH via System Properties:
 1. Search for "Environment Variables"
 2. Edit "Path" under User variables
 3. Add the directory containing `kassie.exe`
+
+## Upgrading Kassie
+
+Kassie includes a built-in upgrade command that makes updating to newer versions easy and safe.
+
+### Self-Upgrade Command
+
+Upgrade to the latest version:
+
+```bash
+kassie upgrade
+```
+
+The upgrade process will:
+1. Check for the latest release on GitHub
+2. Download and verify the new version
+3. Create a backup of your current binary
+4. Install the new version
+5. Verify the installation works
+6. Automatically rollback if anything fails
+
+### Check for Updates
+
+To only check if an update is available without installing:
+
+```bash
+kassie upgrade --check
+```
+
+Output:
+```
+🎯 Kassie Upgrade
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Current version: v0.1.0
+  Latest version:  v0.1.1
+  ✓ Update available
+```
+
+### Upgrade to Specific Version
+
+Install or downgrade to a specific version:
+
+```bash
+kassie upgrade --version v0.1.0
+```
+
+This is useful for:
+- Downgrading if a new version has issues
+- Installing a specific tested version in production
+- Testing different versions
+
+### Force Reinstall
+
+Reinstall the current version (useful for fixing corrupted installations):
+
+```bash
+kassie upgrade --force
+```
+
+### JSON Output
+
+For scripting and automation:
+
+```bash
+kassie upgrade --check --json
+```
+
+Output:
+```json
+{
+  "current_version": "v0.1.0",
+  "latest_version": "v0.1.1",
+  "update_available": true,
+  "platform": {
+    "os": "linux",
+    "arch": "amd64"
+  }
+}
+```
+
+### Upgrade via Curl Script
+
+The install script also works for upgrades:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh
+```
+
+### Upgrade with Homebrew (Coming Soon)
+
+Once Homebrew tap is available:
+
+```bash
+brew upgrade kassie
+```
+
+### Upgrade with Go Install
+
+If installed via `go install`, simply run:
+
+```bash
+go install github.com/KashifKhn/kassie@latest
+```
 
 ## Next Steps
 
@@ -267,9 +376,9 @@ echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-**Homebrew**: Ensure Homebrew's bin is in PATH:
+**Curl Install**: The script should automatically configure PATH. If not:
 ```bash
-echo 'export PATH=/usr/local/bin:$PATH' >> ~/.bashrc
+echo 'export PATH=$PATH:~/.local/bin' >> ~/.bashrc
 source ~/.bashrc
 ```
 

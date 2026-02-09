@@ -4,7 +4,9 @@
   "type": "module",
   "description": "Documentation for Kassie - Database Explorer for Cassandra & ScyllaDB",
   "scripts": {
+    "predev": "node scripts/generate-version.js",
     "dev": "vitepress dev",
+    "prebuild": "node scripts/generate-version.js",
     "build": "vitepress build",
     "preview": "vitepress preview"
   },

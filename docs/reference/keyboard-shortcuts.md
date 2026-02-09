@@ -32,6 +32,7 @@ Complete reference for all keyboard shortcuts in Kassie.
 | `l` or `→` | Expand keyspace/enter |
 | `Enter` | Select table or expand keyspace |
 | `/` | Focus search/filter input |
+| `Ctrl+F` | Focus search/filter input |
 | `Esc` | Clear search |
 
 ### Data Grid (Explorer View)
@@ -49,6 +50,7 @@ Complete reference for all keyboard shortcuts in Kassie.
 | `p` | Previous page |
 | `r` | Refresh data |
 | `/` | Open filter bar |
+| `Ctrl+F` | Focus search input |
 
 ### Filter Bar
 
@@ -64,11 +66,12 @@ Complete reference for all keyboard shortcuts in Kassie.
 
 | Key | Action |
 |-----|--------|
-| `j` or `↓` | Scroll down |
-| `k` or `↑` | Scroll up |
-| `Enter` | Expand/collapse nested object |
-| `Esc` | Close inspector |
-| `c` | Copy JSON to clipboard (if supported) |
+| `j` or `↓` | Scroll down one line |
+| `k` or `↑` | Scroll up one line |
+| `d` | Page down (20 lines) |
+| `u` | Page up (20 lines) |
+| `t` | Toggle display mode (table/JSON/formatted) |
+| `Ctrl+C` | Copy content to clipboard |
 
 ### Panel Navigation
 
@@ -76,6 +79,23 @@ Complete reference for all keyboard shortcuts in Kassie.
 |-----|--------|
 | `Tab` | Switch to next panel (Sidebar → Grid → Inspector) |
 | `Shift+Tab` | Switch to previous panel |
+| `Ctrl+H` | Focus sidebar panel |
+| `Ctrl+L` | Focus grid panel |
+| `Ctrl+I` | Focus inspector panel |
+| `Ctrl+B` | Toggle view mode (Full → No Sidebar → Grid Only → Full) |
+| `Ctrl+F` | Activate search in current panel |
+
+### Help View
+
+| Key | Action |
+|-----|--------|
+| `j` or `↓` | Scroll down one line |
+| `k` or `↑` | Scroll up one line |
+| `d` | Page down (10 lines) |
+| `u` | Page up (10 lines) |
+| `g` | Jump to top |
+| `G` | Jump to bottom |
+| `q` or `Esc` | Close help and return to explorer |
 
 ## Web UI Shortcuts
 
@@ -271,16 +291,17 @@ Print this cheat sheet for quick reference:
 ```
 KASSIE KEYBOARD SHORTCUTS
 
-Global:           Navigation:        Data Grid:
-? - Help          j/k - Up/Down      Enter - Details
-q - Quit          h/l - Left/Right   n/p - Next/Prev Page
-Esc - Cancel      Tab - Switch Panel r - Refresh
-                                     / - Filter
+Global:           Navigation:           Data Grid:
+? - Help          j/k - Up/Down         Enter - Details
+q - Quit          h/l - Left/Right      n/p - Next/Prev Page
+Esc - Cancel      Tab - Switch Panel    r - Refresh
+                  Ctrl+H/L/I - Focus    / - Filter
 
-Vim Mode:         Filter Bar:        Inspector:
-hjkl - Move       Enter - Apply      j/k - Scroll
-gg/G - First/Last Esc - Cancel       Esc - Close
-:q - Quit         ↑/↓ - History      c - Copy
+Panel Control:    Filter Bar:           Inspector:
+Ctrl+B - Views    Enter - Apply         j/k - Scroll
+Ctrl+F - Search   Esc - Cancel          d/u - Page Down/Up
+                  ↑/↓ - History         t - Toggle Mode
+                                        Ctrl+C - Copy
 ```
 
 ## Next Steps

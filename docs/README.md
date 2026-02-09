@@ -31,14 +31,54 @@ npm run preview
 docs/
 ├── .vitepress/          # VitePress configuration
 │   ├── config.ts        # Main config
+│   ├── components/      # Vue components
+│   │   └── VersionInfo.vue  # Dynamic version display
 │   └── theme/           # Custom theme
+├── scripts/             # Build scripts
+│   └── generate-version.js  # Version info generator
 ├── public/              # Static assets
 ├── guide/               # User guides
 ├── reference/           # API reference
 ├── architecture/        # Architecture docs
 ├── development/         # Developer docs
 ├── examples/            # Examples
+├── version.json         # Generated version info (gitignored)
 └── index.md             # Landing page
+```
+
+## Dynamic Versioning
+
+The documentation uses dynamic versioning that automatically pulls version information from git:
+
+**How it works:**
+
+1. `scripts/generate-version.js` reads git tags and commit info
+2. Generates `version.json` with current version, commit hash, and build date
+3. VitePress config imports and uses this data
+4. `<VersionInfo />` component displays version dynamically in docs
+
+**Usage in markdown:**
+
+```markdown
+<VersionInfo />
+```
+
+This displays:
+```
+Kassie v0.1.1
+Commit: 00c76c0
+Built: February 9, 2026
+```
+
+**Version generation runs automatically:**
+
+- Before `npm run dev` (via `predev` script)
+- Before `npm run build` (via `prebuild` script)
+
+**Manual regeneration:**
+
+```bash
+node scripts/generate-version.js
 ```
 
 ## Deployment

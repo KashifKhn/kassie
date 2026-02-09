@@ -57,6 +57,7 @@ your Cassandra/ScyllaDB clusters with ease.`,
 	cmd.AddCommand(newWebCmd())
 	cmd.AddCommand(newTUICmd())
 	cmd.AddCommand(newVersionCmd())
+	cmd.AddCommand(newUpgradeCmd())
 
 	return cmd
 }

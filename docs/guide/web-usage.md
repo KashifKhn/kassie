@@ -1,6 +1,14 @@
 # Web Usage
 
-The Web UI provides a modern, browser-based interface for exploring your Cassandra and ScyllaDB databases.
+::: warning Development Status
+The Web UI is currently under active development (Phase 5). While basic functionality is implemented, many features described in this document are planned but not yet available. For production use, please use the TUI interface (`kassie tui`) which is fully functional and stable.
+
+**Current Status:** 🚧 In Development  
+**Expected Release:** TBD  
+**Recommended:** Use [TUI Interface](/guide/tui-usage) for all production workflows
+:::
+
+The Web UI will provide a modern, browser-based interface for exploring your Cassandra and ScyllaDB databases.
 
 ## Launching the Web UI
 

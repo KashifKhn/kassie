@@ -7,6 +7,8 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
+  release:
+    types: [published, created, released]
   workflow_dispatch:
 
 permissions:
@@ -26,6 +28,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Display trigger information
+        run: |
+          echo "Triggered by: ${{ github.event_name }}"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "Release tag: ${{ github.event.release.tag_name }}"
+            echo "Release name: ${{ github.event.release.name }}"
+          fi
+          git describe --tags --abbrev=0 || echo "No tags found"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

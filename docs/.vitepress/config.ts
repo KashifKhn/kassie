@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import versionInfo from '../version.json'
 
 export default defineConfig({
   title: 'Kassie',
@@ -26,7 +27,7 @@ export default defineConfig({
       { text: 'Development', link: '/development/', activeMatch: '/development/' },
       { text: 'Examples', link: '/examples/', activeMatch: '/examples/' },
       {
-        text: 'v1.0.0',
+        text: versionInfo.version,
         items: [
           { text: 'Changelog', link: 'https://github.com/KashifKhn/kassie/releases' },
           { text: 'Contributing', link: '/development/contributing' },
@@ -55,6 +56,7 @@ export default defineConfig({
           items: [
             { text: 'TUI Interface', link: '/guide/tui-usage' },
             { text: 'Web Interface', link: '/guide/web-usage' },
+            { text: 'Compatibility', link: '/guide/compatibility' },
             { text: 'Troubleshooting', link: '/guide/troubleshooting' },
           ]
         }
@@ -146,6 +148,14 @@ export default defineConfig({
     theme: {
       light: 'github-light',
       dark: 'github-dark'
+    }
+  },
+
+  vite: {
+    define: {
+      __VERSION__: JSON.stringify(versionInfo.version),
+      __COMMIT__: JSON.stringify(versionInfo.commit),
+      __BUILD_DATE__: JSON.stringify(versionInfo.buildDate)
     }
   }
 })
