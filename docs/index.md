@@ -18,8 +18,12 @@ hero:
 
 features:
   - icon: 🖥️
-    title: Dual Interface
-    details: Choose between a fast terminal UI (TUI) or a modern web interface. Both are first-class citizens with full feature parity.
+    title: Terminal Interface (Stable)
+    details: Fast terminal UI (TUI) with full keyboard navigation. Production-ready and battle-tested. Launches in <100ms with vim-like controls.
+  
+  - icon: 🌐
+    title: Web Interface (In Development)
+    details: Modern web UI currently under active development (Phase 5). Use TUI for production workloads while web interface is being completed.
   
   - icon: 📦
     title: Single Binary
@@ -60,9 +64,8 @@ Get up and running in 30 seconds:
 
 ::: code-group
 
-```bash [Homebrew]
-brew tap KashifKhn/kassie
-brew install kassie
+```bash [Curl (Recommended)]
+curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh
 kassie tui
 ```
 
@@ -71,13 +74,15 @@ go install github.com/KashifKhn/kassie@latest
 kassie tui
 ```
 
-```bash [Curl]
-curl -sSL https://kassie.dev/install.sh | bash
-kassie tui
-```
-
 ```bash [Docker]
 docker run -it ghcr.io/kashifkhn/kassie tui
+```
+
+```bash [Homebrew (Coming Soon)]
+# Homebrew tap planned for future release
+brew tap KashifKhn/kassie
+brew install kassie
+kassie tui
 ```
 
 :::

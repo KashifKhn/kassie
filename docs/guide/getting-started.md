@@ -16,17 +16,18 @@ Choose your preferred installation method:
 
 ::: code-group
 
-```bash [Homebrew]
-brew tap KashifKhn/kassie
-brew install kassie
+```bash [Curl (Recommended)]
+curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh
 ```
 
 ```bash [Go Install]
 go install github.com/KashifKhn/kassie@latest
 ```
 
-```bash [Curl]
-curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh
+```bash [Homebrew (Coming Soon)]
+# Homebrew tap planned for future release
+brew tap KashifKhn/kassie
+brew install kassie
 ```
 
 :::
