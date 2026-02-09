@@ -32,7 +32,7 @@ make test
 
 ## Prerequisites
 
-- Go 1.24+
+- Go 1.24+ (tested with 1.24.5)
 - Node.js 20+ (for web UI)
 - protoc (Protocol Buffer compiler)
 - Docker (for integration tests)
