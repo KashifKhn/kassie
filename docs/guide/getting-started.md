@@ -26,7 +26,7 @@ go install github.com/KashifKhn/kassie@latest
 ```
 
 ```bash [Curl]
-curl -sSL https://kassie.dev/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh
 ```
 
 :::
@@ -36,6 +36,10 @@ Verify the installation:
 ```bash
 kassie version
 ```
+
+::: warning Web UI Under Development
+The web interface (`kassie web`) is currently in active development. For production use, we recommend the TUI (Terminal UI) interface which is fully functional and stable.
+:::
 
 ## First Run
 
@@ -80,13 +84,9 @@ Start the TUI:
 kassie tui
 ```
 
-Or launch the web interface:
-
-```bash
-kassie web
-```
-
-The web UI will automatically open in your browser at `http://localhost:8080`.
+::: tip Recommended
+The TUI provides the most stable and feature-complete experience. The web interface is under active development.
+:::
 
 ## First Steps in TUI
 
@@ -163,10 +163,13 @@ Let's explore Cassandra's system tables:
 | `?` | Show help |
 | `q` | Quit/back |
 
-## Web UI Quick Start
+## Web UI Quick Start (Coming Soon)
 
-If you prefer a web interface:
+::: info Development Status
+The web interface is currently under active development (Phase 5). Basic functionality works, but features may be incomplete. For production use, please use the TUI interface with `kassie tui`.
+:::
 
+<!-- Commented out until web UI is fully implemented
 ```bash
 kassie web
 ```
@@ -177,6 +180,7 @@ The web UI will open automatically. You'll see:
 2. **Explorer View**: Similar layout to TUI with resizable panels
 3. **Filter Bar**: Type WHERE clauses with autocomplete
 4. **Inspector Panel**: Click any row to see detailed JSON view
+-->
 
 ## Next Steps
 
@@ -184,7 +188,6 @@ Now that you're up and running:
 
 - [Configuration Guide](/guide/configuration) - Learn about all configuration options
 - [TUI Usage](/guide/tui-usage) - Master the terminal interface
-- [Web Usage](/guide/web-usage) - Explore web features
 - [Examples](/examples/) - See practical usage examples
 
 ## Need Help?
