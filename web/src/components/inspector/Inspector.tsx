@@ -93,7 +93,10 @@ export function Inspector({ row }: InspectorProps) {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div 
+        className="flex-1 overflow-y-auto"
+        style={{ padding: '20px' }}
+      >
         <div className="space-y-6 animate-fade-in">
           <div>
             <h4 
@@ -102,11 +105,17 @@ export function Inspector({ row }: InspectorProps) {
             >
               Key-Value Pairs
             </h4>
-            <div className="space-y-2">
+            <div 
+              className="space-y-2 rounded-lg overflow-hidden"
+              style={{
+                border: '1px solid var(--border-primary)',
+                background: 'var(--bg-elevated)'
+              }}
+            >
               {Object.entries(row.cells).map(([key, value]) => (
                 <div
                   key={key}
-                  className="flex gap-3 text-sm py-2 transition-all"
+                  className="flex gap-4 text-sm py-3 px-4 transition-all"
                   style={{
                     borderBottom: '1px solid var(--border-primary)',
                   }}
@@ -118,7 +127,7 @@ export function Inspector({ row }: InspectorProps) {
                   }}
                 >
                   <span 
-                    className="font-mono font-bold min-w-[120px]"
+                    className="font-mono font-semibold min-w-[140px]"
                     style={{ color: 'var(--accent-primary)' }}
                   >
                     {key}
@@ -142,9 +151,9 @@ export function Inspector({ row }: InspectorProps) {
               JSON View
             </h4>
             <div 
-              className="rounded-md p-3 overflow-auto terminal"
+              className="rounded-lg p-4 overflow-auto"
               style={{
-                background: 'var(--bg-tertiary)',
+                background: 'var(--bg-elevated)',
                 border: '1px solid var(--border-primary)',
               }}
             >
@@ -154,10 +163,27 @@ export function Inspector({ row }: InspectorProps) {
                 displayDataTypes={false}
                 displayObjectSize={false}
                 style={{
-                  fontSize: '12px',
+                  fontSize: '13px',
                   fontFamily: 'var(--font-mono)',
                   background: 'transparent',
-                }}
+                  '--w-rjv-color': 'var(--text-primary)',
+                  '--w-rjv-key-string': 'var(--accent-primary)',
+                  '--w-rjv-background-color': 'transparent',
+                  '--w-rjv-border-left': '1px solid var(--border-primary)',
+                  '--w-rjv-line-color': 'var(--border-primary)',
+                  '--w-rjv-arrow-color': 'var(--text-tertiary)',
+                  '--w-rjv-info-color': 'var(--text-tertiary)',
+                  '--w-rjv-type-string-color': '#22c55e',
+                  '--w-rjv-type-int-color': '#f59e0b',
+                  '--w-rjv-type-float-color': '#f59e0b',
+                  '--w-rjv-type-bigint-color': '#f59e0b',
+                  '--w-rjv-type-boolean-color': '#a855f7',
+                  '--w-rjv-type-date-color': '#06b6d4',
+                  '--w-rjv-type-url-color': 'var(--accent-primary)',
+                  '--w-rjv-type-null-color': '#ef4444',
+                  '--w-rjv-type-nan-color': '#ef4444',
+                  '--w-rjv-type-undefined-color': '#ef4444',
+                } as React.CSSProperties}
               />
             </div>
           </div>
