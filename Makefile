@@ -1,4 +1,4 @@
-.PHONY: setup proto build build-server web dev-tui dev-web dev-server test test-unit test-int lint fmt clean
+.PHONY: setup proto build build-server embed-web web dev-tui dev-web dev-server test test-unit test-int lint fmt clean
 
 setup:
 	@echo "Installing protoc plugins..."
@@ -14,14 +14,16 @@ proto:
 	@echo "Generating protobuf code..."
 	./scripts/gen-proto.sh
 
-build: web
-	@echo "Copying web assets for embedding..."
-	@find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
-	@cp -r web/dist/* internal/server/web/dist/ 2>/dev/null || true
+build: web embed-web
 	@echo "Building kassie binary with embedded web assets..."
 	go build -o kassie cmd/kassie/main.go
 	@echo "Cleaning up copied assets..."
 	@find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
+
+embed-web:
+	@echo "Copying web assets for embedding..."
+	@find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
+	@cp -r web/dist/* internal/server/web/dist/ 2>/dev/null || true
 
 build-server:
 	@echo "Building server only..."

@@ -22,7 +22,7 @@ RUN go mod download
 COPY . .
 COPY --from=web-builder /web/dist ./web/dist
 
-RUN make setup && make proto && make build
+RUN make setup && make proto && make embed-web && go build -o kassie cmd/kassie/main.go
 
 FROM alpine:latest
 
