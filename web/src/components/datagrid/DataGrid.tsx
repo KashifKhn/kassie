@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { List } from 'react-window';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, AlertCircle, Database } from 'lucide-react';
 import { dataApi, queryKeys, schemaApi } from '@/api/queries';
 import { useUiStore } from '@/stores/uiStore';
 import type { Row, CellValue } from '@/api/types';
@@ -31,7 +31,7 @@ export function DataGrid({
 
   const isFiltered = Boolean(whereClause?.trim());
 
-  const { data: rowsData, isLoading } = useQuery({
+  const { data: rowsData, isLoading, error } = useQuery({
     queryKey: isFiltered
       ? queryKeys.data.filteredRows(keyspace, table, whereClause || '', pageSize)
       : queryKeys.data.rows(keyspace, table, pageSize),
@@ -80,10 +80,29 @@ export function DataGrid({
     );
   }
 
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Failed to load data</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : 'An error occurred while fetching data'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!schemaData || !rowsData) {
     return (
-      <div className="h-full flex items-center justify-center text-muted-foreground">
-        No data available
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Database className="h-12 w-12 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No data available</p>
+        </div>
       </div>
     );
   }
@@ -99,6 +118,48 @@ export function DataGrid({
     if (allRows.length === 0) {
       setAllRows(rowsData.rows);
     }
+  }
+
+  if (displayRows.length === 0) {
+    return (
+      <div className="h-full flex flex-col overflow-hidden bg-background">
+        <div className="flex-shrink-0 border-b border-border bg-muted">
+          <div className="flex">
+            {columns.map((column) => (
+              <div
+                key={column.name}
+                className="px-4 py-2 text-sm font-semibold border-r border-border flex-1 min-w-[150px]"
+              >
+                <div className="flex items-center gap-2">
+                  <span>{column.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {column.type}
+                  </span>
+                  {column.isPartitionKey && (
+                    <span className="text-xs bg-primary text-primary-foreground px-1 rounded">
+                      PK
+                    </span>
+                  )}
+                  {column.isClusteringKey && (
+                    <span className="text-xs bg-secondary text-secondary-foreground px-1 rounded">
+                      CK
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <Database className="h-12 w-12" />
+            <p className="text-sm">
+              {isFiltered ? 'No rows match the filter' : 'No data in this table'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
