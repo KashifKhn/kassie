@@ -5,7 +5,7 @@ before:
     - go mod tidy
     - go generate ./...
     - find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
-    - cp -r web/dist/* internal/server/web/dist/ 2>/dev/null || true
+    - sh -c 'if [ -d web/dist ]; then cp -r web/dist/. internal/server/web/dist/; fi'
 
 builds:
   - id: kassie
