@@ -16,12 +16,12 @@ proto:
 
 build: web
 	@echo "Copying web assets for embedding..."
-	@rm -rf internal/server/web/dist
-	@cp -r web/dist internal/server/web/dist
+	@find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
+	@cp -r web/dist/* internal/server/web/dist/ 2>/dev/null || true
 	@echo "Building kassie binary with embedded web assets..."
 	go build -o kassie cmd/kassie/main.go
 	@echo "Cleaning up copied assets..."
-	@rm -rf internal/server/web/dist
+	@find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
 
 build-server:
 	@echo "Building server only..."

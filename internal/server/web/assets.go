@@ -17,5 +17,10 @@ func HasAssets() bool {
 	if err != nil {
 		return false
 	}
-	return len(entries) > 0
+	for _, entry := range entries {
+		if entry.Name() != ".gitkeep" {
+			return true
+		}
+	}
+	return false
 }

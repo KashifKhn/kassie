@@ -100,7 +100,9 @@ func (s *Server) spaHandler(distFS fs.FS) http.HandlerFunc {
 			defer indexFile.Close()
 
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			io.Copy(w, indexFile)
+			if _, copyErr := io.Copy(w, indexFile); copyErr != nil {
+				s.logger.With().Err(copyErr).Logger().Error("failed to write index.html")
+			}
 			return
 		}
 		defer file.Close()
@@ -120,7 +122,9 @@ func (s *Server) spaHandler(distFS fs.FS) http.HandlerFunc {
 			defer indexFile.Close()
 
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			io.Copy(w, indexFile)
+			if _, copyErr := io.Copy(w, indexFile); copyErr != nil {
+				s.logger.With().Err(copyErr).Logger().Error("failed to write index.html")
+			}
 			return
 		}
 
@@ -134,7 +138,9 @@ func (s *Server) spaHandler(distFS fs.FS) http.HandlerFunc {
 			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 		}
 
-		io.Copy(w, file)
+		if _, err := io.Copy(w, file); err != nil {
+			s.logger.With().Err(err).Str("file", filePath).Logger().Error("failed to write file")
+		}
 	}
 }
 

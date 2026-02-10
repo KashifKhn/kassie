@@ -63,4 +63,7 @@ tags
 # Test artifacts
 coverage.out
 coverage.html
-internal/server/web/dist
+
+# Web assets (keep directory structure)
+internal/server/web/dist/*
+!internal/server/web/dist/.gitkeep
