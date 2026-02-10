@@ -51,7 +51,3 @@ changelog:
       - '^test:'
       - '^chore:'
       - '^ci:'
-
-after:
-  hooks:
-    - find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
