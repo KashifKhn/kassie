@@ -21,16 +21,17 @@ type CopyErrorMsg struct {
 type ExplorerView struct {
 	theme styles.Theme
 
-	sidebar     components.Sidebar
-	grid        components.DataGrid
-	inspect     components.Inspector
-	filter      components.FilterBar
-	status      components.StatusBar
-	active      pane
-	profile     string
-	message     string
-	schemaCache *cache.SchemaCache
-	viewMode    viewMode
+	sidebar          components.Sidebar
+	grid             components.DataGrid
+	inspect          components.Inspector
+	filter           components.FilterBar
+	status           components.StatusBar
+	active           pane
+	profile          string
+	message          string
+	schemaCache      *cache.SchemaCache
+	viewMode         viewMode
+	previousViewMode viewMode
 }
 
 type pane int
@@ -47,6 +48,7 @@ const (
 	viewModeFull viewMode = iota
 	viewModeNoSidebar
 	viewModeGridOnly
+	viewModeInspectorOnly
 )
 
 func NewExplorerView(theme styles.Theme) ExplorerView {
@@ -155,12 +157,25 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 		keyMsg, ok := msg.(tea.KeyMsg)
 		if ok {
 			switch keyMsg.String() {
+			case "i":
+				if v.viewMode == viewModeInspectorOnly {
+					v.viewMode = v.previousViewMode
+					v.inspect.SetFullscreen(false)
+				} else {
+					v.previousViewMode = v.viewMode
+					v.viewMode = viewModeInspectorOnly
+					v.inspect.SetFullscreen(true)
+				}
 			case "t":
 				v.inspect.CycleDisplayMode()
 			case "j", "down":
 				v.inspect.ScrollDown()
 			case "k", "up":
 				v.inspect.ScrollUp()
+			case "h", "left":
+				v.inspect.ScrollLeft()
+			case "l", "right":
+				v.inspect.ScrollRight()
 			case "d":
 				height := 20
 				v.inspect.PageDown(height)
@@ -209,6 +224,10 @@ func (v ExplorerView) View(width, height int) string {
 		leftWidth = 0
 		middleWidth = width
 		rightWidth = 0
+	case viewModeInspectorOnly:
+		leftWidth = 0
+		middleWidth = 0
+		rightWidth = width
 	}
 
 	border := v.theme.Panel
@@ -251,6 +270,8 @@ func (v ExplorerView) View(width, height int) string {
 		row = lipgloss.JoinHorizontal(lipgloss.Top, middle, right)
 	case viewModeGridOnly:
 		row = middleBorder.Width(middleWidth).Height(contentHeight).Render(v.grid.View(middleWidth-2, contentHeight-2))
+	case viewModeInspectorOnly:
+		row = rightBorder.Width(rightWidth).Height(contentHeight).Render(v.inspect.View(rightWidth-2, contentHeight-2))
 	}
 
 	statusText := v.grid.Status()
@@ -264,11 +285,13 @@ func (v ExplorerView) View(width, height int) string {
 	statusHint := fmt.Sprintf("Pane: %s | Tab switch", v.paneLabel())
 	switch v.viewMode {
 	case viewModeFull:
-		statusHint += " | Ctrl+B: hide sidebar"
+		statusHint += " | Ctrl+B: hide sidebar | i: fullscreen inspector"
 	case viewModeNoSidebar:
-		statusHint += " | Ctrl+B: fullscreen grid"
+		statusHint += " | Ctrl+B: fullscreen grid | i: fullscreen inspector"
 	case viewModeGridOnly:
 		statusHint += " | Ctrl+B: show all"
+	case viewModeInspectorOnly:
+		statusHint += " | i: exit fullscreen"
 	}
 
 	status := v.status.View(width, v.profile, v.grid.Keyspace(), v.grid.Table(), statusText+" | "+statusHint)
@@ -307,6 +330,7 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 				v.active = paneGrid
 			}
 		case viewModeGridOnly:
+		case viewModeInspectorOnly:
 		}
 	case "shift+tab":
 		switch v.viewMode {
@@ -319,6 +343,7 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 				v.active = paneGrid
 			}
 		case viewModeGridOnly:
+		case viewModeInspectorOnly:
 		}
 	case "ctrl+h":
 		if v.viewMode == viewModeFull {
@@ -327,7 +352,7 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 	case "ctrl+l":
 		v.active = paneGrid
 	case "ctrl+i":
-		if v.viewMode != viewModeGridOnly {
+		if v.viewMode != viewModeGridOnly && v.viewMode != viewModeInspectorOnly {
 			v.active = paneInspector
 		}
 	case "ctrl+f":

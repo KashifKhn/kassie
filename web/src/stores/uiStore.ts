@@ -9,6 +9,8 @@ interface UiState {
   inspectorCollapsed: boolean;
   filterBarVisible: boolean;
   pageSize: number;
+  selectedKeyspace: string | null;
+  selectedTable: string | null;
 }
 
 interface UiActions {
@@ -19,6 +21,8 @@ interface UiActions {
   setInspectorCollapsed: (collapsed: boolean) => void;
   setFilterBarVisible: (visible: boolean) => void;
   setPageSize: (size: number) => void;
+  setSelectedKeyspace: (keyspace: string | null) => void;
+  setSelectedTable: (table: string | null) => void;
 }
 
 const initialState: UiState = {
@@ -27,6 +31,8 @@ const initialState: UiState = {
   inspectorCollapsed: false,
   filterBarVisible: true,
   pageSize: 100,
+  selectedKeyspace: null,
+  selectedTable: null,
 };
 
 export const useUiStore = create<UiState & UiActions>()(
@@ -61,6 +67,14 @@ export const useUiStore = create<UiState & UiActions>()(
       setPageSize: (size) => {
         if (size < 10 || size > 1000) return;
         set({ pageSize: size });
+      },
+
+      setSelectedKeyspace: (keyspace) => {
+        set({ selectedKeyspace: keyspace, selectedTable: null });
+      },
+
+      setSelectedTable: (table) => {
+        set({ selectedTable: table });
       },
     }),
     {
