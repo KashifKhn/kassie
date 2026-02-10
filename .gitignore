@@ -63,3 +63,4 @@ tags
 # Test artifacts
 coverage.out
 coverage.html
+internal/server/web/dist
