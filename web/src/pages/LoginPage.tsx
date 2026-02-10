@@ -154,12 +154,12 @@ export function LoginPage() {
                 key={profile.name}
                 onClick={() => handleLogin(profile)}
                 disabled={loginMutation.isPending}
-                className="group w-full rounded-2xl p-8 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 relative overflow-hidden animate-fade-in"
+                className="group w-full rounded-2xl text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 relative overflow-hidden animate-fade-in"
                 style={{
                   background: 'var(--bg-elevated)',
                   border: '2px solid var(--border-primary)',
                   animationDelay: `${index * 150}ms`,
-                  minHeight: '140px'
+                  padding: '32px 40px'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = 'var(--accent-primary)';
@@ -180,57 +180,62 @@ export function LoginPage() {
                   }}
                 />
                 
-                <div className="relative flex items-start justify-between gap-6">
-                  <div className="flex-1 space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{
-                          background: 'var(--accent-subtle)',
-                          border: '1px solid var(--accent-primary)'
-                        }}
-                      >
-                        <Server className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
-                      </div>
+                <div className="relative flex items-center justify-between gap-8">
+                  <div className="flex items-center gap-6">
+                    {/* Icon - Much Bigger and Separated */}
+                    <div 
+                      className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center"
+                      style={{
+                        background: 'var(--accent-subtle)',
+                        border: '2px solid var(--accent-primary)'
+                      }}
+                    >
+                      <Server className="w-8 h-8" style={{ color: 'var(--accent-primary)' }} />
+                    </div>
+                    
+                    {/* Content - Vertical Stack with Proper Spacing */}
+                    <div className="flex-1 space-y-3">
                       <h3 
-                        className="font-mono text-2xl font-bold tracking-wide"
+                        className="font-mono text-3xl font-bold tracking-wide"
                         style={{ color: 'var(--text-primary)' }}
                       >
                         {profile.name}
                       </h3>
-                    </div>
-                    
-                    <div className="space-y-2 pl-16">
-                      <p 
-                        className="font-mono text-base"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        {profile.hosts.join(', ')}:{profile.port}
-                      </p>
                       
-                      {profile.keyspace && (
+                      <div className="space-y-2">
                         <p 
-                          className="text-sm font-mono flex items-center gap-2"
-                          style={{ color: 'var(--text-secondary)' }}
+                          className="font-mono text-base"
+                          style={{ color: 'var(--text-primary)' }}
                         >
-                          <span style={{ color: 'var(--accent-primary)' }}>▸</span>
-                          keyspace: {profile.keyspace}
+                          {profile.hosts.join(', ')}:{profile.port}
                         </p>
-                      )}
-                      
-                      {profile.sslEnabled && (
-                        <span 
-                          className="inline-flex items-center gap-2 text-sm font-mono px-3 py-1 rounded-lg"
-                          style={{ 
-                            background: 'var(--success)',
-                            color: 'white',
-                            boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)'
-                          }}
-                        >
-                          <Shield className="w-4 h-4" />
-                          SSL Enabled
-                        </span>
-                      )}
+                        
+                        {profile.keyspace && (
+                          <p 
+                            className="text-base font-mono flex items-center gap-2"
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
+                            <span style={{ color: 'var(--accent-primary)' }}>▸</span>
+                            keyspace: {profile.keyspace}
+                          </p>
+                        )}
+                        
+                        {profile.sslEnabled && (
+                          <div className="pt-1">
+                            <span 
+                              className="inline-flex items-center gap-2 text-sm font-mono px-3 py-1.5 rounded-lg"
+                              style={{ 
+                                background: 'var(--success)',
+                                color: 'white',
+                                boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)'
+                              }}
+                            >
+                              <Shield className="w-4 h-4" />
+                              SSL Enabled
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
