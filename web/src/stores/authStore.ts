@@ -31,10 +31,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       ...initialState,
 
       setTokens: (accessToken, refreshToken, expiresAt) => {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('tokenExpiresAt', expiresAt.toString());
-        
         set({
           accessToken,
           refreshToken,
@@ -48,10 +44,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       },
 
       clearAuth: () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('tokenExpiresAt');
-        
         set({
           ...initialState,
         });
@@ -66,8 +58,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     {
       name: 'auth-storage',
       partialize: (state) => ({
+        accessToken: state.accessToken,
         refreshToken: state.refreshToken,
+        expiresAt: state.expiresAt,
         profile: state.profile,
+        isAuthenticated: state.isAuthenticated,
       }),
     }
   )

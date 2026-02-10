@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import type { ApiError } from './types';
+import { useAuthStore } from '@/stores/authStore';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
@@ -31,7 +32,7 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = useAuthStore.getState().accessToken;
     if (accessToken && config.headers) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -70,11 +71,10 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = useAuthStore.getState().refreshToken;
 
       if (!refreshToken) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        useAuthStore.getState().clearAuth();
         window.location.href = '/login';
         return Promise.reject(error);
       }
@@ -85,8 +85,8 @@ apiClient.interceptors.response.use(
         });
 
         const { accessToken, expiresAt } = response.data;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('tokenExpiresAt', expiresAt.toString());
+        const { setTokens } = useAuthStore.getState();
+        setTokens(accessToken, refreshToken, expiresAt);
 
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -96,8 +96,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError as Error, null);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        useAuthStore.getState().clearAuth();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

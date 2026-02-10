@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { apiClient, handleApiError } from './client';
+import { LoginResponseSchema, RefreshResponseSchema, GetProfilesResponseSchema } from './schemas';
 import type {
   GetProfilesResponse,
   LoginRequest,
@@ -56,11 +57,8 @@ export const queryKeys = {
 export const sessionApi = {
   login: async (request: LoginRequest): Promise<LoginResponse> => {
     try {
-      const response = await apiClient.post<LoginResponse>(
-        '/session/login',
-        request
-      );
-      return response.data;
+      const response = await apiClient.post('/session/login', request);
+      return LoginResponseSchema.parse(response.data);
     } catch (error) {
       throw handleApiError(error);
     }
@@ -68,11 +66,8 @@ export const sessionApi = {
 
   refresh: async (request: RefreshRequest): Promise<RefreshResponse> => {
     try {
-      const response = await apiClient.post<RefreshResponse>(
-        '/session/refresh',
-        request
-      );
-      return response.data;
+      const response = await apiClient.post('/session/refresh', request);
+      return RefreshResponseSchema.parse(response.data);
     } catch (error) {
       throw handleApiError(error);
     }
@@ -88,8 +83,8 @@ export const sessionApi = {
 
   getProfiles: async (): Promise<GetProfilesResponse> => {
     try {
-      const response = await apiClient.get<GetProfilesResponse>('/profiles');
-      return response.data;
+      const response = await apiClient.get('/profiles');
+      return GetProfilesResponseSchema.parse(response.data);
     } catch (error) {
       throw handleApiError(error);
     }

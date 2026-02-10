@@ -15,7 +15,7 @@ export const LoginRequestSchema = z.object({
 export const LoginResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
-  expiresAt: z.number(),
+  expiresAt: z.coerce.number().transform((val) => val * 1000),
   profile: ProfileInfoSchema,
 });
 
@@ -25,7 +25,7 @@ export const RefreshRequestSchema = z.object({
 
 export const RefreshResponseSchema = z.object({
   accessToken: z.string(),
-  expiresAt: z.number(),
+  expiresAt: z.coerce.number().transform((val) => val * 1000),
 });
 
 export const LogoutRequestSchema = z.object({});

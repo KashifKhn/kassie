@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     port: 9091,
     proxy: {
-      '/api': {
+      '/api/v1': {
         target: 'http://localhost:9090',
         changeOrigin: true,
       },
