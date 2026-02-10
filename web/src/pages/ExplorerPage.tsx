@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import { Database, ArrowRight } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Header } from '@/components/header/Header';
 import { Sidebar } from '@/components/sidebar/Sidebar';
@@ -51,7 +52,10 @@ export function ExplorerPage() {
       header={<Header onLogout={handleLogout} />}
       sidebar={<Sidebar />}
       main={
-        <div className="flex h-full flex-col">
+        <div 
+          className="flex h-full flex-col"
+          style={{ background: 'var(--bg-primary)' }}
+        >
           {selectedKeyspace && selectedTable ? (
             <>
               <FilterBar onFilter={handleFilter} onClear={handleClearFilter} />
@@ -65,12 +69,44 @@ export function ExplorerPage() {
               </div>
             </>
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <div className="text-center text-gray-500 dark:text-gray-400">
-                <p className="text-lg font-medium">No table selected</p>
-                <p className="mt-2 text-sm">
-                  Select a table from the sidebar to view data
+            <div className="flex h-full items-center justify-center noise-bg">
+              <div 
+                className="text-center p-12 rounded-xl glass animate-scale-in"
+                style={{
+                  maxWidth: '500px',
+                  border: '1px solid var(--border-primary)',
+                  boxShadow: 'var(--shadow-lg)',
+                }}
+              >
+                <Database 
+                  className="h-16 w-16 mx-auto mb-6 animate-pulse"
+                  style={{ 
+                    color: 'var(--accent-primary)',
+                    filter: 'drop-shadow(0 0 20px var(--accent-primary))',
+                  }}
+                />
+                <h2 
+                  className="text-2xl font-mono font-bold mb-3"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  No Table Selected
+                </h2>
+                <p 
+                  className="text-sm font-sans mb-6 leading-relaxed"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Select a keyspace and table from the sidebar to begin exploring your data
                 </p>
+                <div 
+                  className="flex items-center justify-center gap-2 text-xs font-mono"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  <Database className="w-3 h-3" />
+                  <ArrowRight className="w-3 h-3" />
+                  <span>Choose keyspace</span>
+                  <ArrowRight className="w-3 h-3" />
+                  <span>Select table</span>
+                </div>
               </div>
             </div>
           )}

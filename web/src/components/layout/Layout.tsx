@@ -13,8 +13,11 @@ export function Layout({ header, sidebar, main, inspector }: LayoutProps) {
   const { sidebarCollapsed, inspectorCollapsed } = useUiStore();
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
-      <header className="h-14 border-b border-border flex-shrink-0">
+    <div 
+      className="h-screen w-screen flex flex-col overflow-hidden"
+      style={{ background: 'var(--bg-primary)' }}
+    >
+      <header className="h-14 flex-shrink-0">
         {header}
       </header>
 
@@ -26,11 +29,22 @@ export function Layout({ header, sidebar, main, inspector }: LayoutProps) {
                 defaultSize={20}
                 minSize={15}
                 maxSize={30}
-                className="bg-background"
+                style={{ background: 'var(--bg-secondary)' }}
               >
                 {sidebar}
               </Panel>
-              <Separator className="w-1 bg-border hover:bg-primary transition-colors" />
+              <Separator 
+                className="w-1 transition-colors duration-200 hover:cursor-col-resize"
+                style={{ 
+                  background: 'var(--border-primary)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--accent-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--border-primary)';
+                }}
+              />
             </>
           )}
 
@@ -40,12 +54,23 @@ export function Layout({ header, sidebar, main, inspector }: LayoutProps) {
 
           {!inspectorCollapsed && (
             <>
-              <Separator className="w-1 bg-border hover:bg-primary transition-colors" />
+              <Separator 
+                className="w-1 transition-colors duration-200 hover:cursor-col-resize"
+                style={{ 
+                  background: 'var(--border-primary)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--accent-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--border-primary)';
+                }}
+              />
               <Panel
                 defaultSize={20}
                 minSize={15}
                 maxSize={40}
-                className="bg-background"
+                style={{ background: 'var(--bg-secondary)' }}
               >
                 {inspector}
               </Panel>

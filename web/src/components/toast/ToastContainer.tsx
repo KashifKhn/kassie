@@ -6,14 +6,15 @@ export function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-      {toasts.map((toast) => (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3" style={{ maxWidth: '400px' }}>
+      {toasts.map((toast, index) => (
         <Toast
           key={toast.id}
           id={toast.id}
           type={toast.type}
           message={toast.message}
           onClose={() => removeToast(toast.id)}
+          index={index}
         />
       ))}
     </div>
@@ -25,9 +26,10 @@ interface ToastProps {
   type: 'success' | 'error' | 'info' | 'warning';
   message: string;
   onClose: () => void;
+  index: number;
 }
 
-function Toast({ type, message, onClose }: ToastProps) {
+function Toast({ type, message, onClose, index }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
     return () => clearTimeout(timer);
@@ -36,19 +38,23 @@ function Toast({ type, message, onClose }: ToastProps) {
   const config = {
     success: {
       icon: CheckCircle,
-      className: 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400',
+      bgColor: 'var(--success)',
+      iconColor: 'var(--success)',
     },
     error: {
       icon: AlertCircle,
-      className: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400',
+      bgColor: 'var(--error)',
+      iconColor: 'var(--error)',
     },
     info: {
       icon: Info,
-      className: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400',
+      bgColor: 'var(--info)',
+      iconColor: 'var(--info)',
     },
     warning: {
       icon: AlertTriangle,
-      className: 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-400',
+      bgColor: 'var(--warning)',
+      iconColor: 'var(--warning)',
     },
   }[type];
 
@@ -56,13 +62,37 @@ function Toast({ type, message, onClose }: ToastProps) {
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg transition-all ${config.className}`}
+      className="flex items-center gap-3 px-4 py-3 rounded-lg glass font-mono animate-slide-up"
+      style={{
+        background: 'var(--bg-elevated)',
+        border: `1px solid ${config.bgColor}`,
+        boxShadow: `0 0 20px ${config.bgColor}40, var(--shadow-lg)`,
+        color: 'var(--text-primary)',
+        animationDelay: `${index * 100}ms`,
+      }}
     >
-      <Icon className="h-5 w-5 flex-shrink-0" />
+      <Icon 
+        className="h-5 w-5 flex-shrink-0 animate-pulse" 
+        style={{ 
+          color: config.iconColor,
+          filter: `drop-shadow(0 0 10px ${config.iconColor})`,
+        }}
+      />
       <p className="flex-1 text-sm font-medium">{message}</p>
       <button
         onClick={onClose}
-        className="flex-shrink-0 opacity-70 hover:opacity-100"
+        className="flex-shrink-0 transition-all"
+        style={{ 
+          color: 'var(--text-tertiary)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = 'var(--error)';
+          e.currentTarget.style.transform = 'scale(1.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'var(--text-tertiary)';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
       >
         <X className="h-4 w-4" />
       </button>

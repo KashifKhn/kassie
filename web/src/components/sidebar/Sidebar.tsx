@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, ChevronDown, Database, Table, Loader2 } from 'lucide-react';
 import { schemaApi, queryKeys } from '@/api/queries';
 import { useUiStore } from '@/stores/uiStore';
-import { cn } from '@/lib/utils';
 
 export function Sidebar() {
   const { selectedKeyspace, selectedTable, setSelectedKeyspace, setSelectedTable } = useUiStore();
@@ -35,19 +34,44 @@ export function Sidebar() {
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading schema...</p>
+      <div 
+        className="h-full flex items-center justify-center"
+        style={{ background: 'var(--bg-primary)' }}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 
+            className="h-6 w-6 animate-spin" 
+            style={{ color: 'var(--accent-primary)' }}
+          />
+          <p 
+            className="text-sm font-mono"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Loading schema...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-sm font-semibold text-foreground">Schema</h2>
+    <div 
+      className="h-full flex flex-col overflow-hidden"
+      style={{ background: 'var(--bg-primary)' }}
+    >
+      <div 
+        className="px-4 py-3"
+        style={{ 
+          borderBottom: '1px solid var(--border-primary)',
+          background: 'var(--bg-secondary)'
+        }}
+      >
+        <h2 
+          className="text-xs font-mono font-semibold tracking-wider uppercase"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          Schema Explorer
+        </h2>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -90,44 +114,92 @@ function KeyspaceNode({
     enabled: isExpanded,
   });
 
+  const isSelected = selectedKeyspace === keyspace;
+
   return (
-    <div>
+    <div className="animate-fade-in">
       <button
         onClick={onToggle}
-        className={cn(
-          'w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-colors',
-          selectedKeyspace === keyspace && 'bg-accent'
-        )}
+        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-mono transition-all"
+        style={{
+          background: isSelected ? 'var(--accent-subtle)' : 'transparent',
+          color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
+          borderLeft: isSelected ? '3px solid var(--accent-primary)' : '3px solid transparent',
+        }}
+        onMouseEnter={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.background = 'var(--bg-secondary)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.background = 'transparent';
+          }
+        }}
       >
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          <ChevronDown 
+            className="w-4 h-4 flex-shrink-0 transition-transform" 
+            style={{ color: 'var(--text-tertiary)' }}
+          />
         ) : (
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <ChevronRight 
+            className="w-4 h-4 flex-shrink-0 transition-transform" 
+            style={{ color: 'var(--text-tertiary)' }}
+          />
         )}
-        <Database className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-left font-medium">{keyspace}</span>
+        <Database 
+          className="w-4 h-4 flex-shrink-0" 
+          style={{ color: 'var(--accent-primary)' }}
+        />
+        <span className="flex-1 text-left font-medium truncate">{keyspace}</span>
       </button>
 
       {isExpanded && tablesData && (
-        <div className="ml-6">
-          {tablesData.tables.map((table) => (
-            <button
-              key={table.name}
-              onClick={() => onTableSelect?.(keyspace, table.name)}
-              className={cn(
-                'w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-colors',
-                selectedKeyspace === keyspace &&
-                  selectedTable === table.name &&
-                  'bg-accent text-primary'
-              )}
-            >
-              <Table className="w-4 h-4 text-muted-foreground" />
-              <span className="flex-1 text-left">{table.name}</span>
-              <span className="text-xs text-muted-foreground">
-                {table.estimatedRows > 0 && `~${formatNumber(table.estimatedRows)}`}
-              </span>
-            </button>
-          ))}
+        <div className="animate-slide-down" style={{ background: 'var(--bg-secondary)' }}>
+          {tablesData.tables.map((table, index) => {
+            const isTableSelected = selectedKeyspace === keyspace && selectedTable === table.name;
+            return (
+              <button
+                key={table.name}
+                onClick={() => onTableSelect?.(keyspace, table.name)}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-mono transition-all animate-fade-in"
+                style={{
+                  background: isTableSelected ? 'var(--accent-subtle)' : 'transparent',
+                  color: isTableSelected ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  borderLeft: isTableSelected ? '3px solid var(--accent-primary)' : '3px solid transparent',
+                  marginLeft: '1rem',
+                  animationDelay: `${index * 50}ms`,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isTableSelected) {
+                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isTableSelected) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }
+                }}
+              >
+                <Table 
+                  className="w-4 h-4 flex-shrink-0" 
+                  style={{ color: 'var(--text-tertiary)' }}
+                />
+                <span className="flex-1 text-left truncate">{table.name}</span>
+                {table.estimatedRows > 0 && (
+                  <span 
+                    className="text-xs font-mono flex-shrink-0"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    {formatNumber(table.estimatedRows)}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

@@ -71,10 +71,24 @@ export function DataGrid({
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading data...</p>
+      <div 
+        className="h-full flex items-center justify-center noise-bg"
+        style={{ background: 'var(--bg-primary)' }}
+      >
+        <div className="flex flex-col items-center gap-3 animate-fade-in">
+          <Loader2 
+            className="h-10 w-10 animate-spin" 
+            style={{ 
+              color: 'var(--accent-primary)',
+              filter: 'drop-shadow(0 0 10px var(--accent-primary))',
+            }}
+          />
+          <p 
+            className="text-sm font-mono"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Loading data...
+          </p>
         </div>
       </div>
     );
@@ -82,12 +96,35 @@ export function DataGrid({
 
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 max-w-md text-center">
-          <AlertCircle className="h-12 w-12 text-destructive" />
+      <div 
+        className="h-full flex items-center justify-center"
+        style={{ background: 'var(--bg-primary)' }}
+      >
+        <div 
+          className="flex flex-col items-center gap-4 max-w-md text-center p-8 rounded-xl glass animate-scale-in"
+          style={{
+            border: '1px solid var(--border-primary)',
+            boxShadow: 'var(--shadow-lg)',
+          }}
+        >
+          <AlertCircle 
+            className="h-12 w-12" 
+            style={{ 
+              color: 'var(--error)',
+              filter: 'drop-shadow(0 0 20px var(--error))',
+            }}
+          />
           <div>
-            <h3 className="text-lg font-semibold text-foreground">Failed to load data</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <h3 
+              className="text-lg font-mono font-bold"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Failed to load data
+            </h3>
+            <p 
+              className="mt-3 text-sm font-sans"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               {error instanceof Error ? error.message : 'An error occurred while fetching data'}
             </p>
           </div>
@@ -98,10 +135,21 @@ export function DataGrid({
 
   if (!schemaData || !rowsData) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Database className="h-12 w-12 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">No data available</p>
+      <div 
+        className="h-full flex items-center justify-center"
+        style={{ background: 'var(--bg-primary)' }}
+      >
+        <div className="flex flex-col items-center gap-3 animate-fade-in">
+          <Database 
+            className="h-12 w-12" 
+            style={{ color: 'var(--text-tertiary)' }}
+          />
+          <p 
+            className="text-sm font-mono"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            No data available
+          </p>
         </div>
       </div>
     );
@@ -122,26 +170,54 @@ export function DataGrid({
 
   if (displayRows.length === 0) {
     return (
-      <div className="h-full flex flex-col overflow-hidden bg-background">
-        <div className="flex-shrink-0 border-b border-border bg-muted">
+      <div 
+        className="h-full flex flex-col overflow-hidden"
+        style={{ background: 'var(--bg-primary)' }}
+      >
+        <div 
+          className="flex-shrink-0"
+          style={{ 
+            borderBottom: '1px solid var(--border-primary)',
+            background: 'var(--bg-secondary)',
+          }}
+        >
           <div className="flex">
             {columns.map((column) => (
               <div
                 key={column.name}
-                className="px-4 py-2 text-sm font-semibold border-r border-border flex-1 min-w-[150px]"
+                className="px-4 py-3 text-sm font-mono font-bold border-r flex-1 min-w-[150px]"
+                style={{ 
+                  color: 'var(--text-primary)',
+                  borderRight: '1px solid var(--border-primary)',
+                }}
               >
                 <div className="flex items-center gap-2">
                   <span>{column.name}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span 
+                    className="text-xs"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
                     {column.type}
                   </span>
                   {column.isPartitionKey && (
-                    <span className="text-xs bg-primary text-primary-foreground px-1 rounded">
+                    <span 
+                      className="text-xs px-1.5 py-0.5 rounded font-bold"
+                      style={{ 
+                        background: 'var(--accent-primary)',
+                        color: 'var(--text-inverse)',
+                      }}
+                    >
                       PK
                     </span>
                   )}
                   {column.isClusteringKey && (
-                    <span className="text-xs bg-secondary text-secondary-foreground px-1 rounded">
+                    <span 
+                      className="text-xs px-1.5 py-0.5 rounded font-bold"
+                      style={{ 
+                        background: 'var(--accent-subtle)',
+                        color: 'var(--accent-primary)',
+                      }}
+                    >
                       CK
                     </span>
                   )}
@@ -150,10 +226,19 @@ export function DataGrid({
             ))}
           </div>
         </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <Database className="h-12 w-12" />
-            <p className="text-sm">
+        <div 
+          className="flex-1 flex items-center justify-center noise-bg"
+          style={{ background: 'var(--bg-primary)' }}
+        >
+          <div className="flex flex-col items-center gap-3 animate-fade-in">
+            <Database 
+              className="h-12 w-12" 
+              style={{ color: 'var(--text-tertiary)' }}
+            />
+            <p 
+              className="text-sm font-mono"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               {isFiltered ? 'No rows match the filter' : 'No data in this table'}
             </p>
           </div>
@@ -163,26 +248,54 @@ export function DataGrid({
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
-      <div className="flex-shrink-0 border-b border-border bg-muted">
+    <div 
+      className="h-full flex flex-col overflow-hidden"
+      style={{ background: 'var(--bg-primary)' }}
+    >
+      <div 
+        className="flex-shrink-0"
+        style={{ 
+          borderBottom: '1px solid var(--border-primary)',
+          background: 'var(--bg-secondary)',
+        }}
+      >
         <div className="flex">
           {columns.map((column) => (
             <div
               key={column.name}
-              className="px-4 py-2 text-sm font-semibold border-r border-border flex-1 min-w-[150px]"
+              className="px-4 py-3 text-sm font-mono font-bold border-r flex-1 min-w-[150px]"
+              style={{ 
+                color: 'var(--text-primary)',
+                borderRight: '1px solid var(--border-primary)',
+              }}
             >
               <div className="flex items-center gap-2">
                 <span>{column.name}</span>
-                <span className="text-xs text-muted-foreground">
+                <span 
+                  className="text-xs"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
                   {column.type}
                 </span>
                 {column.isPartitionKey && (
-                  <span className="text-xs bg-primary text-primary-foreground px-1 rounded">
+                  <span 
+                    className="text-xs px-1.5 py-0.5 rounded font-bold"
+                    style={{ 
+                      background: 'var(--accent-primary)',
+                      color: 'var(--text-inverse)',
+                    }}
+                  >
                     PK
                   </span>
                 )}
                 {column.isClusteringKey && (
-                  <span className="text-xs bg-secondary text-secondary-foreground px-1 rounded">
+                  <span 
+                    className="text-xs px-1.5 py-0.5 rounded font-bold"
+                    style={{ 
+                      background: 'var(--accent-subtle)',
+                      color: 'var(--accent-primary)',
+                    }}
+                  >
                     CK
                   </span>
                 )}
@@ -202,16 +315,34 @@ export function DataGrid({
         />
       </div>
 
-      <div className="flex-shrink-0 border-t border-border px-4 py-2 bg-muted">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            Showing {displayRows.length} {displayRows.length === 1 ? 'row' : 'rows'}
+      <div 
+        className="flex-shrink-0 px-4 py-3"
+        style={{ 
+          borderTop: '1px solid var(--border-primary)',
+          background: 'var(--bg-secondary)',
+        }}
+      >
+        <div className="flex items-center justify-between text-sm font-mono">
+          <span style={{ color: 'var(--text-secondary)' }}>
+            Showing <span style={{ color: 'var(--accent-primary)' }}>{displayRows.length}</span> {displayRows.length === 1 ? 'row' : 'rows'}
           </span>
           <div className="flex items-center gap-2">
             {allRows.length > pageSize && (
               <button
                 onClick={handlePrevPage}
-                className="flex items-center gap-1 px-3 py-1 text-sm font-medium bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-4 py-2 text-sm font-mono font-medium rounded transition-all"
+                style={{
+                  background: 'var(--accent-primary)',
+                  color: 'var(--text-inverse)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--accent-hover)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--accent-primary)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
@@ -221,7 +352,25 @@ export function DataGrid({
               <button
                 onClick={handleNextPage}
                 disabled={nextPageMutation.isPending}
-                className="flex items-center gap-1 px-3 py-1 text-sm font-medium bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-4 py-2 text-sm font-mono font-medium rounded transition-all"
+                style={{
+                  background: nextPageMutation.isPending ? 'var(--bg-tertiary)' : 'var(--accent-primary)',
+                  color: nextPageMutation.isPending ? 'var(--text-tertiary)' : 'var(--text-inverse)',
+                  cursor: nextPageMutation.isPending ? 'not-allowed' : 'pointer',
+                  opacity: nextPageMutation.isPending ? '0.5' : '1',
+                }}
+                onMouseEnter={(e) => {
+                  if (!nextPageMutation.isPending) {
+                    e.currentTarget.style.background = 'var(--accent-hover)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!nextPageMutation.isPending) {
+                    e.currentTarget.style.background = 'var(--accent-primary)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }
+                }}
               >
                 Next
                 <ChevronRight className="h-4 w-4" />
@@ -256,14 +405,29 @@ function RowRenderer({
 
   return (
     <div
-      style={style}
-      className="flex border-b border-border hover:bg-accent cursor-pointer transition-colors"
+      style={{
+        ...style,
+        borderBottom: '1px solid var(--border-primary)',
+        background: 'transparent',
+        cursor: 'pointer',
+      }}
+      className="flex transition-all"
       onClick={() => onRowSelect?.(row)}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--accent-subtle)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent';
+      }}
     >
       {columns.map((column) => (
         <div
           key={column.name}
-          className="px-4 py-2 text-sm border-r border-border flex-1 min-w-[150px] truncate"
+          className="px-4 py-2 text-sm font-mono border-r flex-1 min-w-[150px] truncate"
+          style={{
+            color: 'var(--text-primary)',
+            borderRight: '1px solid var(--border-primary)',
+          }}
         >
           {formatCellValue(row.cells[column.name])}
         </div>
