@@ -165,31 +165,111 @@ Kassie validates your filter syntax before sending it to the database. Invalid f
 
 ## Inspector Panel
 
-When you press `Enter` on a row, the inspector shows detailed JSON:
+The inspector panel shows detailed row information with multiple viewing modes.
 
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "John Doe",
-  "email": "john@example.com",
-  "created_at": "2024-01-15T10:30:00Z",
-  "metadata": {
-    "role": "admin",
-    "permissions": ["read", "write", "delete"]
-  },
-  "tags": ["vip", "premium"]
-}
+### Display Modes
+
+Press `t` to cycle between display modes:
+
+1. **Table Mode**: Two-column layout with keys on left, values on right
+   ```
+   id                   │ "550e8400-e29b-41d4-a716-446655440000"
+   name                 │ "John Doe"
+   email                │ "john@example.com"
+   created_at           │ "2024-01-15T10:30:00Z"
+   ```
+
+2. **JSON Mode**: Pretty-printed JSON with syntax highlighting
+   ```json
+   {
+     "id": "550e8400-e29b-41d4-a716-446655440000",
+     "name": "John Doe",
+     "email": "john@example.com",
+     "created_at": "2024-01-15T10:30:00Z"
+   }
+   ```
+
+### Navigation
+
+| Key | Action |
+|-----|--------|
+| `j` / `↓` | Scroll down one line |
+| `k` / `↑` | Scroll up one line |
+| `h` / `←` | Scroll left (for long values) |
+| `l` / `→` | Scroll right (for long values) |
+| `d` | Page down (20 lines) |
+| `u` | Page up (20 lines) |
+| `[` | Navigate to previous row |
+| `]` | Navigate to next row |
+| `t` | Toggle display mode (Table/JSON) |
+| `i` | Toggle fullscreen inspector mode |
+| `Ctrl+C` | Copy content to clipboard |
+
+### Horizontal Scrolling
+
+For rows with long values (URLs, large IDs, JSON objects):
+
+1. Focus the inspector panel (`Tab` or `Ctrl+I`)
+2. Press `h` to scroll left, `l` to scroll right
+3. The key column stays fixed while values scroll
+4. A scroll indicator `[→ N]` shows your position
+
+**Example**: Viewing a row with a long URL:
+```
+id                   │ "441f1d36-32bc-4259-b4de-342a30a3e142"
+image_url            │ "https://example.com/very/long/path/to/image..."
+```
+Press `l` to scroll right:
+```
+id                   │ "2bc-4259-b4de-342a30a3e142"
+image_url            │ .com/very/long/path/to/image/file.png"
 ```
 
-**Features**:
-- Syntax highlighting
-- Collapsible nested objects
-- Copy values (when supported by terminal)
+### Fullscreen Mode
 
-**Navigation**:
-- `j/k`: Scroll through JSON
-- `Enter`: Expand/collapse nested objects
-- `Esc`: Close inspector
+Press `i` when the inspector is focused to toggle fullscreen mode:
+
+- **Normal mode**: Inspector shares space with grid and sidebar
+- **Fullscreen mode**: Inspector takes the full screen for better viewing
+
+This is useful for:
+- Inspecting rows with many columns
+- Viewing large JSON objects
+- Reading long text values
+
+Press `i` again to exit fullscreen.
+
+### Row Navigation
+
+Browse through rows without leaving the inspector:
+
+1. View a row in the inspector (`Enter` from grid)
+2. Press `]` to move to the next row
+3. Press `[` to move to the previous row
+4. The inspector updates automatically
+
+This is much faster than switching back to the grid for each row.
+
+### Clipboard Support
+
+Press `Ctrl+C` to copy the current row data to clipboard:
+
+- **Table mode**: Copies as formatted table
+- **JSON mode**: Copies as JSON object
+
+Requires clipboard utilities:
+- **Linux**: `xclip`, `xsel`, or `wl-copy` (Wayland)
+- **macOS**: Built-in (`pbcopy`)
+- **Windows**: Built-in (`clip`)
+
+::: tip Navigation Workflow
+**Efficient data browsing**:
+1. Select a row (`Enter` in grid)
+2. Press `i` for fullscreen inspector
+3. Use `]` to browse through rows
+4. Use `h/l` to see long values
+5. Press `i` to exit fullscreen
+:::
 
 ## Pagination
 
@@ -248,8 +328,12 @@ Kassie uses Cassandra's paging state tokens for efficient pagination. No data is
 
 | Key | Action |
 |-----|--------|
-| `j/k` or `↓/↑` | Scroll |
-| `Enter` | Expand/collapse |
+| `j/k` or `↓/↑` | Scroll vertically |
+| `h/l` or `←/→` | Scroll horizontally |
+| `[` / `]` | Previous/next row |
+| `i` | Toggle fullscreen |
+| `m` | Switch display mode |
+| `Ctrl+C` | Copy to clipboard |
 | `Esc` | Close |
 
 ## Themes

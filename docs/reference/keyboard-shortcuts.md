@@ -68,9 +68,14 @@ Complete reference for all keyboard shortcuts in Kassie.
 |-----|--------|
 | `j` or `↓` | Scroll down one line |
 | `k` or `↑` | Scroll up one line |
+| `h` or `←` | Scroll left (horizontal) |
+| `l` or `→` | Scroll right (horizontal) |
 | `d` | Page down (20 lines) |
 | `u` | Page up (20 lines) |
-| `t` | Toggle display mode (table/JSON/formatted) |
+| `[` | Navigate to previous row |
+| `]` | Navigate to next row |
+| `t` | Toggle display mode (Table/JSON) |
+| `i` | Toggle fullscreen inspector mode |
 | `Ctrl+C` | Copy content to clipboard |
 
 ### Panel Navigation
@@ -82,7 +87,7 @@ Complete reference for all keyboard shortcuts in Kassie.
 | `Ctrl+H` | Focus sidebar panel |
 | `Ctrl+L` | Focus grid panel |
 | `Ctrl+I` | Focus inspector panel |
-| `Ctrl+B` | Toggle view mode (Full → No Sidebar → Grid Only → Full) |
+| `Ctrl+B` | Cycle view mode (Full → No Sidebar → Grid Only → Inspector Only → Full) |
 | `Ctrl+F` | Activate search in current panel |
 
 ### Help View
@@ -298,9 +303,10 @@ Esc - Cancel      Tab - Switch Panel    r - Refresh
                   Ctrl+H/L/I - Focus    / - Filter
 
 Panel Control:    Filter Bar:           Inspector:
-Ctrl+B - Views    Enter - Apply         j/k - Scroll
-Ctrl+F - Search   Esc - Cancel          d/u - Page Down/Up
-                  ↑/↓ - History         t - Toggle Mode
+Ctrl+B - Views    Enter - Apply         [/] - Prev/Next Row
+Ctrl+F - Search   Esc - Cancel          h/l - Scroll Horiz
+                  ↑/↓ - History         i - Fullscreen
+                                        t - Toggle Mode
                                         Ctrl+C - Copy
 ```
 
