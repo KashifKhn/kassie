@@ -201,10 +201,7 @@ func (i *Inspector) View(width, height int) string {
 
 	header := headerStyle.Render(fmt.Sprintf("Inspector [%s]", modeName))
 
-	footerLines := 1
-	if width < 80 || width >= 120 {
-		footerLines = 2
-	}
+	footerLines := 2
 
 	contentHeight := height - 3 - footerLines
 
@@ -240,27 +237,31 @@ func (i *Inspector) View(width, height int) string {
 	if width < 80 {
 		if i.isFullscreen {
 			line1 := dimStyle.Render("j/k: scroll • h/l: horizontal")
-			line2 := dimStyle.Render("t: toggle • i: close")
+			line2 := dimStyle.Render("[/]: prev/next row • t: toggle • i: close")
 			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
 		} else {
 			line1 := dimStyle.Render("j/k: scroll • h/l: horizontal")
-			line2 := dimStyle.Render("t: toggle • i: fullscreen")
+			line2 := dimStyle.Render("[/]: prev/next row • t: toggle • i: full")
 			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
 		}
 	} else if width < 120 {
 		if i.isFullscreen {
-			footer = dimStyle.Render("j/k scroll • h/l horiz • t toggle • i close")
+			line1 := dimStyle.Render("j/k: scroll • h/l: horiz • [/]: prev/next")
+			line2 := dimStyle.Render("t: toggle • i: close • ctrl+c: copy")
+			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
 		} else {
-			footer = dimStyle.Render("j/k scroll • h/l horiz • t toggle • i full")
+			line1 := dimStyle.Render("j/k: scroll • h/l: horiz • [/]: prev/next")
+			line2 := dimStyle.Render("t: toggle • i: full • ctrl+c: copy")
+			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
 		}
 	} else {
 		if i.isFullscreen {
 			line1 := dimStyle.Render("j/k: scroll up/down • h/l: scroll left/right • d/u: page down/up")
-			line2 := dimStyle.Render("t: toggle view • i: close fullscreen • ctrl+c: copy to clipboard")
+			line2 := dimStyle.Render("[/]: prev/next row • t: toggle view • i: close fullscreen • ctrl+c: copy")
 			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
 		} else {
 			line1 := dimStyle.Render("j/k: scroll up/down • h/l: scroll left/right • d/u: page down/up")
-			line2 := dimStyle.Render("t: toggle table/json • i: fullscreen • ctrl+c: copy to clipboard")
+			line2 := dimStyle.Render("[/]: prev/next row • t: toggle table/json • i: fullscreen • ctrl+c: copy")
 			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
 		}
 	}

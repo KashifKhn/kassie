@@ -107,6 +107,14 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 	case components.RowSelectedMsg:
 		v.inspect.SetRow(m.Row)
 		return v, nil
+	case components.NavigateRowMsg:
+		var cmd tea.Cmd
+		if m.Direction > 0 {
+			v.grid, cmd = v.grid.SelectNextRow()
+		} else {
+			v.grid, cmd = v.grid.SelectPrevRow()
+		}
+		return v, cmd
 	case components.FilterAppliedMsg:
 		v.filter = v.filter.Deactivate()
 		var cmd tea.Cmd
@@ -182,6 +190,10 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 			case "u":
 				height := 20
 				v.inspect.PageUp(height)
+			case "]":
+				return v, func() tea.Msg { return components.NavigateRowMsg{Direction: 1} }
+			case "[":
+				return v, func() tea.Msg { return components.NavigateRowMsg{Direction: -1} }
 			case "ctrl+c":
 				return v, v.copyToClipboardCmd()
 			}
