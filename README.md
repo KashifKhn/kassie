@@ -1,15 +1,17 @@
 # Kassie
 
-Modern database explorer for Cassandra & ScyllaDB with TUI and Web interfaces.
+Modern database explorer for Cassandra & ScyllaDB with dual TUI and Web interfaces.
 
 ## Features
 
-- **Terminal Interface (TUI)** - Stable, production-ready
-- **Web UI** - 🚧 Under active development (Phase 5)
+- **Terminal Interface (TUI)** - Stable, production-ready, keyboard-driven
+- **Web UI** - ✅ Feature-complete, modern React interface
 - Single binary with embedded server
 - Browse keyspaces, tables, and data
-- Filter with WHERE clauses
-- Keyboard-driven navigation
+- Filter with CQL WHERE clauses
+- Cursor-based pagination
+- Light/Dark/System themes
+- Real-time data exploration
 
 ## Installation
 
@@ -52,8 +54,8 @@ kassie upgrade --version v0.2.0   # Upgrade to specific version
 ## Usage
 
 ```bash
-kassie tui              # Launch terminal interface (recommended)
-kassie web              # Launch web interface (under development)
+kassie tui              # Launch terminal interface
+kassie web              # Launch web interface (recommended for GUI users)
 kassie server           # Run standalone server
 ```
 

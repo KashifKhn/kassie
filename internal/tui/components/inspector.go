@@ -14,12 +14,17 @@ import (
 )
 
 type Inspector struct {
-	theme       styles.Theme
-	row         *pb.Row
-	json        string
-	scrollPos   int
-	totalLines  int
-	displayMode displayMode
+	theme         styles.Theme
+	row           *pb.Row
+	json          string
+	scrollPos     int
+	horizontalPos int
+	totalLines    int
+	maxLineWidth  int
+	displayMode   displayMode
+	contentWidth  int
+	contentHeight int
+	isFullscreen  bool
 }
 
 type displayMode int
@@ -27,7 +32,6 @@ type displayMode int
 const (
 	displayModeTable displayMode = iota
 	displayModePrettyJSON
-	displayModeCompactJSON
 )
 
 func NewInspector(theme styles.Theme) Inspector {
@@ -38,9 +42,9 @@ func NewInspector(theme styles.Theme) Inspector {
 }
 
 func (i *Inspector) CycleDisplayMode() {
-	i.displayMode = (i.displayMode + 1) % 3
+	i.displayMode = (i.displayMode + 1) % 2
 	i.scrollPos = 0
-	if i.row != nil {
+	if i.row != nil && i.contentWidth > 0 {
 		i.updateContent()
 	}
 }
@@ -48,19 +52,29 @@ func (i *Inspector) CycleDisplayMode() {
 func (i *Inspector) SetRow(row *pb.Row) {
 	i.row = row
 	i.scrollPos = 0
-	i.updateContent()
+	if i.contentWidth > 0 {
+		i.updateContent()
+	}
 }
 
 func (i *Inspector) updateContent() {
 	switch i.displayMode {
 	case displayModeTable:
-		i.json = formatRowTable(i.row, i.theme)
+		i.json = formatRowTable(i.row, i.theme, i.contentWidth, i.horizontalPos)
 	case displayModePrettyJSON:
-		i.json = formatRowJSON(i.row)
-	case displayModeCompactJSON:
-		i.json = formatRowCompact(i.row)
+		rawJSON := formatRowJSON(i.row)
+		i.json = wrapJSON(rawJSON, i.contentWidth, i.horizontalPos)
 	}
 	i.totalLines = strings.Count(i.json, "\n") + 1
+
+	i.maxLineWidth = 0
+	lines := strings.Split(i.json, "\n")
+	for _, line := range lines {
+		lineWidth := lipgloss.Width(line)
+		if lineWidth > i.maxLineWidth {
+			i.maxLineWidth = lineWidth
+		}
+	}
 }
 
 func (i *Inspector) ScrollDown() {
@@ -81,6 +95,23 @@ func (i *Inspector) PageDown(height int) {
 
 func (i *Inspector) PageUp(height int) {
 	i.scrollPos = maxInt(i.scrollPos-height+2, 0)
+}
+
+func (i *Inspector) ScrollLeft() {
+	if i.horizontalPos > 0 {
+		i.horizontalPos -= 5
+		if i.horizontalPos < 0 {
+			i.horizontalPos = 0
+		}
+	}
+}
+
+func (i *Inspector) ScrollRight() {
+	i.horizontalPos += 5
+}
+
+func (i *Inspector) SetFullscreen(fullscreen bool) {
+	i.isFullscreen = fullscreen
 }
 
 func (i Inspector) CopyToClipboard() error {
@@ -130,13 +161,26 @@ func copyToClipboard(text string) error {
 	return cmd.Wait()
 }
 
-func (i Inspector) View(width, height int) string {
+func (i *Inspector) View(width, height int) string {
 	if width <= 0 || height <= 0 {
 		return ""
 	}
 
 	if i.row == nil {
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, i.theme.Dim.Render("Select a row"))
+	}
+
+	// Store previous state
+	prevHorizontal := i.horizontalPos
+	prevWidth := i.contentWidth
+
+	// Update dimensions
+	i.contentWidth = width
+	i.contentHeight = height
+
+	// Only regenerate if something changed
+	if i.json == "" || prevWidth != width || prevHorizontal != i.horizontalPos {
+		i.updateContent()
 	}
 
 	lines := strings.Split(i.json, "\n")
@@ -152,13 +196,14 @@ func (i Inspector) View(width, height int) string {
 	case displayModeTable:
 		modeName = "Table"
 	case displayModePrettyJSON:
-		modeName = "Pretty JSON"
-	case displayModeCompactJSON:
-		modeName = "Compact JSON"
+		modeName = "JSON"
 	}
 
 	header := headerStyle.Render(fmt.Sprintf("Inspector [%s]", modeName))
-	contentHeight := height - 3
+
+	footerLines := 2
+
+	contentHeight := height - 3 - footerLines
 
 	if contentHeight < 1 {
 		contentHeight = 1
@@ -179,9 +224,47 @@ func (i Inspector) View(width, height int) string {
 			Render(fmt.Sprintf(" [%d/%d - %.0f%%]", i.scrollPos+1, i.totalLines, scrollPercent))
 	}
 
-	footer := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240")).
-		Render("j/k scroll • d/u page • t toggle view • ctrl+c copy")
+	// Add horizontal scroll indicator
+	if i.horizontalPos > 0 {
+		scrollIndicator += lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240")).
+			Render(fmt.Sprintf(" [→ %d]", i.horizontalPos))
+	}
+
+	var footer string
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+
+	if width < 80 {
+		if i.isFullscreen {
+			line1 := dimStyle.Render("j/k: scroll • h/l: horizontal")
+			line2 := dimStyle.Render("[/]: prev/next row • t: toggle • i: close")
+			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
+		} else {
+			line1 := dimStyle.Render("j/k: scroll • h/l: horizontal")
+			line2 := dimStyle.Render("[/]: prev/next row • t: toggle • i: full")
+			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
+		}
+	} else if width < 120 {
+		if i.isFullscreen {
+			line1 := dimStyle.Render("j/k: scroll • h/l: horiz • [/]: prev/next")
+			line2 := dimStyle.Render("t: toggle • i: close • ctrl+c: copy")
+			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
+		} else {
+			line1 := dimStyle.Render("j/k: scroll • h/l: horiz • [/]: prev/next")
+			line2 := dimStyle.Render("t: toggle • i: full • ctrl+c: copy")
+			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
+		}
+	} else {
+		if i.isFullscreen {
+			line1 := dimStyle.Render("j/k: scroll up/down • h/l: scroll left/right • d/u: page down/up")
+			line2 := dimStyle.Render("[/]: prev/next row • t: toggle view • i: close fullscreen • ctrl+c: copy")
+			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
+		} else {
+			line1 := dimStyle.Render("j/k: scroll up/down • h/l: scroll left/right • d/u: page down/up")
+			line2 := dimStyle.Render("[/]: prev/next row • t: toggle table/json • i: fullscreen • ctrl+c: copy")
+			footer = lipgloss.JoinVertical(lipgloss.Left, line1, line2)
+		}
+	}
 
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -239,7 +322,7 @@ func cellToInspectable(cell *pb.CellValue) any {
 	}
 }
 
-func formatRowTable(row *pb.Row, theme styles.Theme) string {
+func formatRowTable(row *pb.Row, theme styles.Theme, maxWidth int, horizontalOffset int) string {
 	if row == nil || row.Cells == nil {
 		return ""
 	}
@@ -250,9 +333,6 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 	}
 	sort.Strings(keys)
 
-	maxKeyLen := 0
-	maxValueLen := 0
-
 	type rowData struct {
 		key   string
 		value string
@@ -260,6 +340,7 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 	}
 
 	rows := make([]rowData, 0, len(keys))
+	maxKeyLen := 0
 
 	for _, key := range keys {
 		if len(key) > maxKeyLen {
@@ -287,15 +368,34 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 			}
 		}
 
-		if len(valueStr) > maxValueLen {
-			maxValueLen = len(valueStr)
-		}
-
 		rows = append(rows, rowData{key: key, value: valueStr, raw: value})
 	}
 
-	if maxValueLen > 60 {
-		maxValueLen = 60
+	// Fixed key column width - adjust based on available width
+	keyColWidth := maxKeyLen
+
+	// In narrow panels, constrain key width more aggressively
+	if maxWidth < 100 {
+		// Very narrow - limit keys to 15 chars
+		if keyColWidth > 15 {
+			keyColWidth = 15
+		}
+	} else if maxWidth < 150 {
+		// Narrow - limit keys to 20 chars
+		if keyColWidth > 20 {
+			keyColWidth = 20
+		}
+	} else {
+		// Wide panel - allow up to 30 chars
+		if keyColWidth > 30 {
+			keyColWidth = 30
+		}
+	}
+
+	// Calculate value column width based on remaining space
+	valueColWidth := maxWidth - keyColWidth - 4 // 4 for separator and padding
+	if valueColWidth < 10 {
+		valueColWidth = 10
 	}
 
 	keyStyle := lipgloss.NewStyle().
@@ -313,17 +413,27 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 
 	var lines []string
 
-	topBorder := "┌" + strings.Repeat("─", maxKeyLen+2) + "┬" + strings.Repeat("─", maxValueLen+2) + "┐"
-	lines = append(lines, borderStyle.Render(topBorder))
-
+	// No top border - just render rows
 	for _, rd := range rows {
-		keyPadded := padRight(rd.key, maxKeyLen)
-
-		valueStr := rd.value
-		if len(valueStr) > maxValueLen {
-			valueStr = valueStr[:maxValueLen-3] + "..."
+		// Truncate key if needed
+		keyStr := rd.key
+		if len(keyStr) > keyColWidth {
+			keyStr = keyStr[:keyColWidth-3] + "..."
 		}
-		valuePadded := padRight(valueStr, maxValueLen)
+		keyPadded := padRight(keyStr, keyColWidth)
+
+		// Apply horizontal scroll to value
+		valueStr := rd.value
+		if horizontalOffset > 0 && horizontalOffset < len(valueStr) {
+			valueStr = valueStr[horizontalOffset:]
+		} else if horizontalOffset >= len(valueStr) {
+			valueStr = ""
+		}
+
+		// Truncate value to visible width (no padding to prevent overflow)
+		if len(valueStr) > valueColWidth {
+			valueStr = valueStr[:valueColWidth]
+		}
 
 		var styleToUse lipgloss.Style
 		if rd.raw == nil {
@@ -341,44 +451,15 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 			}
 		}
 
-		leftBorder := borderStyle.Render("│ ")
-		rightBorder := borderStyle.Render(" │")
 		separator := borderStyle.Render(" │ ")
-
 		keyCell := keyStyle.Render(keyPadded)
-		valueCell := styleToUse.Render(valuePadded)
+		valueCell := styleToUse.Render(valueStr)
 
-		line := leftBorder + keyCell + separator + valueCell + rightBorder
+		line := keyCell + separator + valueCell
 		lines = append(lines, line)
 	}
 
-	bottomBorder := "└" + strings.Repeat("─", maxKeyLen+2) + "┴" + strings.Repeat("─", maxValueLen+2) + "┘"
-	lines = append(lines, borderStyle.Render(bottomBorder))
-
 	return strings.Join(lines, "\n")
-}
-
-func formatRowCompact(row *pb.Row) string {
-	if row == nil || row.Cells == nil {
-		return ""
-	}
-
-	keys := make([]string, 0, len(row.Cells))
-	for key := range row.Cells {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	data := make(map[string]any, len(keys))
-	for _, key := range keys {
-		data[key] = cellToInspectable(row.Cells[key])
-	}
-
-	value, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Sprintf("failed to format row: %v", err)
-	}
-	return string(value)
 }
 
 func padRight(s string, length int) string {
@@ -386,4 +467,33 @@ func padRight(s string, length int) string {
 		return s
 	}
 	return s + strings.Repeat(" ", length-len(s))
+}
+
+func wrapJSON(jsonStr string, maxWidth int, horizontalOffset int) string {
+
+	if maxWidth <= 0 || maxWidth < 20 {
+		maxWidth = 40
+	}
+
+	lines := strings.Split(jsonStr, "\n")
+	var processedLines []string
+
+	for _, line := range lines {
+		// Apply horizontal scroll
+		if horizontalOffset > 0 && horizontalOffset < len(line) {
+			line = line[horizontalOffset:]
+		} else if horizontalOffset >= len(line) {
+			line = ""
+		}
+
+		// Truncate to visible width
+		runes := []rune(line)
+		if len(runes) > maxWidth {
+			processedLines = append(processedLines, string(runes[:maxWidth]))
+		} else {
+			processedLines = append(processedLines, line)
+		}
+	}
+
+	return strings.Join(processedLines, "\n")
 }

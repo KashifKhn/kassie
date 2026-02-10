@@ -38,10 +38,6 @@ Verify the installation:
 kassie version
 ```
 
-::: warning Web UI Under Development
-The web interface (`kassie web`) is currently in active development. For production use, we recommend the TUI (Terminal UI) interface which is fully functional and stable.
-:::
-
 ## First Run
 
 ### Step 1: Create a Configuration File
@@ -85,8 +81,15 @@ Start the TUI:
 kassie tui
 ```
 
-::: tip Recommended
-The TUI provides the most stable and feature-complete experience. The web interface is under active development.
+Or start the Web UI:
+
+```bash
+kassie web
+```
+
+::: tip Choose Your Interface
+- **TUI**: Perfect for terminal users, SSH sessions, and keyboard-driven workflows
+- **Web**: Ideal for GUI users, team collaboration, and visual data exploration
 :::
 
 ## First Steps in TUI

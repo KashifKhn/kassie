@@ -11,6 +11,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type GatewayConfig struct {
@@ -30,6 +31,15 @@ type Gateway struct {
 func NewGateway(cfg *GatewayConfig, log *logger.Logger) (*Gateway, error) {
 	mux := runtime.NewServeMux(
 		runtime.WithIncomingHeaderMatcher(customHeaderMatcher),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				UseProtoNames:   false,
+				EmitUnpopulated: true,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
+		}),
 	)
 
 	g := &Gateway{

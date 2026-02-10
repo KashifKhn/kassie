@@ -51,6 +51,10 @@ type RowSelectedMsg struct {
 	Row *pb.Row
 }
 
+type NavigateRowMsg struct {
+	Direction int
+}
+
 type exportSuccessMsg struct {
 	FilePath string
 	Format   string
@@ -383,6 +387,41 @@ func (g DataGrid) CacheStats() (hits, misses, size int) {
 
 func (g DataGrid) IsSearchActive() bool {
 	return g.searchActive
+}
+
+func (g DataGrid) SelectNextRow() (DataGrid, tea.Cmd) {
+	if len(g.rows) == 0 {
+		return g, nil
+	}
+
+	if g.selected < len(g.rows)-1 {
+		g.selected++
+		row := g.rows[g.selected].raw
+		return g, func() tea.Msg { return RowSelectedMsg{Row: row} }
+	}
+
+	return g, nil
+}
+
+func (g DataGrid) SelectPrevRow() (DataGrid, tea.Cmd) {
+	if len(g.rows) == 0 {
+		return g, nil
+	}
+
+	if g.selected > 0 {
+		g.selected--
+		row := g.rows[g.selected].raw
+		return g, func() tea.Msg { return RowSelectedMsg{Row: row} }
+	}
+
+	return g, nil
+}
+
+func (g DataGrid) GetCurrentRow() *pb.Row {
+	if len(g.rows) == 0 || g.selected < 0 || g.selected >= len(g.rows) {
+		return nil
+	}
+	return g.rows[g.selected].raw
 }
 
 func (g DataGrid) ActivateSearch() DataGrid {

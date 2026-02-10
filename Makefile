@@ -15,8 +15,13 @@ proto:
 	./scripts/gen-proto.sh
 
 build: web
-	@echo "Building kassie binary..."
+	@echo "Copying web assets for embedding..."
+	@find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
+	@cp -r web/dist/* internal/server/web/dist/ 2>/dev/null || true
+	@echo "Building kassie binary with embedded web assets..."
 	go build -o kassie cmd/kassie/main.go
+	@echo "Cleaning up copied assets..."
+	@find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
 
 build-server:
 	@echo "Building server only..."
@@ -25,9 +30,9 @@ build-server:
 web:
 	@echo "Building web UI..."
 	@if [ -d "web" ]; then \
-		cd web && npm install && npm run build; \
+		cd web && pnpm install && pnpm run build; \
 	else \
-		echo "Web directory not found, skipping (Phase 5 not implemented yet)"; \
+		echo "Web directory not found, skipping"; \
 	fi
 
 dev-tui:
@@ -35,12 +40,13 @@ dev-tui:
 	go run cmd/kassie/main.go tui
 
 dev-web:
-	@echo "Running web UI with hot reload..."
-	cd web && npm run dev
+	@echo "Running web UI on port 9091..."
+	@echo "Make sure to run 'make dev-server' in another terminal"
+	cd web && pnpm dev
 
 dev-server:
-	@echo "Running server only..."
-	go run cmd/kassie/main.go server --web-root ./web/dist
+	@echo "Running server for web development on port 9090..."
+	go run cmd/kassie/main.go server --http-port 9090
 
 test:
 	@echo "Running all tests..."
@@ -61,7 +67,7 @@ lint:
 fmt:
 	@echo "Formatting code..."
 	go fmt ./...
-	@if [ -f web/package.json ]; then cd web && npm run format; fi
+	@if [ -f web/package.json ]; then cd web && pnpm run format; fi
 
 clean:
 	@echo "Cleaning build artifacts..."

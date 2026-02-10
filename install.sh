@@ -92,6 +92,39 @@ detect_rosetta() {
     get_arch
 }
 
+spinner_pid=""
+
+show_spinner() {
+    message="$1"
+    spinner_chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    
+    printf "\033[?25l"
+    
+    i=0
+    while true; do
+        char=$(printf "%s" "$spinner_chars" | cut -c$((i + 1)))
+        printf "\r  ${CYAN}%s${NC} ${MUTED}%s${NC}" "$char" "$message"
+        i=$(((i + 1) % 10))
+        sleep 0.08
+    done
+}
+
+start_spinner() {
+    message="${1:-Loading...}"
+    show_spinner "$message" &
+    spinner_pid=$!
+}
+
+stop_spinner() {
+    if [ -n "$spinner_pid" ]; then
+        kill "$spinner_pid" 2>/dev/null || true
+        wait "$spinner_pid" 2>/dev/null || true
+        spinner_pid=""
+        printf "\r\033[K"
+        printf "\033[?25h"
+    fi
+}
+
 get_latest_version() {
     max_retries=3
     retry_delay=2
@@ -187,45 +220,37 @@ download_with_progress() {
     url="$1"
     output="$2"
     
-    if [ ! -t 2 ]; then
-        curl -fsSL "$url" -o "$output"
-        return $?
-    fi
-    
-    printf "\033[?25l"
-    
-    trap 'printf "\033[?25h"' EXIT INT TERM
-    
-    total_size=$(curl -sI "$url" | grep -i "content-length" | tail -1 | tr -d '\r' | awk '{print $2}')
+    total_size=$(curl -sI "$url" 2>/dev/null | grep -i "content-length" | tail -1 | tr -d '\r' | awk '{print $2}')
     
     if [ -z "$total_size" ] || [ "$total_size" = "0" ]; then
-        curl -fsSL "$url" -o "$output"
+        start_spinner "Downloading..."
+        curl -fsSL "$url" -o "$output" 2>/dev/null
         ret=$?
-        printf "\033[?25h"
-        echo ""
+        stop_spinner
         return $ret
     fi
+    
+    size_mb=$((total_size / 1024 / 1024))
+    if [ $size_mb -eq 0 ]; then
+        size_kb=$((total_size / 1024))
+        size_display="${size_kb}KB"
+    else
+        size_display="${size_mb}MB"
+    fi
+    
+    start_spinner "Downloading ${size_display}..."
     
     curl -fsSL "$url" -o "$output" 2>/dev/null &
     curl_pid=$!
     
     while kill -0 "$curl_pid" 2>/dev/null; do
-        if [ -f "$output" ]; then
-            current_size=$(wc -c < "$output" 2>/dev/null | tr -d ' ' || echo "0")
-            print_progress "$current_size" "$total_size"
-        fi
         sleep 0.1
     done
     
     wait $curl_pid
     ret=$?
     
-    if [ $ret -eq 0 ]; then
-        print_progress "$total_size" "$total_size"
-    fi
-    
-    printf "\033[?25h"
-    echo ""
+    stop_spinner
     
     return $ret
 }
@@ -338,19 +363,26 @@ download_and_install() {
         print_info "Check releases: https://github.com/${REPO}/releases"
         exit 1
     fi
+    print_success "Downloaded ${ARCHIVE}"
+    echo ""
 
+    start_spinner "Extracting archive..."
     cd "$TMP_DIR"
     if [ "$OS" = "windows" ]; then
         unzip -q "$ARCHIVE" 2>/dev/null || {
+            stop_spinner
             print_error "Failed to extract archive"
             exit 1
         }
     else
         tar -xzf "$ARCHIVE" 2>/dev/null || {
+            stop_spinner
             print_error "Failed to extract archive"
             exit 1
         }
     fi
+    stop_spinner
+    print_success "Extracted archive"
 
     if [ "$OS" = "windows" ]; then
         BINARY="${BINARY_NAME}.exe"
@@ -408,19 +440,29 @@ done
 
 main() {
     print_logo
+    
+    trap 'stop_spinner' EXIT INT TERM
 
     if [ -n "$requested_version" ]; then
         VERSION="$requested_version"
         print_info "Installing version: ${BOLD}v${VERSION}${NC}"
     else
-        printf "  ${MUTED}Fetching latest version...${NC}\r"
+        start_spinner "Fetching latest version..."
+        start_time=$(date +%s)
         VERSION=$(get_latest_version)
+        end_time=$(date +%s)
+        elapsed=$((end_time - start_time))
+        
+        if [ $elapsed -lt 1 ]; then
+            sleep_time=$((1 - elapsed))
+            sleep $sleep_time
+        fi
+        
+        stop_spinner
         if [ -z "$VERSION" ]; then
-            echo ""
             print_error "Could not determine latest version"
             exit 1
         fi
-        printf "                                    \r"
         print_success "Latest version: ${BOLD}v${VERSION}${NC}"
     fi
 
