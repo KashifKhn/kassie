@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { Layout } from '@/components/layout/Layout';
 import { Header } from '@/components/header/Header';
 import { Sidebar } from '@/components/sidebar/Sidebar';
@@ -6,27 +8,47 @@ import { FilterBar } from '@/components/filterbar/FilterBar';
 import { DataGrid } from '@/components/datagrid/DataGrid';
 import { Inspector } from '@/components/inspector/Inspector';
 import { useUiStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useToastStore } from '@/stores/toastStore';
+import { sessionApi } from '@/api/queries';
 import type { Row } from '@/api/types';
 
 export function ExplorerPage() {
+  const navigate = useNavigate();
   const { selectedKeyspace, selectedTable } = useUiStore();
+  const { clearAuth } = useAuthStore();
+  const { success } = useToastStore();
   const [selectedRow, setSelectedRow] = useState<Row | null>(null);
+  const [whereClause, setWhereClause] = useState<string>('');
+
+  const logoutMutation = useMutation({
+    mutationFn: sessionApi.logout,
+    onSuccess: () => {
+      clearAuth();
+      success('Logged out successfully');
+      navigate('/login');
+    },
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   const handleRowSelect = (row: Row) => {
     setSelectedRow(row);
   };
 
-  const handleFilter = (_filter: string) => {
-    // TODO: Implement filtering in Phase 5
+  const handleFilter = (filter: string) => {
+    setWhereClause(filter);
   };
 
   const handleClearFilter = () => {
-    // TODO: Implement filter clearing in Phase 5
+    setWhereClause('');
   };
 
   return (
     <Layout
-      header={<Header />}
+      header={<Header onLogout={handleLogout} />}
       sidebar={<Sidebar />}
       main={
         <div className="flex h-full flex-col">
@@ -34,11 +56,12 @@ export function ExplorerPage() {
             <>
               <FilterBar onFilter={handleFilter} onClear={handleClearFilter} />
               <div className="flex-1 overflow-hidden">
-                <DataGrid
-                  keyspace={selectedKeyspace}
-                  table={selectedTable}
-                  onRowSelect={handleRowSelect}
-                />
+              <DataGrid
+                keyspace={selectedKeyspace}
+                table={selectedTable}
+                whereClause={whereClause}
+                onRowSelect={handleRowSelect}
+              />
               </div>
             </>
           ) : (
