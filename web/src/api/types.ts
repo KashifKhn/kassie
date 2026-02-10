@@ -26,11 +26,11 @@ export interface RefreshResponse {
   expiresAt: number;
 }
 
-export interface LogoutRequest {}
+export type LogoutRequest = Record<string, never>;
 
-export interface LogoutResponse {}
+export type LogoutResponse = Record<string, never>;
 
-export interface GetProfilesRequest {}
+export type GetProfilesRequest = Record<string, never>;
 
 export interface GetProfilesResponse {
   profiles: ProfileInfo[];
@@ -64,7 +64,7 @@ export interface TableSchema {
   clusteringKeys: string[];
 }
 
-export interface ListKeyspacesRequest {}
+export type ListKeyspacesRequest = Record<string, never>;
 
 export interface ListKeyspacesResponse {
   keyspaces: Keyspace[];
