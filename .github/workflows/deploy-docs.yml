@@ -27,7 +27,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
+          fetch-tags: true
+
+      - name: Ensure tags are up to date
+        run: git fetch --tags --force
 
       - name: Display trigger information
         run: |
@@ -36,7 +41,8 @@ jobs:
             echo "Release tag: ${{ github.event.release.tag_name }}"
             echo "Release name: ${{ github.event.release.name }}"
           fi
-          git describe --tags --abbrev=0 || echo "No tags found"
+          echo "Latest tag: $(git describe --tags --abbrev=0 || echo 'No tags found')"
+          echo "Current commit: $(git rev-parse --short HEAD)"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
