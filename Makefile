@@ -35,7 +35,7 @@ dev-tui:
 	go run cmd/kassie/main.go tui
 
 dev-web:
-	@echo "Running web UI with hot reload..."
+	@echo "Running web UI on port 9091..."
 	@echo "Make sure to run 'make dev-server' in another terminal"
 	cd web && pnpm dev
 
