@@ -14,12 +14,15 @@ import (
 )
 
 type Inspector struct {
-	theme       styles.Theme
-	row         *pb.Row
-	json        string
-	scrollPos   int
-	totalLines  int
-	displayMode displayMode
+	theme         styles.Theme
+	row           *pb.Row
+	json          string
+	scrollPos     int
+	totalLines    int
+	maxLineWidth  int
+	displayMode   displayMode
+	contentWidth  int
+	contentHeight int
 }
 
 type displayMode int
@@ -27,7 +30,6 @@ type displayMode int
 const (
 	displayModeTable displayMode = iota
 	displayModePrettyJSON
-	displayModeCompactJSON
 )
 
 func NewInspector(theme styles.Theme) Inspector {
@@ -38,9 +40,9 @@ func NewInspector(theme styles.Theme) Inspector {
 }
 
 func (i *Inspector) CycleDisplayMode() {
-	i.displayMode = (i.displayMode + 1) % 3
+	i.displayMode = (i.displayMode + 1) % 2
 	i.scrollPos = 0
-	if i.row != nil {
+	if i.row != nil && i.contentWidth > 0 {
 		i.updateContent()
 	}
 }
@@ -48,19 +50,29 @@ func (i *Inspector) CycleDisplayMode() {
 func (i *Inspector) SetRow(row *pb.Row) {
 	i.row = row
 	i.scrollPos = 0
-	i.updateContent()
+	if i.contentWidth > 0 {
+		i.updateContent()
+	}
 }
 
 func (i *Inspector) updateContent() {
 	switch i.displayMode {
 	case displayModeTable:
-		i.json = formatRowTable(i.row, i.theme)
+		i.json = formatRowTable(i.row, i.theme, i.contentWidth)
 	case displayModePrettyJSON:
-		i.json = formatRowJSON(i.row)
-	case displayModeCompactJSON:
-		i.json = formatRowCompact(i.row)
+		rawJSON := formatRowJSON(i.row)
+		i.json = wrapJSON(rawJSON, i.contentWidth)
 	}
 	i.totalLines = strings.Count(i.json, "\n") + 1
+
+	i.maxLineWidth = 0
+	lines := strings.Split(i.json, "\n")
+	for _, line := range lines {
+		lineWidth := lipgloss.Width(line)
+		if lineWidth > i.maxLineWidth {
+			i.maxLineWidth = lineWidth
+		}
+	}
 }
 
 func (i *Inspector) ScrollDown() {
@@ -130,13 +142,19 @@ func copyToClipboard(text string) error {
 	return cmd.Wait()
 }
 
-func (i Inspector) View(width, height int) string {
+func (i *Inspector) View(width, height int) string {
 	if width <= 0 || height <= 0 {
 		return ""
 	}
 
 	if i.row == nil {
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, i.theme.Dim.Render("Select a row"))
+	}
+
+	if i.json == "" || i.contentWidth != width {
+		i.contentWidth = width
+		i.contentHeight = height
+		i.updateContent()
 	}
 
 	lines := strings.Split(i.json, "\n")
@@ -152,9 +170,7 @@ func (i Inspector) View(width, height int) string {
 	case displayModeTable:
 		modeName = "Table"
 	case displayModePrettyJSON:
-		modeName = "Pretty JSON"
-	case displayModeCompactJSON:
-		modeName = "Compact JSON"
+		modeName = "JSON"
 	}
 
 	header := headerStyle.Render(fmt.Sprintf("Inspector [%s]", modeName))
@@ -239,7 +255,7 @@ func cellToInspectable(cell *pb.CellValue) any {
 	}
 }
 
-func formatRowTable(row *pb.Row, theme styles.Theme) string {
+func formatRowTable(row *pb.Row, theme styles.Theme, maxWidth int) string {
 	if row == nil || row.Cells == nil {
 		return ""
 	}
@@ -294,8 +310,36 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 		rows = append(rows, rowData{key: key, value: valueStr, raw: value})
 	}
 
-	if maxValueLen > 60 {
-		maxValueLen = 60
+	if maxWidth > 0 && maxWidth < 40 {
+		maxWidth = 40
+	}
+
+	if maxWidth > 0 {
+		// Account for table borders: "│ " (2) + " │ " (3) + " │" (2) = 7 chars
+		// But we need extra padding for safety
+		availableWidth := maxWidth - 10
+		if availableWidth < 20 {
+			availableWidth = 20
+		}
+
+		if maxKeyLen+maxValueLen > availableWidth {
+			keyRatio := float64(maxKeyLen) / float64(maxKeyLen+maxValueLen)
+			maxKeyLen = int(float64(availableWidth) * keyRatio)
+			maxValueLen = availableWidth - maxKeyLen
+
+			if maxKeyLen < 8 {
+				maxKeyLen = 8
+				maxValueLen = availableWidth - 8
+			}
+			if maxValueLen < 8 {
+				maxValueLen = 8
+				maxKeyLen = availableWidth - 8
+			}
+		}
+	} else {
+		if maxValueLen > 60 {
+			maxValueLen = 60
+		}
 	}
 
 	keyStyle := lipgloss.NewStyle().
@@ -317,7 +361,11 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 	lines = append(lines, borderStyle.Render(topBorder))
 
 	for _, rd := range rows {
-		keyPadded := padRight(rd.key, maxKeyLen)
+		keyStr := rd.key
+		if len(keyStr) > maxKeyLen {
+			keyStr = keyStr[:maxKeyLen-3] + "..."
+		}
+		keyPadded := padRight(keyStr, maxKeyLen)
 
 		valueStr := rd.value
 		if len(valueStr) > maxValueLen {
@@ -358,32 +406,37 @@ func formatRowTable(row *pb.Row, theme styles.Theme) string {
 	return strings.Join(lines, "\n")
 }
 
-func formatRowCompact(row *pb.Row) string {
-	if row == nil || row.Cells == nil {
-		return ""
-	}
-
-	keys := make([]string, 0, len(row.Cells))
-	for key := range row.Cells {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	data := make(map[string]any, len(keys))
-	for _, key := range keys {
-		data[key] = cellToInspectable(row.Cells[key])
-	}
-
-	value, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Sprintf("failed to format row: %v", err)
-	}
-	return string(value)
-}
-
 func padRight(s string, length int) string {
 	if len(s) >= length {
 		return s
 	}
 	return s + strings.Repeat(" ", length-len(s))
+}
+
+func wrapJSON(jsonStr string, maxWidth int) string {
+
+	if maxWidth <= 0 || maxWidth < 20 {
+		maxWidth = 40
+	}
+
+	// Reserve space for panel padding
+	maxLineWidth := maxWidth - 4
+	if maxLineWidth < 20 {
+		maxLineWidth = 20
+	}
+
+	lines := strings.Split(jsonStr, "\n")
+	var truncatedLines []string
+
+	for _, line := range lines {
+		runes := []rune(line)
+		if len(runes) > maxLineWidth {
+			// Simple truncation with ellipsis
+			truncatedLines = append(truncatedLines, string(runes[:maxLineWidth-3])+"...")
+		} else {
+			truncatedLines = append(truncatedLines, line)
+		}
+	}
+
+	return strings.Join(truncatedLines, "\n")
 }
