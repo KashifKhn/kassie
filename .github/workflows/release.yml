@@ -30,6 +30,11 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Install protoc
         run: |
           sudo apt-get update
@@ -40,6 +45,9 @@ jobs:
 
       - name: Generate proto
         run: make proto
+
+      - name: Build web assets
+        run: make web
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
