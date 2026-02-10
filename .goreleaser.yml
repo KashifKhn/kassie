@@ -25,9 +25,6 @@ builds:
       - -X github.com/KashifKhn/kassie/internal/shared/version.Version={{.Version}}
       - -X github.com/KashifKhn/kassie/internal/shared/version.Commit={{.Commit}}
       - -X github.com/KashifKhn/kassie/internal/shared/version.BuildDate={{.Date}}
-    hooks:
-      post:
-        - find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
 
 archives:
   - id: kassie
@@ -54,3 +51,7 @@ changelog:
       - '^test:'
       - '^chore:'
       - '^ci:'
+
+after:
+  hooks:
+    - find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
