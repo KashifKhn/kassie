@@ -59,13 +59,26 @@ export function ExplorerPage() {
           {selectedKeyspace && selectedTable ? (
             <>
               <FilterBar onFilter={handleFilter} onClear={handleClearFilter} />
-              <div className="flex-1 overflow-hidden">
-              <DataGrid
-                keyspace={selectedKeyspace}
-                table={selectedTable}
-                whereClause={whereClause}
-                onRowSelect={handleRowSelect}
-              />
+              <div 
+                className="flex-1 overflow-hidden"
+                style={{ padding: '20px' }}
+              >
+                <div 
+                  className="h-full"
+                  style={{
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    border: '1px solid var(--border-primary)',
+                    boxShadow: 'var(--shadow-md)'
+                  }}
+                >
+                  <DataGrid
+                    keyspace={selectedKeyspace}
+                    table={selectedTable}
+                    whereClause={whereClause}
+                    onRowSelect={handleRowSelect}
+                  />
+                </div>
               </div>
             </>
           ) : (
