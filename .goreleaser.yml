@@ -4,7 +4,8 @@ before:
   hooks:
     - go mod tidy
     - go generate ./...
-    - cp -r web/dist internal/server/web/dist
+    - find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
+    - cp -r web/dist/* internal/server/web/dist/ 2>/dev/null || true
 
 builds:
   - id: kassie
@@ -26,7 +27,7 @@ builds:
       - -X github.com/KashifKhn/kassie/internal/shared/version.BuildDate={{.Date}}
     hooks:
       post:
-        - rm -rf internal/server/web/dist
+        - find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
 
 archives:
   - id: kassie
