@@ -4,11 +4,13 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Database, Loader2 } from 'lucide-react';
 import { sessionApi } from '@/api/queries';
 import { useAuthStore } from '@/stores/authStore';
+import { useToastStore } from '@/stores/toastStore';
 import type { ProfileInfo } from '@/api/types';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { setTokens, setProfile } = useAuthStore();
+  const { success, error } = useToastStore();
   const [selectedProfile, setSelectedProfile] = useState<string>('');
 
   const { data: profilesData, isLoading: loadingProfiles } = useQuery({
@@ -21,7 +23,11 @@ export function LoginPage() {
     onSuccess: (data) => {
       setTokens(data.accessToken, data.refreshToken, data.expiresAt);
       setProfile(data.profile);
+      success(`Connected to ${data.profile.name}`);
       navigate('/explorer');
+    },
+    onError: (err) => {
+      error(err instanceof Error ? err.message : 'Failed to connect');
     },
   });
 
