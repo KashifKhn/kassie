@@ -4,6 +4,7 @@ before:
   hooks:
     - go mod tidy
     - go generate ./...
+    - cp -r web/dist internal/server/web/dist
 
 builds:
   - id: kassie
@@ -23,6 +24,9 @@ builds:
       - -X github.com/KashifKhn/kassie/internal/shared/version.Version={{.Version}}
       - -X github.com/KashifKhn/kassie/internal/shared/version.Commit={{.Commit}}
       - -X github.com/KashifKhn/kassie/internal/shared/version.BuildDate={{.Date}}
+    hooks:
+      post:
+        - rm -rf internal/server/web/dist
 
 archives:
   - id: kassie
