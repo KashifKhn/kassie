@@ -1,20 +1,12 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ChevronDown, Database, Table } from 'lucide-react';
+import { ChevronRight, ChevronDown, Database, Table, Loader2 } from 'lucide-react';
 import { schemaApi, queryKeys } from '@/api/queries';
+import { useUiStore } from '@/stores/uiStore';
 import { cn } from '@/lib/utils';
 
-interface SidebarProps {
-  onTableSelect?: (keyspace: string, table: string) => void;
-  selectedKeyspace?: string;
-  selectedTable?: string;
-}
-
-export function Sidebar({
-  onTableSelect,
-  selectedKeyspace,
-  selectedTable,
-}: SidebarProps) {
+export function Sidebar() {
+  const { selectedKeyspace, selectedTable, setSelectedKeyspace, setSelectedTable } = useUiStore();
   const [expandedKeyspaces, setExpandedKeyspaces] = useState<Set<string>>(
     new Set()
   );
@@ -36,10 +28,18 @@ export function Sidebar({
     });
   };
 
+  const handleTableSelect = (keyspace: string, table: string) => {
+    setSelectedKeyspace(keyspace);
+    setSelectedTable(table);
+  };
+
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center text-muted-foreground">
-        Loading...
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading schema...</p>
+        </div>
       </div>
     );
   }
@@ -57,9 +57,9 @@ export function Sidebar({
             keyspace={keyspace.name}
             isExpanded={expandedKeyspaces.has(keyspace.name)}
             onToggle={() => toggleKeyspace(keyspace.name)}
-            onTableSelect={onTableSelect}
-            selectedKeyspace={selectedKeyspace}
-            selectedTable={selectedTable}
+            onTableSelect={handleTableSelect}
+            selectedKeyspace={selectedKeyspace || undefined}
+            selectedTable={selectedTable || undefined}
           />
         ))}
       </div>
