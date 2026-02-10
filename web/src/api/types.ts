@@ -2,7 +2,7 @@ export interface ProfileInfo {
   name: string;
   hosts: string[];
   port: number;
-  keyspace: string;
+  keyspace?: string;
   sslEnabled: boolean;
 }
 

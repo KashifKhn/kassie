@@ -4,7 +4,7 @@ export const ProfileInfoSchema = z.object({
   name: z.string(),
   hosts: z.array(z.string()),
   port: z.number(),
-  keyspace: z.string(),
+  keyspace: z.string().optional(),
   sslEnabled: z.boolean(),
 });
 
