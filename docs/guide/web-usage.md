@@ -1,14 +1,6 @@
 # Web Usage
 
-::: warning Development Status
-The Web UI is currently under active development (Phase 5). While basic functionality is implemented, many features described in this document are planned but not yet available. For production use, please use the TUI interface (`kassie tui`) which is fully functional and stable.
-
-**Current Status:** 🚧 In Development  
-**Expected Release:** TBD  
-**Recommended:** Use [TUI Interface](/guide/tui-usage) for all production workflows
-:::
-
-The Web UI will provide a modern, browser-based interface for exploring your Cassandra and ScyllaDB databases.
+The Web UI provides a modern, browser-based interface for exploring your Cassandra and ScyllaDB databases with a responsive, feature-rich experience.
 
 ## Launching the Web UI
 
@@ -18,7 +10,7 @@ Start Kassie Web:
 kassie web
 ```
 
-The web interface will open automatically at `http://localhost:8080`.
+The web interface will open automatically at `http://localhost:9042`.
 
 **Custom port**:
 ```bash
@@ -32,101 +24,132 @@ kassie web --no-browser
 
 ## Interface Overview
 
-The Web UI features a responsive, resizable layout:
+The Web UI features a responsive, resizable three-panel layout optimized for database exploration.
 
-### Connection Page
+### Login Page
 
-When you first access Kassie, you'll see the connection page.
+When you first access Kassie, you'll see the profile selection page.
 
 **Features**:
-- Profile cards showing connection details
-- Connection status indicators
-- Recent connections list
-- Quick connect buttons
+- Clean profile cards with connection details
+- Host and port display
+- Default keyspace indication
+- One-click connection
+- Loading states during authentication
 
 **Connecting**:
-1. Select a profile card
-2. Click "Connect"
-3. Wait for connection confirmation
-4. You'll be redirected to the explorer
+1. Review available profiles
+2. Click on a profile card
+3. Wait for authentication
+4. Automatically redirected to explorer
+
+**Authentication**:
+- JWT-based secure authentication
+- Automatic token refresh
+- Session persistence
+- Secure logout
 
 ### Explorer Page
 
-After connecting, the main explorer interface appears.
+After connecting, the main explorer interface provides full database access.
 
-**Layout**:
-- **Left Sidebar**: Keyspace and table navigation
-- **Center Panel**: Data grid with rows
-- **Right Panel**: Inspector for row details
-- **Top Bar**: Filter input and actions
-- **Bottom Bar**: Status and pagination
+**Layout Panels**:
+- **Left Sidebar**: Hierarchical keyspace and table navigation
+- **Center Panel**: Data grid with filter bar and pagination
+- **Right Panel**: Inspector for detailed row examination
+- **Header**: Theme toggle, panel controls, profile info, logout
 
-All panels are resizable by dragging the dividers.
+All panels are resizable via drag handles between sections.
 
 ## Navigation
 
 ### Sidebar
 
-The sidebar displays a tree of keyspaces and tables:
+The sidebar displays an expandable tree of keyspaces and tables.
+
+**Features**:
+- Collapsible keyspace sections
+- Lazy-loaded table lists (fetched on expansion)
+- Table row count estimates
+- Visual indicators for partition keys (PK) and clustering keys (CK)
+- Responsive loading states
+- Panel toggle from header
 
 **Actions**:
-- Click keyspace to expand/collapse
-- Click table name to load data
-- Use search box to filter keyspaces/tables
-- Drag divider to resize sidebar
+- Click keyspace name to expand/collapse
+- Click table name to load data in grid
+- Selected table highlighted
+- Automatic state synchronization
 
-**Keyboard shortcuts**:
-- `↑/↓`: Navigate up/down
-- `←/→`: Collapse/expand
-- `Enter`: Select table
-- `/`: Focus search box
+**Indicators**:
+- 🔑 **PK** badge: Partition key column
+- 🔗 **CK** badge: Clustering key column
+- Row counts formatted (K for thousands, M for millions)
 
 ### Data Grid
 
-The center panel shows table data in a virtualized grid:
+The center panel displays table data in a high-performance virtualized grid.
 
 **Features**:
-- Sortable columns (click header)
-- Resizable columns (drag column border)
-- Row selection (click row)
-- Virtual scrolling (handles millions of rows)
-- Pagination controls at bottom
+- Virtual scrolling (handles large datasets efficiently)
+- Column type display in headers
+- Key column badges (PK/CK)
+- Row selection with click
+- Cursor-based pagination
+- Empty state messaging
+- Error state handling
 
-**Column operations**:
-- **Click header**: Sort by column (asc/desc)
-- **Drag column border**: Resize column
-- **Double-click border**: Auto-fit column width
+**Column Headers**:
+Each column header displays:
+- Column name
+- Data type (text, int, uuid, etc.)
+- Key badges (PK for partition key, CK for clustering key)
 
-**Row selection**:
+**Row Operations**:
 - Click any row to view details in inspector
-- Selected row is highlighted
+- Selected row highlighted with accent color
+- Hover effect for better visibility
+
+**Data Display**:
+- Proper formatting for all CQL types
+- NULL values clearly indicated
+- Truncated long values with ellipsis
+- Byte arrays shown as `<bytes>`
+- Timestamps and UUIDs formatted
 
 ### Inspector Panel
 
-The right panel shows detailed JSON view of selected row:
+The right panel shows detailed views of selected rows.
+
+**View Modes**:
+1. **Key-Value View**: Structured field-by-field display
+2. **JSON View**: Syntax-highlighted JSON representation
 
 **Features**:
-- Syntax-highlighted JSON
-- Collapsible nested objects
-- Copy to clipboard button
-- Pretty-print formatting
+- Collapsible nested objects/collections
+- Color-coded JSON syntax
+- Clean, readable formatting
+- Toggle between views
+- Empty state when no row selected
+- Resizable panel
 
-**Operations**:
-- **Click object**: Expand/collapse
-- **Copy button**: Copy entire JSON
-- **Close button**: Hide inspector
+**JSON View**:
+- Syntax highlighting for types
+- Collapsible arrays and objects
+- Copy-friendly formatting
+- Dark mode optimized colors
 
 ## Filtering Data
 
-Use the filter bar at the top to apply WHERE clauses.
+Use the filter bar above the data grid to apply CQL WHERE clauses.
 
 **Features**:
-- Syntax validation as you type
-- Autocomplete for column names
-- Query history dropdown
-- Quick filter templates
+- Live filtering as you type WHERE clauses
+- Clear button to remove filters
+- Automatic query invalidation
+- Error feedback for invalid syntax
 
-**Example filters**:
+**Example Filters**:
 
 ```cql
 # Simple equality
@@ -139,66 +162,113 @@ created_at > '2024-01-01' AND created_at < '2024-02-01'
 status IN ('active', 'pending', 'completed')
 
 # Multiple conditions
-user_id = 123 AND status = 'active' AND created_at > '2024-01-01'
+user_id = 123 AND status = 'active'
 ```
 
-**Using the filter bar**:
-1. Click the filter input or press `/`
-2. Type your WHERE clause
-3. Press `Enter` or click "Apply"
-4. Results update automatically
+**Using the Filter Bar**:
+1. Type your WHERE clause in the search input
+2. Click "Filter" button or press Enter
+3. Data grid automatically refetches with filter
+4. Click X icon to clear filter
 
-**Query history**:
-- Click the clock icon to see recent queries
-- Select a query to reapply it
-- History persists in browser storage
+**Important Notes**:
+- Only WHERE clause content (no "WHERE" keyword needed)
+- Must follow CQL syntax rules
+- Partition key filters recommended for performance
+- Filter persists during session
 
 ## Pagination
 
-Navigate large datasets with pagination controls.
+Navigate large datasets with smart cursor-based pagination.
+
+**Features**:
+- Next/Previous page buttons
+- Cursor-based navigation (Cassandra-native)
+- Automatic page state management
+- Loading indicators during fetch
+- "More data available" indicator
 
 **Controls**:
-- **First**: Jump to first page
-- **Previous**: Go back one page
-- **Page input**: Jump to specific page
-- **Next**: Go forward one page
-- **Last**: Jump to last page
+- **Previous**: Navigate to prior page (appears after loading multiple pages)
+- **Next**: Fetch next page using cursor (appears when more data available)
+- **Row counter**: Shows total rows loaded
 
-**Status display**:
+**Pagination Flow**:
 ```
-Showing rows 51-100 of 1,247  |  Page 2 of 13
-```
-
-**Keyboard shortcuts**:
-- `n`: Next page
-- `p`: Previous page
-- `g`: First page
-- `G`: Last page
-
-## URL State
-
-The Web UI synchronizes state with the URL for easy sharing:
-
-**URL format**:
-```
-http://localhost:8080/?keyspace=app_data&table=users&filter=status='active'&page=2
+Initial load → 100 rows + cursor
+Click Next → Loads 100 more rows + new cursor
+Click Previous → Returns to previous page state
 ```
 
-**Benefits**:
-- Share specific views with team members
-- Bookmark frequently used queries
-- Browser back/forward works
-- Refresh preserves state
+**Performance**:
+- Only visible rows rendered (virtualized)
+- Cursor-based pagination (no offset scanning)
+- Efficient for tables with millions of rows
 
-**What's stored in URL**:
-- Current keyspace
-- Current table
-- Active filter
-- Current page number
+## Theme Switching
+
+Toggle between light, dark, and system themes.
+
+**Theme Options**:
+- **Light**: Bright background, dark text
+- **Dark**: Dark background, light text  
+- **System**: Automatically matches OS preference
+
+**How to Switch**:
+1. Click theme icon in header (☀️ Sun / 🌙 Moon / 💻 Monitor)
+2. Cycles: Light → Dark → System → Light...
+3. Preference saved in browser localStorage
+
+**Theme Persistence**:
+- Remembered across sessions
+- Syncs with system preferences in "System" mode
+- Instant switching without reload
+
+## Notifications
+
+The app uses toast notifications for user feedback.
+
+**Toast Types**:
+- ✅ **Success**: Green - successful operations (e.g., "Connected to local")
+- ❌ **Error**: Red - failures and errors
+- ℹ️ **Info**: Blue - informational messages
+- ⚠️ **Warning**: Yellow - warnings
+
+**Behavior**:
+- Auto-dismiss after 3 seconds
+- Manual dismiss with X button
+- Stacked in bottom-right corner
+- Non-blocking interface
+
+**Common Notifications**:
+- Login success/failure
+- Connection errors
+- Query execution feedback
+- Logout confirmation
+
+## Error Handling
+
+Comprehensive error states throughout the application.
+
+**Error Boundary**:
+- Catches unexpected React errors
+- User-friendly error page
+- Reload button to recover
+- Error logged to console
+
+**Component Error States**:
+- **Loading**: Animated spinner with message
+- **Error**: Alert icon with error details
+- **Empty**: Contextual empty state message
+
+**Data Grid Errors**:
+- Query failures shown with error message
+- Network errors displayed clearly
+- Retry functionality available
 
 ## Responsive Design
 
-The Web UI adapts to different screen sizes:
+The Web UI adapts to different screen sizes.
 
 ### Desktop (>1024px)
 
@@ -206,196 +276,20 @@ Full three-panel layout with all features visible.
 
 ### Tablet (768-1024px)
 
-- Collapsible sidebar (hamburger menu)
-- Stacked data grid and inspector
+- Collapsible sidebar
 - Touch-friendly controls
+- Optimized spacing
 
 ### Mobile (<768px)
 
-- Single panel view
-- Navigation drawer for sidebar
-- Full-screen data grid
-- Modal inspector
-
-**Mobile gestures**:
-- Swipe right: Open sidebar drawer
-- Swipe left: Close sidebar drawer
-- Tap row: Open inspector modal
-- Pull to refresh: Reload data
-
-## Keyboard Shortcuts
-
-The Web UI supports extensive keyboard navigation:
-
-### Global
-
-| Key | Action |
-|-----|--------|
-| `?` | Show keyboard shortcuts help |
-| `/` | Focus filter bar |
-| `Esc` | Cancel/close current action |
-| `Ctrl+K` | Focus search |
-
-### Navigation
-
-| Key | Action |
-|-----|--------|
-| `↑/↓` | Navigate rows |
-| `←/→` | Scroll columns |
-| `Enter` | View row details |
-| `Tab` | Switch panels |
-
-### Pagination
-
-| Key | Action |
-|-----|--------|
-| `n` | Next page |
-| `p` | Previous page |
-| `g` | First page |
-| `G` | Last page |
-
-### Actions
-
-| Key | Action |
-|-----|--------|
-| `r` | Refresh data |
-| `c` | Copy selected row |
-| `i` | Toggle inspector |
-| `s` | Toggle sidebar |
-
-Press `?` in the Web UI to see the complete shortcuts list.
-
-## Features
-
-### Dark Mode
-
-Toggle between light and dark themes:
-
-- Click the theme icon in the top-right
-- System preference auto-detected
-- Preference saved in localStorage
-
-### Connection Management
-
-**Switching profiles**:
-1. Click profile name in top-left
-2. Select "Change Connection"
-3. Choose new profile
-4. Confirm switch
-
-**Logout**:
-1. Click profile menu
-2. Select "Logout"
-3. Return to connection page
-
-### Data Export
-
-Export current view to JSON or CSV:
-
-1. Click "Export" button
-2. Choose format (JSON/CSV)
-3. Optionally apply filters
-4. Click "Download"
-
-::: info
-Export is limited to current result set. Use filters to reduce data size before exporting.
-:::
-
-### Clipboard Operations
-
-**Copy row**:
-- Right-click row → Copy JSON
-- Or press `c` with row selected
-
-**Copy cell**:
-- Click cell → Click copy icon
-- Or double-click cell to select text
-
-### Connection Status
-
-The status bar shows real-time connection info:
-
-```
-Connected to local@127.0.0.1:9042  |  app_data.users  |  Last updated: 2 seconds ago
-```
-
-**Indicators**:
-- 🟢 Green: Connected
-- 🟡 Yellow: Connecting
-- 🔴 Red: Disconnected
-
-If connection is lost, Kassie attempts automatic reconnection.
-
-## Customization
-
-### Panel Sizes
-
-Resize panels by dragging dividers:
-- Drag left divider to resize sidebar
-- Drag right divider to resize inspector
-- Sizes saved in localStorage
-
-### Column Widths
-
-Adjust column widths in data grid:
-- Drag column borders
-- Double-click to auto-fit
-- Widths persist per table
-
-### Preferences
-
-Configure preferences via profile menu:
-
-**Available settings**:
-- Theme (light/dark/auto)
-- Auto-open inspector
-- Default page size
-- Sidebar collapsed by default
-- Show line numbers in JSON
-
-## Performance
-
-### Virtual Scrolling
-
-The data grid uses virtualization for performance:
-- Only visible rows are rendered
-- Handles tables with millions of rows
-- Smooth scrolling even with 1000+ columns
-
-### Caching
-
-Smart caching reduces database queries:
-- Schema cached for 5 minutes
-- Navigation state cached
-- Query results cached until refresh
-
-### Lazy Loading
-
-Data loads progressively:
-- Initial page loads immediately
-- Subsequent pages fetch on demand
-- No upfront cost for large datasets
-
-## Accessibility
-
-The Web UI follows WCAG 2.1 AA standards:
-
-**Features**:
-- Full keyboard navigation
-- Screen reader support
-- ARIA labels on interactive elements
-- Focus management
-- High contrast mode
-- Reduced motion support
-
-**Screen reader tested with**:
-- NVDA (Windows)
-- JAWS (Windows)
-- VoiceOver (macOS)
+- Single panel focus
+- Drawer navigation
+- Mobile-optimized data grid
+- Full-screen inspector
 
 ## Browser Support
 
-Kassie Web UI supports:
+Kassie Web UI supports modern browsers:
 
 | Browser | Minimum Version |
 |---------|----------------|
@@ -408,72 +302,143 @@ Kassie Web UI supports:
 Internet Explorer is not supported.
 :::
 
+## Performance
+
+### Virtual Scrolling
+
+The data grid uses React Window for virtualization:
+- Only visible rows rendered in DOM
+- Handles tables with millions of rows
+- Smooth scrolling performance
+- Minimal memory footprint
+
+### Caching
+
+TanStack Query provides intelligent caching:
+- Schema cached for 5 minutes
+- Data cached until invalidated
+- Background refetching
+- Automatic cache invalidation on mutations
+
+### Lazy Loading
+
+Progressive data loading:
+- Keyspaces loaded on mount
+- Tables loaded per keyspace when expanded
+- Data fetched per table when selected
+- Pagination loads incrementally
+
+## Technical Features
+
+### State Management
+
+- **Zustand** for UI state (theme, panel visibility, selection)
+- **TanStack Query** for server state (data, schema)
+- **localStorage** for persistence (auth, preferences)
+
+### Type Safety
+
+- Full TypeScript with strict mode
+- Zod schema validation
+- Type-safe API calls
+- Zero `any` types
+
+### Bundle Size
+
+- **111.01 KB** gzipped (production build)
+- Code splitting by route
+- Optimized dependencies
+- Tree-shaking enabled
+
+### Security
+
+- JWT-based authentication
+- Automatic token refresh
+- Secure storage (httpOnly where possible)
+- CORS handling
+- Protected routes
+
+## Keyboard Shortcuts
+
+While keyboard shortcuts are not yet fully implemented, the following work:
+
+### Forms
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Submit filter / form |
+| `Esc` | Clear/dismiss |
+
+### Navigation
+
+| Key | Action |
+|-----|--------|
+| Click | Select table / row |
+| Scroll | Navigate data grid |
+
 ## Tips and Tricks
 
-### Quick Filters
+### Quick Navigation
 
-Create bookmarkable URLs for common filters:
+1. Click profile to connect
+2. Expand keyspace in sidebar
+3. Click table to load
+4. Apply filter if needed
+5. Click row to inspect
 
-```
-# Active users
-http://localhost:8080/?keyspace=app&table=users&filter=status='active'
+### Efficient Filtering
 
-# Recent orders
-http://localhost:8080/?keyspace=app&table=orders&filter=created_at>'2024-01-01'
-```
+For best performance:
+- Include partition key in filter
+- Use equality on partition key
+- Avoid full table scans
+- Test filters on small datasets first
 
-### Keyboard-First Workflow
+### Panel Management
 
-1. Launch Kassie: `kassie web`
-2. Press `/` to search keyspaces
-3. Press `Enter` to select table
-4. Press `/` to add filter
-5. Use `n/p` to navigate pages
-6. Press `Enter` to inspect rows
+- Resize panels to your workflow
+- Collapse sidebar for more grid space
+- Toggle inspector when not needed
+- Sizes persist in localStorage
 
-### Team Sharing
+### Theme Preference
 
-Run Kassie server for team access:
-
-```bash
-# Start server
-kassie server --http-port 8080 --host 0.0.0.0
-
-# Share URL
-http://your-server:8080
-```
-
-Everyone can connect with their own profiles.
+- Use "System" to match OS dark mode
+- Switch themes for different lighting
+- Dark mode easier on eyes for long sessions
 
 ## Troubleshooting
 
-### Page won't load
+### Page Won't Load
 
 - Check browser console for errors
 - Try incognito/private mode
-- Clear browser cache and cookies
+- Clear browser cache
+- Verify server is running
 
-### WebSocket connection failed
+### Connection Failed
 
-Kassie uses gRPC-Web which requires HTTP/2:
-- Ensure server supports HTTP/2
-- Check for proxy/firewall blocking connections
+- Verify profile configuration
+- Check Cassandra/ScyllaDB is running
+- Verify network connectivity
+- Check firewall rules
 
-### Slow data loading
+### Slow Data Loading
 
-- Reduce page size in config
-- Apply filters to limit data
+- Apply filters to reduce dataset
 - Check network latency
-- Enable browser's hardware acceleration
+- Verify database performance
+- Reduce page size if needed
 
-### Inspector not showing
+### Inspector Not Showing
 
-- Try resizing panels (inspector might be collapsed)
-- Check browser console for JavaScript errors
+- Check if panel collapsed (drag right border)
+- Try selecting a row
 - Refresh the page
+- Check browser console
 
 ## Next Steps
 
 - [Configuration](/guide/configuration) - Customize your setup
-- [API Reference](/reference/api) - Use the REST API
-- [Examples](/examples/) - See practical examples
+- [TUI Usage](/guide/tui-usage) - Use terminal interface
+- [Troubleshooting](/guide/troubleshooting) - Fix common issues

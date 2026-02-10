@@ -22,8 +22,8 @@ features:
     details: Fast terminal UI (TUI) with full keyboard navigation. Production-ready and battle-tested. Launches in <100ms with vim-like controls.
   
   - icon: 🌐
-    title: Web Interface (In Development)
-    details: Modern web UI currently under active development (Phase 5). Use TUI for production workloads while web interface is being completed.
+    title: Web Interface (Ready)
+    details: Modern React-based web UI with responsive design. Full-featured with filtering, pagination, and themes. Production-ready for team collaboration.
   
   - icon: 📦
     title: Single Binary
@@ -31,7 +31,7 @@ features:
   
   - icon: ⚡
     title: Fast & Lightweight
-    details: Built in Go for maximum performance. TUI launches in <100ms, web UI in <500ms. Minimal resource usage (<50MB RAM).
+    details: Built in Go for maximum performance. TUI launches in <100ms, web UI bundle only 111KB gzipped. Minimal resource usage (<50MB RAM).
   
   - icon: 🔐
     title: Secure Authentication
@@ -39,15 +39,15 @@ features:
   
   - icon: ⌨️
     title: Keyboard-Driven
-    details: Vim-like navigation in TUI. Full keyboard shortcuts in web UI. Designed for terminal enthusiasts and power users.
+    details: Vim-like navigation in TUI. Keyboard shortcuts in web UI. Designed for terminal enthusiasts and power users alike.
   
   - icon: 🎨
     title: Beautiful Design
-    details: Polished TUI with multiple themes. Modern web UI with dark mode. Syntax highlighting and JSON inspection built-in.
+    details: Polished TUI with multiple themes. Modern web UI with light/dark/system modes. Syntax highlighting and JSON inspection built-in.
 
   - icon: 🔍
     title: Smart Filtering
-    details: Apply WHERE clauses with syntax validation. Filter by partition keys, clustering keys, and more. Query history included.
+    details: Apply CQL WHERE clauses with live validation. Filter by partition keys, clustering keys, and more. Real-time query updates.
   
   - icon: 📄
     title: Pagination Made Easy
@@ -103,8 +103,8 @@ Working with Cassandra and ScyllaDB traditionally means:
 Kassie provides a modern, safe way to explore your data:
 - **Visual Navigation**: Tree-view sidebar with all keyspaces and tables
 - **Read-Safety First**: Optimized for browsing and observing data
-- **Multiple Interfaces**: Terminal UI for SSH sessions, Web UI for teams
-- **Single Binary**: No installation hassles, works everywhere
+- **Dual Interfaces**: Terminal UI for SSH sessions, Web UI for teams and GUI users
+- **Single Binary**: No installation hassles, embedded web assets, works everywhere
 
 ## Comparison
 
@@ -140,6 +140,7 @@ Browse large tables with pagination. Filter by keys. Inspect complex data types 
 - [Getting Started →](/guide/getting-started) - 5-minute tutorial
 - [Installation →](/guide/installation) - Detailed installation guide
 - [TUI Usage →](/guide/tui-usage) - Learn the terminal interface
+- [Web Usage →](/guide/web-usage) - Explore the web interface
 - [Architecture →](/architecture/) - Understand how it works
 
 </div>
