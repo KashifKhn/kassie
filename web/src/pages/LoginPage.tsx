@@ -64,64 +64,65 @@ export function LoginPage() {
 
   return (
     <div 
-      className="relative flex min-h-screen items-center justify-center px-4 noise-bg overflow-hidden"
+      className="relative flex min-h-screen items-center justify-center px-6 noise-bg overflow-hidden"
       style={{ background: 'var(--bg-primary)' }}
     >
-      {/* Animated background elements */}
+      {/* Animated background elements - MUCH MORE VISIBLE */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse" 
+        <div className="absolute top-1/3 left-1/3 w-[600px] h-[600px] rounded-full blur-3xl opacity-30 animate-pulse" 
           style={{ 
-            background: 'radial-gradient(circle, var(--accent-primary) 0%, transparent 70%)',
-            animationDuration: '4s'
+            background: 'radial-gradient(circle, var(--accent-primary) 0%, transparent 60%)',
+            animationDuration: '3s'
           }}
         />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-15 animate-pulse" 
+        <div className="absolute bottom-1/3 right-1/3 w-[500px] h-[500px] rounded-full blur-3xl opacity-25 animate-pulse" 
           style={{ 
-            background: 'radial-gradient(circle, var(--accent-primary) 0%, transparent 70%)',
-            animationDuration: '6s',
-            animationDelay: '2s'
+            background: 'radial-gradient(circle, var(--accent-hover) 0%, transparent 60%)',
+            animationDuration: '4s',
+            animationDelay: '1.5s'
           }}
         />
       </div>
 
-      <div className="relative w-full max-w-lg space-y-10 animate-scale-in">
-        {/* Header */}
-        <div className="text-center space-y-6">
+      <div className="relative w-full max-w-2xl space-y-12 animate-scale-in">
+        {/* Header - BIGGER AND BOLDER */}
+        <div className="text-center space-y-8">
           <div className="inline-flex items-center justify-center relative group">
             <div 
-              className="absolute inset-0 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-500"
+              className="absolute inset-0 rounded-3xl blur-2xl opacity-60 group-hover:opacity-90 transition-opacity duration-500"
               style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))' }}
             />
             <div 
-              className="relative flex items-center justify-center w-20 h-20 rounded-2xl"
+              className="relative flex items-center justify-center w-28 h-28 rounded-3xl"
               style={{ 
                 background: 'var(--bg-elevated)',
-                border: '2px solid var(--border-primary)'
+                border: '3px solid var(--accent-primary)',
+                boxShadow: '0 0 40px rgba(59, 130, 246, 0.3)'
               }}
             >
-              <Database className="w-10 h-10" style={{ color: 'var(--accent-primary)' }} />
+              <Database className="w-14 h-14" style={{ color: 'var(--accent-primary)' }} />
             </div>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h1 
-              className="font-mono text-5xl font-bold tracking-tight"
+              className="font-mono text-7xl font-bold tracking-tight"
               style={{ color: 'var(--text-primary)' }}
             >
               KASSIE
             </h1>
-            <div className="flex items-center justify-center gap-2">
-              <div className="h-px w-8" style={{ background: 'var(--border-secondary)' }} />
+            <div className="flex items-center justify-center gap-3">
+              <div className="h-px w-12" style={{ background: 'var(--accent-primary)', opacity: 0.5 }} />
               <p 
-                className="font-mono text-sm tracking-wider uppercase"
-                style={{ color: 'var(--text-tertiary)' }}
+                className="font-mono text-base tracking-widest uppercase"
+                style={{ color: 'var(--accent-primary)' }}
               >
                 Database Explorer
               </p>
-              <div className="h-px w-8" style={{ background: 'var(--border-secondary)' }} />
+              <div className="h-px w-12" style={{ background: 'var(--accent-primary)', opacity: 0.5 }} />
             </div>
             <p 
-              className="text-sm"
+              className="text-base font-sans"
               style={{ color: 'var(--text-secondary)' }}
             >
               Select a connection profile to continue
@@ -129,21 +130,21 @@ export function LoginPage() {
           </div>
         </div>
 
-        {/* Profiles */}
-        <div className="space-y-4">
+        {/* Profiles - MUCH LARGER CARDS */}
+        <div className="space-y-5">
           {profiles.length === 0 ? (
             <div 
-              className="rounded-xl p-8 text-center backdrop-blur-sm"
+              className="rounded-2xl p-12 text-center backdrop-blur-sm"
               style={{ 
                 background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-primary)'
+                border: '2px solid var(--border-primary)'
               }}
             >
-              <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" style={{ color: 'var(--text-tertiary)' }} />
-              <p className="font-mono text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <Shield className="w-16 h-16 mx-auto mb-6 opacity-50" style={{ color: 'var(--text-tertiary)' }} />
+              <p className="font-mono text-base" style={{ color: 'var(--text-secondary)' }}>
                 No connection profiles found.
               </p>
-              <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
+              <p className="text-sm mt-3" style={{ color: 'var(--text-tertiary)' }}>
                 Configure profiles in ~/.config/kassie/config.json
               </p>
             </div>
@@ -153,22 +154,25 @@ export function LoginPage() {
                 key={profile.name}
                 onClick={() => handleLogin(profile)}
                 disabled={loginMutation.isPending}
-                className="group w-full rounded-xl p-6 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 relative overflow-hidden"
+                className="group w-full rounded-2xl p-8 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 relative overflow-hidden animate-fade-in"
                 style={{
                   background: 'var(--bg-elevated)',
-                  border: '1px solid var(--border-primary)',
-                  animationDelay: `${index * 100}ms`
+                  border: '2px solid var(--border-primary)',
+                  animationDelay: `${index * 150}ms`,
+                  minHeight: '140px'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                  e.currentTarget.style.boxShadow = '0 0 40px rgba(59, 130, 246, 0.4)';
+                  e.currentTarget.style.transform = 'translateY(-4px)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = 'var(--border-primary)';
                   e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                {/* Hover gradient effect */}
+                {/* Hover gradient effect - MORE VISIBLE */}
                 <div 
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                   style={{
@@ -176,46 +180,55 @@ export function LoginPage() {
                   }}
                 />
                 
-                <div className="relative flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-3">
-                      <Server className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                <div className="relative flex items-start justify-between gap-6">
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{
+                          background: 'var(--accent-subtle)',
+                          border: '1px solid var(--accent-primary)'
+                        }}
+                      >
+                        <Server className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
+                      </div>
                       <h3 
-                        className="font-mono text-lg font-semibold tracking-wide"
+                        className="font-mono text-2xl font-bold tracking-wide"
                         style={{ color: 'var(--text-primary)' }}
                       >
                         {profile.name}
                       </h3>
                     </div>
                     
-                    <div className="space-y-1 pl-8">
+                    <div className="space-y-2 pl-16">
                       <p 
-                        className="font-mono text-sm"
-                        style={{ color: 'var(--text-secondary)' }}
+                        className="font-mono text-base"
+                        style={{ color: 'var(--text-primary)' }}
                       >
                         {profile.hosts.join(', ')}:{profile.port}
                       </p>
                       
                       {profile.keyspace && (
                         <p 
-                          className="text-xs font-mono"
-                          style={{ color: 'var(--text-tertiary)' }}
+                          className="text-sm font-mono flex items-center gap-2"
+                          style={{ color: 'var(--text-secondary)' }}
                         >
+                          <span style={{ color: 'var(--accent-primary)' }}>▸</span>
                           keyspace: {profile.keyspace}
                         </p>
                       )}
                       
                       {profile.sslEnabled && (
                         <span 
-                          className="inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded"
+                          className="inline-flex items-center gap-2 text-sm font-mono px-3 py-1 rounded-lg"
                           style={{ 
                             background: 'var(--success)',
                             color: 'white',
-                            opacity: 0.9
+                            boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)'
                           }}
                         >
-                          <Shield className="w-3 h-3" />
-                          SSL
+                          <Shield className="w-4 h-4" />
+                          SSL Enabled
                         </span>
                       )}
                     </div>
@@ -223,7 +236,13 @@ export function LoginPage() {
                   
                   {loginMutation.isPending && selectedProfile === profile.name && (
                     <div className="flex-shrink-0">
-                      <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--accent-primary)' }} />
+                      <Loader2 
+                        className="w-8 h-8 animate-spin" 
+                        style={{ 
+                          color: 'var(--accent-primary)',
+                          filter: 'drop-shadow(0 0 10px var(--accent-primary))'
+                        }} 
+                      />
                     </div>
                   )}
                 </div>
@@ -235,14 +254,15 @@ export function LoginPage() {
         {/* Error Message */}
         {loginMutation.isError && (
           <div 
-            className="rounded-xl p-4 backdrop-blur-sm animate-slide-down"
+            className="rounded-2xl p-6 backdrop-blur-sm animate-slide-down"
             style={{ 
-              background: 'rgb(239 68 68 / 0.1)',
-              border: '1px solid var(--error)'
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '2px solid var(--error)',
+              boxShadow: '0 0 30px rgba(239, 68, 68, 0.2)'
             }}
           >
-            <p className="text-sm font-mono" style={{ color: 'var(--error)' }}>
-              ERROR: {loginMutation.error instanceof Error
+            <p className="text-base font-mono font-bold" style={{ color: 'var(--error)' }}>
+              ✗ CONNECTION ERROR: {loginMutation.error instanceof Error
                 ? loginMutation.error.message
                 : 'Connection failed'}
             </p>
@@ -251,10 +271,10 @@ export function LoginPage() {
 
         {/* Footer hint */}
         <p 
-          className="text-center text-xs font-mono opacity-50"
+          className="text-center text-sm font-mono"
           style={{ color: 'var(--text-tertiary)' }}
         >
-          &gt;_ Cassandra & ScyllaDB Explorer
+          <span style={{ color: 'var(--accent-primary)' }}>&gt;_</span> Cassandra & ScyllaDB Explorer
         </p>
       </div>
     </div>
