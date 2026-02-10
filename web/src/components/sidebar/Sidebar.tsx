@@ -60,15 +60,15 @@ export function Sidebar() {
       style={{ background: 'var(--bg-primary)' }}
     >
       <div 
-        className="px-4 py-3"
+        className="px-5 py-4"
         style={{ 
           borderBottom: '1px solid var(--border-primary)',
           background: 'var(--bg-secondary)'
         }}
       >
         <h2 
-          className="text-xs font-mono font-semibold tracking-wider uppercase"
-          style={{ color: 'var(--text-secondary)' }}
+          className="text-sm font-mono font-bold tracking-wider uppercase"
+          style={{ color: 'var(--text-primary)' }}
         >
           Schema Explorer
         </h2>
@@ -120,7 +120,7 @@ function KeyspaceNode({
     <div className="animate-fade-in">
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-mono transition-all"
+        className="w-full flex items-center gap-3 px-5 py-3 text-sm font-mono transition-all"
         style={{
           background: isSelected ? 'var(--accent-subtle)' : 'transparent',
           color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
@@ -149,10 +149,10 @@ function KeyspaceNode({
           />
         )}
         <Database 
-          className="w-4 h-4 flex-shrink-0" 
+          className="w-5 h-5 flex-shrink-0" 
           style={{ color: 'var(--accent-primary)' }}
         />
-        <span className="flex-1 text-left font-medium truncate">{keyspace}</span>
+        <span className="flex-1 text-left font-semibold break-words">{keyspace}</span>
       </button>
 
       {isExpanded && tablesData && (
@@ -163,12 +163,12 @@ function KeyspaceNode({
               <button
                 key={table.name}
                 onClick={() => onTableSelect?.(keyspace, table.name)}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-mono transition-all animate-fade-in"
+                className="w-full flex items-center gap-3 px-5 py-2.5 text-sm font-mono transition-all animate-fade-in"
                 style={{
                   background: isTableSelected ? 'var(--accent-subtle)' : 'transparent',
                   color: isTableSelected ? 'var(--accent-primary)' : 'var(--text-secondary)',
                   borderLeft: isTableSelected ? '3px solid var(--accent-primary)' : '3px solid transparent',
-                  marginLeft: '1rem',
+                  paddingLeft: '2.5rem',
                   animationDelay: `${index * 50}ms`,
                 }}
                 onMouseEnter={(e) => {
@@ -188,10 +188,10 @@ function KeyspaceNode({
                   className="w-4 h-4 flex-shrink-0" 
                   style={{ color: 'var(--text-tertiary)' }}
                 />
-                <span className="flex-1 text-left truncate">{table.name}</span>
+                <span className="flex-1 text-left break-words">{table.name}</span>
                 {table.estimatedRows > 0 && (
                   <span 
-                    className="text-xs font-mono flex-shrink-0"
+                    className="text-xs font-mono flex-shrink-0 ml-2"
                     style={{ color: 'var(--text-tertiary)' }}
                   >
                     {formatNumber(table.estimatedRows)}
