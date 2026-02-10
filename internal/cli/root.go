@@ -101,6 +101,7 @@ func initConfig() error {
 	if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
 		appLogger.Warn("config file not found, using defaults")
 		appConfig = getDefaultConfig()
+		appConfig.SetDefaults()
 		return nil
 	}
 
