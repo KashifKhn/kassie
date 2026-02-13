@@ -26,7 +26,6 @@ type EmbeddedServer struct {
 	httpGateway *gateway.Gateway
 	cfg         *EmbeddedServerConfig
 	logger      *logger.Logger
-	ctx         context.Context
 	cancel      context.CancelFunc
 }
 
@@ -74,35 +73,38 @@ func NewEmbeddedServer(appCfg *config.Config, cfg *EmbeddedServerConfig, log *lo
 		AllowedOrigins: cfg.AllowedOrigins,
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	httpGateway, err := gateway.NewGateway(gatewayCfg, log)
 	if err != nil {
+		cancel()
 		return nil, fmt.Errorf("failed to create HTTP gateway: %w", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	if err := httpGateway.RegisterServices(ctx); err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to register gateway services: %w", err)
+	}
 
 	return &EmbeddedServer{
 		grpcServer:  grpcServer,
 		httpGateway: httpGateway,
 		cfg:         cfg,
 		logger:      log,
-		ctx:         ctx,
 		cancel:      cancel,
 	}, nil
 }
 
 func (e *EmbeddedServer) Start() error {
+	if err := e.grpcServer.Listen(); err != nil {
+		return fmt.Errorf("failed to start gRPC listener: %w", err)
+	}
+
 	go func() {
-		if err := e.grpcServer.Start(); err != nil {
+		if err := e.grpcServer.Serve(); err != nil {
 			e.logger.With().Err(err).Logger().Error("gRPC server failed")
 		}
 	}()
-
-	time.Sleep(100 * time.Millisecond)
-
-	if err := e.httpGateway.RegisterServices(e.ctx); err != nil {
-		return fmt.Errorf("failed to register gateway services: %w", err)
-	}
 
 	go func() {
 		if err := e.httpGateway.Start(); err != nil {

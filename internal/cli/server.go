@@ -58,8 +58,12 @@ func runServer(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create gRPC server: %w", err)
 	}
 
+	if err := grpcServer.Listen(); err != nil {
+		return fmt.Errorf("failed to start gRPC listener: %w", err)
+	}
+
 	go func() {
-		if err := grpcServer.Start(); err != nil {
+		if err := grpcServer.Serve(); err != nil {
 			appLogger.With().Err(err).Logger().Error("gRPC server failed")
 			cancel()
 		}

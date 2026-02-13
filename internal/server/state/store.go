@@ -24,15 +24,18 @@ type Session struct {
 }
 
 type Store struct {
-	sessions map[string]*Session
-	mu       sync.RWMutex
-	ttl      time.Duration
+	sessions  map[string]*Session
+	mu        sync.RWMutex
+	ttl       time.Duration
+	done      chan struct{}
+	closeOnce sync.Once
 }
 
 func NewStore(ttl time.Duration) *Store {
 	store := &Store{
 		sessions: make(map[string]*Session),
 		ttl:      ttl,
+		done:     make(chan struct{}),
 	}
 	go store.cleanup()
 	return store
@@ -66,6 +69,7 @@ func (s *Store) Get(id string) (*Session, error) {
 
 	if time.Since(session.LastAccess) > s.ttl {
 		delete(s.sessions, id)
+		session.Cursors.Stop()
 		if session.Connection != nil {
 			session.Connection.Close()
 		}
@@ -81,6 +85,7 @@ func (s *Store) Delete(id string) {
 	defer s.mu.Unlock()
 
 	if session, exists := s.sessions[id]; exists {
+		session.Cursors.Stop()
 		if session.Connection != nil {
 			session.Connection.Close()
 		}
@@ -92,18 +97,24 @@ func (s *Store) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		s.mu.Lock()
-		now := time.Now()
-		for id, session := range s.sessions {
-			if now.Sub(session.LastAccess) > s.ttl {
-				if session.Connection != nil {
-					session.Connection.Close()
+	for {
+		select {
+		case <-s.done:
+			return
+		case <-ticker.C:
+			s.mu.Lock()
+			now := time.Now()
+			for id, session := range s.sessions {
+				if now.Sub(session.LastAccess) > s.ttl {
+					session.Cursors.Stop()
+					if session.Connection != nil {
+						session.Connection.Close()
+					}
+					delete(s.sessions, id)
 				}
-				delete(s.sessions, id)
 			}
+			s.mu.Unlock()
 		}
-		s.mu.Unlock()
 	}
 }
 
@@ -118,9 +129,17 @@ func (s *Store) CloseAll() {
 	defer s.mu.Unlock()
 
 	for id, session := range s.sessions {
+		session.Cursors.Stop()
 		if session.Connection != nil && !session.Connection.Closed() {
 			session.Connection.Close()
 		}
 		delete(s.sessions, id)
 	}
+}
+
+func (s *Store) Close() {
+	s.closeOnce.Do(func() {
+		close(s.done)
+	})
+	s.CloseAll()
 }

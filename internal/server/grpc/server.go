@@ -72,6 +72,13 @@ func NewServer(cfg *ServerConfig, appCfg *config.Config, log *logger.Logger) (*S
 }
 
 func (s *Server) Start() error {
+	if err := s.Listen(); err != nil {
+		return err
+	}
+	return s.Serve()
+}
+
+func (s *Server) Listen() error {
 	addr := fmt.Sprintf("%s:%d", s.cfg.Host, s.cfg.Port)
 
 	listener, err := net.Listen("tcp", addr)
@@ -81,11 +88,13 @@ func (s *Server) Start() error {
 
 	s.listener = listener
 	s.logger.With().Str("address", addr).Logger().Info("gRPC server listening")
+	return nil
+}
 
-	if err := s.grpcServer.Serve(listener); err != nil {
+func (s *Server) Serve() error {
+	if err := s.grpcServer.Serve(s.listener); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)
 	}
-
 	return nil
 }
 
@@ -121,10 +130,13 @@ func (s *Server) Address() string {
 }
 
 func (s *Server) ServeAsync(ctx context.Context) error {
-	errChan := make(chan error, 1)
+	if err := s.Listen(); err != nil {
+		return err
+	}
 
+	errChan := make(chan error, 1)
 	go func() {
-		if err := s.Start(); err != nil {
+		if err := s.Serve(); err != nil {
 			errChan <- err
 		}
 	}()
@@ -132,9 +144,9 @@ func (s *Server) ServeAsync(ctx context.Context) error {
 	select {
 	case err := <-errChan:
 		return err
-	case <-time.After(100 * time.Millisecond):
-		return nil
 	case <-ctx.Done():
 		return s.Stop()
+	default:
+		return nil
 	}
 }

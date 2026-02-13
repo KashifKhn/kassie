@@ -71,7 +71,6 @@ func runTUI(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to start embedded server: %w", err)
 		}
 
-		time.Sleep(150 * time.Millisecond)
 		grpcAddr = embedded.GRPCAddress()
 	}
 

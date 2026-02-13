@@ -70,14 +70,16 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create gRPC server: %w", err)
 	}
 
+	if err := grpcServer.Listen(); err != nil {
+		return fmt.Errorf("failed to start gRPC listener: %w", err)
+	}
+
 	go func() {
-		if err := grpcServer.Start(); err != nil {
+		if err := grpcServer.Serve(); err != nil {
 			appLogger.With().Err(err).Logger().Error("gRPC server failed")
 			cancel()
 		}
 	}()
-
-	time.Sleep(100 * time.Millisecond)
 
 	gatewayCfg := &gateway.GatewayConfig{
 		Host:           "127.0.0.1",
@@ -102,8 +104,6 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	time.Sleep(100 * time.Millisecond)
-
 	webCfg := &web.ServerConfig{
 		Host:           "127.0.0.1",
 		Port:           webPort,
@@ -121,8 +121,6 @@ func runWeb(cmd *cobra.Command, args []string) error {
 			cancel()
 		}
 	}()
-
-	time.Sleep(100 * time.Millisecond)
 
 	webURL := fmt.Sprintf("http://127.0.0.1:%d", webPort)
 	apiURL := fmt.Sprintf("http://127.0.0.1:%d", apiPort)

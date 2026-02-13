@@ -213,6 +213,10 @@ var (
 	dangerousStatements = regexp.MustCompile(
 		`(?i)\b(DROP|DELETE\s+FROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|ALTER|CREATE|TRUNCATE|GRANT|REVOKE|BATCH)\b`,
 	)
+
+	commentPattern = regexp.MustCompile(`/\*|\*/|--`)
+	controlChars   = regexp.MustCompile(`[\x00\n\r]`)
+	cqlOperator    = regexp.MustCompile(`(?i)(!=|<=|>=|=|<|>|\bIN\b|\bCONTAINS\b)`)
 )
 
 func validateIdentifier(name string) error {
@@ -239,8 +243,20 @@ func validateWhereClause(whereClause string) error {
 		return fmt.Errorf("semicolons are not allowed in WHERE clause")
 	}
 
+	if commentPattern.MatchString(trimmed) {
+		return fmt.Errorf("comments are not allowed in WHERE clause")
+	}
+
+	if controlChars.MatchString(trimmed) {
+		return fmt.Errorf("control characters are not allowed in WHERE clause")
+	}
+
 	if dangerousStatements.MatchString(trimmed) {
 		return fmt.Errorf("WHERE clause contains disallowed CQL statement")
+	}
+
+	if !cqlOperator.MatchString(trimmed) {
+		return fmt.Errorf("WHERE clause must contain at least one comparison operator")
 	}
 
 	return nil
