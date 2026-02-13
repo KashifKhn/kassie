@@ -81,5 +81,8 @@ func (s *Session) Close() {
 }
 
 func (s *Session) Closed() bool {
+	if s.session == nil {
+		return true
+	}
 	return s.session.Closed()
 }

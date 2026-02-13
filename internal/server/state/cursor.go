@@ -60,8 +60,8 @@ func (cs *CursorStore) Create(pageState []byte, keyspace, table, filter string, 
 }
 
 func (cs *CursorStore) Get(id string) (*Cursor, error) {
-	cs.mu.RLock()
-	defer cs.mu.RUnlock()
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 
 	cursor, exists := cs.cursors[id]
 	if !exists {
@@ -69,6 +69,7 @@ func (cs *CursorStore) Get(id string) (*Cursor, error) {
 	}
 
 	if time.Since(cursor.LastUsed) > cs.ttl {
+		delete(cs.cursors, id)
 		return nil, ErrCursorExpired
 	}
 

@@ -43,8 +43,8 @@ func runServer(cmd *cobra.Command, args []string) error {
 
 	jwtSecret := os.Getenv("KASSIE_JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "change-this-secret-in-production"
-		appLogger.Warn("using default JWT secret, set KASSIE_JWT_SECRET env variable")
+		jwtSecret = generateSecret()
+		appLogger.Warn("no KASSIE_JWT_SECRET set, generated random secret for this session")
 	}
 
 	grpcCfg := &grpc.ServerConfig{

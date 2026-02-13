@@ -34,7 +34,7 @@ type Server struct {
 
 func NewServer(cfg *ServerConfig, appCfg *config.Config, log *logger.Logger) (*Server, error) {
 	if cfg.JWTSecret == "" {
-		cfg.JWTSecret = "default-secret-change-in-production"
+		return nil, fmt.Errorf("JWT secret is required")
 	}
 
 	pool := db.NewPool()

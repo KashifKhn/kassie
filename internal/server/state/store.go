@@ -56,8 +56,8 @@ func (s *Store) Create(id string, profile *config.Profile, conn *db.Session) *Se
 }
 
 func (s *Store) Get(id string) (*Session, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	session, exists := s.sessions[id]
 	if !exists {
@@ -65,6 +65,10 @@ func (s *Store) Get(id string) (*Session, error) {
 	}
 
 	if time.Since(session.LastAccess) > s.ttl {
+		delete(s.sessions, id)
+		if session.Connection != nil {
+			session.Connection.Close()
+		}
 		return nil, ErrSessionExpired
 	}
 
@@ -107,4 +111,16 @@ func (s *Store) Count() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.sessions)
+}
+
+func (s *Store) CloseAll() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for id, session := range s.sessions {
+		if session.Connection != nil && !session.Connection.Closed() {
+			session.Connection.Close()
+		}
+		delete(s.sessions, id)
+	}
 }

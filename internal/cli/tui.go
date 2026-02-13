@@ -52,7 +52,7 @@ func runTUI(cmd *cobra.Command, args []string) error {
 	} else {
 		jwtSecret := os.Getenv("KASSIE_JWT_SECRET")
 		if jwtSecret == "" {
-			jwtSecret = "tui-mode-secret"
+			jwtSecret = generateSecret()
 		}
 
 		embeddedCfg := &server.EmbeddedServerConfig{

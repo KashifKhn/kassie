@@ -2,7 +2,9 @@ package db
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -158,6 +160,27 @@ func createSession(cfg *ConnectionConfig) (*gocql.Session, error) {
 		tlsConfig := &tls.Config{
 			InsecureSkipVerify: cfg.SSLSkipVerify,
 		}
+
+		if cfg.SSLCertPath != "" && cfg.SSLKeyPath != "" {
+			cert, err := tls.LoadX509KeyPair(cfg.SSLCertPath, cfg.SSLKeyPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load SSL cert/key: %w", err)
+			}
+			tlsConfig.Certificates = []tls.Certificate{cert}
+		}
+
+		if cfg.SSLCAPath != "" {
+			caCert, err := os.ReadFile(cfg.SSLCAPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read CA cert: %w", err)
+			}
+			caCertPool := x509.NewCertPool()
+			if !caCertPool.AppendCertsFromPEM(caCert) {
+				return nil, fmt.Errorf("failed to parse CA certificate")
+			}
+			tlsConfig.RootCAs = caCertPool
+		}
+
 		cluster.SslOpts = &gocql.SslOptions{
 			Config: tlsConfig,
 		}

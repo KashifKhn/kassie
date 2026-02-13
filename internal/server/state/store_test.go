@@ -117,15 +117,3 @@ func TestStore_CloseAll(t *testing.T) {
 		t.Errorf("expected count 0 after CloseAll, got %d", store.Count())
 	}
 }
-
-func (s *Store) CloseAll() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for id, session := range s.sessions {
-		if session.Connection != nil && !session.Connection.Closed() {
-			session.Connection.Close()
-		}
-		delete(s.sessions, id)
-	}
-}

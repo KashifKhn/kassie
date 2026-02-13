@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"time"
@@ -30,7 +32,12 @@ type EmbeddedServer struct {
 
 func NewEmbeddedServer(appCfg *config.Config, cfg *EmbeddedServerConfig, log *logger.Logger) (*EmbeddedServer, error) {
 	if cfg.JWTSecret == "" {
-		cfg.JWTSecret = "embedded-default-secret"
+		secret, err := generateRandomSecret(32)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate JWT secret: %w", err)
+		}
+		cfg.JWTSecret = secret
+		log.Warn("no JWT secret provided, generated random secret for this session")
 	}
 
 	if cfg.GRPCPort == 0 {
@@ -143,4 +150,12 @@ func getFreePort() (int, error) {
 
 	addr := listener.Addr().(*net.TCPAddr)
 	return addr.Port, nil
+}
+
+func generateRandomSecret(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }
