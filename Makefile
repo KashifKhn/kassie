@@ -1,4 +1,4 @@
-.PHONY: setup proto build build-server embed-web web dev-tui dev-web dev-server test test-unit test-int lint fmt clean
+.PHONY: setup proto build build-server embed-web web dev-tui dev-web dev-server doc-dev doc-build test test-unit test-int lint fmt clean
 
 setup:
 	@echo "Installing protoc plugins..."
@@ -49,6 +49,14 @@ dev-web:
 dev-server:
 	@echo "Running server for web development on port 9090..."
 	go run cmd/kassie/main.go server --http-port 9090
+
+doc-dev:
+	@echo "Running docs dev server..."
+	cd docs && pnpm dev
+
+doc-build:
+	@echo "Building docs..."
+	cd docs && pnpm install && pnpm run build
 
 test:
 	@echo "Running all tests..."
