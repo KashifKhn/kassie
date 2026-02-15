@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type SchemaService struct {
@@ -28,7 +29,7 @@ func (s *SchemaService) ListKeyspaces(ctx context.Context, req *pb.ListKeyspaces
 	query := `SELECT keyspace_name, replication FROM system_schema.keyspaces`
 	rows, err := session.Connection.FetchAll(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch keyspaces: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to fetch keyspaces: %v", err)
 	}
 
 	keyspaces := make([]*pb.Keyspace, 0, len(rows))
@@ -65,7 +66,7 @@ func (s *SchemaService) ListKeyspaces(ctx context.Context, req *pb.ListKeyspaces
 
 func (s *SchemaService) ListTables(ctx context.Context, req *pb.ListTablesRequest) (*pb.ListTablesResponse, error) {
 	if req.Keyspace == "" {
-		return nil, fmt.Errorf("keyspace is required")
+		return nil, status.Error(codes.InvalidArgument, "keyspace is required")
 	}
 
 	session, err := GetSessionFromContext(ctx, s.store)
@@ -76,7 +77,7 @@ func (s *SchemaService) ListTables(ctx context.Context, req *pb.ListTablesReques
 	query := `SELECT table_name FROM system_schema.tables WHERE keyspace_name = ?`
 	rows, err := session.Connection.FetchAll(ctx, query, req.Keyspace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch tables: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to fetch tables: %v", err)
 	}
 
 	tables := make([]*pb.Table, 0, len(rows))
@@ -103,7 +104,7 @@ func (s *SchemaService) ListTables(ctx context.Context, req *pb.ListTablesReques
 
 func (s *SchemaService) GetTableSchema(ctx context.Context, req *pb.GetTableSchemaRequest) (*pb.GetTableSchemaResponse, error) {
 	if req.Keyspace == "" || req.Table == "" {
-		return nil, fmt.Errorf("keyspace and table are required")
+		return nil, status.Error(codes.InvalidArgument, "keyspace and table are required")
 	}
 
 	session, err := GetSessionFromContext(ctx, s.store)
@@ -114,11 +115,11 @@ func (s *SchemaService) GetTableSchema(ctx context.Context, req *pb.GetTableSche
 	query := `SELECT column_name, type, kind, position FROM system_schema.columns WHERE keyspace_name = ? AND table_name = ?`
 	rows, err := session.Connection.FetchAll(ctx, query, req.Keyspace, req.Table)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch table schema: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to fetch table schema: %v", err)
 	}
 
 	if len(rows) == 0 {
-		return nil, fmt.Errorf("table not found: %s.%s", req.Keyspace, req.Table)
+		return nil, status.Errorf(codes.NotFound, "table not found: %s.%s", req.Keyspace, req.Table)
 	}
 
 	columns := make([]*pb.Column, 0, len(rows))

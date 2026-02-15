@@ -8,6 +8,8 @@ import (
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/server/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type DataService struct {
@@ -23,14 +25,14 @@ func NewDataService(store SessionStore) *DataService {
 
 func (d *DataService) QueryRows(ctx context.Context, req *pb.QueryRowsRequest) (*pb.QueryRowsResponse, error) {
 	if req.Keyspace == "" || req.Table == "" {
-		return nil, fmt.Errorf("keyspace and table are required")
+		return nil, status.Error(codes.InvalidArgument, "keyspace and table are required")
 	}
 
 	if err := validateIdentifier(req.Keyspace); err != nil {
-		return nil, fmt.Errorf("invalid keyspace: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid keyspace: %v", err)
 	}
 	if err := validateIdentifier(req.Table); err != nil {
-		return nil, fmt.Errorf("invalid table: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid table: %v", err)
 	}
 
 	session, err := GetSessionFromContext(ctx, d.store)
@@ -43,7 +45,7 @@ func (d *DataService) QueryRows(ctx context.Context, req *pb.QueryRowsRequest) (
 	query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, req.Keyspace, req.Table)
 	rows, nextPageState, err := session.Connection.FetchWithPaging(ctx, query, pageSize, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query rows: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to query rows: %v", err)
 	}
 
 	pbRows := convertRows(rows)
@@ -65,7 +67,7 @@ func (d *DataService) QueryRows(ctx context.Context, req *pb.QueryRowsRequest) (
 
 func (d *DataService) GetNextPage(ctx context.Context, req *pb.GetNextPageRequest) (*pb.GetNextPageResponse, error) {
 	if req.CursorId == "" {
-		return nil, fmt.Errorf("cursor ID is required")
+		return nil, status.Error(codes.InvalidArgument, "cursor ID is required")
 	}
 
 	session, err := GetSessionFromContext(ctx, d.store)
@@ -75,7 +77,7 @@ func (d *DataService) GetNextPage(ctx context.Context, req *pb.GetNextPageReques
 
 	cursor, err := session.Cursors.Get(req.CursorId)
 	if err != nil {
-		return nil, fmt.Errorf("cursor not found or expired: %w", err)
+		return nil, status.Errorf(codes.NotFound, "cursor not found or expired: %v", err)
 	}
 
 	query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, cursor.Keyspace, cursor.Table)
@@ -85,7 +87,7 @@ func (d *DataService) GetNextPage(ctx context.Context, req *pb.GetNextPageReques
 
 	rows, nextPageState, err := session.Connection.FetchWithPaging(ctx, query, cursor.PageSize, cursor.PageState)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch next page: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to fetch next page: %v", err)
 	}
 
 	pbRows := convertRows(rows)
@@ -108,18 +110,18 @@ func (d *DataService) GetNextPage(ctx context.Context, req *pb.GetNextPageReques
 
 func (d *DataService) FilterRows(ctx context.Context, req *pb.FilterRowsRequest) (*pb.FilterRowsResponse, error) {
 	if req.Keyspace == "" || req.Table == "" {
-		return nil, fmt.Errorf("keyspace and table are required")
+		return nil, status.Error(codes.InvalidArgument, "keyspace and table are required")
 	}
 
 	if req.WhereClause == "" {
-		return nil, fmt.Errorf("where clause is required for filtering")
+		return nil, status.Error(codes.InvalidArgument, "where clause is required for filtering")
 	}
 
 	if err := validateIdentifier(req.Keyspace); err != nil {
-		return nil, fmt.Errorf("invalid keyspace: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid keyspace: %v", err)
 	}
 	if err := validateIdentifier(req.Table); err != nil {
-		return nil, fmt.Errorf("invalid table: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid table: %v", err)
 	}
 
 	session, err := GetSessionFromContext(ctx, d.store)
@@ -128,7 +130,7 @@ func (d *DataService) FilterRows(ctx context.Context, req *pb.FilterRowsRequest)
 	}
 
 	if err := validateWhereClause(req.WhereClause); err != nil {
-		return nil, fmt.Errorf("invalid WHERE clause: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid WHERE clause: %v", err)
 	}
 
 	pageSize := normalizePageSize(int(req.PageSize))
@@ -136,7 +138,7 @@ func (d *DataService) FilterRows(ctx context.Context, req *pb.FilterRowsRequest)
 	query := fmt.Sprintf(`SELECT * FROM "%s"."%s" WHERE %s`, req.Keyspace, req.Table, req.WhereClause)
 	rows, nextPageState, err := session.Connection.FetchWithPaging(ctx, query, pageSize, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to filter rows: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to filter rows: %v", err)
 	}
 
 	pbRows := convertRows(rows)
@@ -220,7 +222,7 @@ var (
 
 func validateIdentifier(name string) error {
 	if !identifierRegex.MatchString(name) {
-		return fmt.Errorf("contains invalid characters: %q", name)
+		return status.Errorf(codes.InvalidArgument, "contains invalid characters: %q", name)
 	}
 	return nil
 }
@@ -235,27 +237,27 @@ func normalizePageSize(pageSize int) int {
 func validateWhereClause(whereClause string) error {
 	trimmed := strings.TrimSpace(whereClause)
 	if trimmed == "" {
-		return fmt.Errorf("empty WHERE clause")
+		return status.Error(codes.InvalidArgument, "empty WHERE clause")
 	}
 
 	if strings.Contains(trimmed, ";") {
-		return fmt.Errorf("semicolons are not allowed in WHERE clause")
+		return status.Error(codes.InvalidArgument, "semicolons are not allowed in WHERE clause")
 	}
 
 	if commentPattern.MatchString(trimmed) {
-		return fmt.Errorf("comments are not allowed in WHERE clause")
+		return status.Error(codes.InvalidArgument, "comments are not allowed in WHERE clause")
 	}
 
 	if controlChars.MatchString(trimmed) {
-		return fmt.Errorf("control characters are not allowed in WHERE clause")
+		return status.Error(codes.InvalidArgument, "control characters are not allowed in WHERE clause")
 	}
 
 	if dangerousStatements.MatchString(trimmed) {
-		return fmt.Errorf("WHERE clause contains disallowed CQL statement")
+		return status.Error(codes.InvalidArgument, "WHERE clause contains disallowed CQL statement")
 	}
 
 	if !cqlOperator.MatchString(trimmed) {
-		return fmt.Errorf("WHERE clause must contain at least one comparison operator")
+		return status.Error(codes.InvalidArgument, "WHERE clause must contain at least one comparison operator")
 	}
 
 	return nil
