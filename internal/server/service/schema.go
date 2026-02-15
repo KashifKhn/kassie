@@ -6,15 +6,14 @@ import (
 	"sort"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
-	"github.com/KashifKhn/kassie/internal/server/state"
 )
 
 type SchemaService struct {
 	pb.UnimplementedSchemaServiceServer
-	store *state.Store
+	store SessionStore
 }
 
-func NewSchemaService(store *state.Store) *SchemaService {
+func NewSchemaService(store SessionStore) *SchemaService {
 	return &SchemaService{
 		store: store,
 	}

@@ -7,10 +7,7 @@ import (
 	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
-	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/service"
-	"github.com/KashifKhn/kassie/internal/server/state"
-	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -32,20 +29,24 @@ type Server struct {
 	logger         *logger.Logger
 }
 
-func NewServer(cfg *ServerConfig, appCfg *config.Config, log *logger.Logger) (*Server, error) {
+type ServerDeps struct {
+	Config service.ProfileProvider
+	Pool   service.ConnectionPool
+	Store  service.SessionStore
+}
+
+func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server, error) {
 	if cfg.JWTSecret == "" {
 		return nil, fmt.Errorf("JWT secret is required")
 	}
 
-	pool := db.NewPool()
-	store := state.NewStore(7 * 24 * time.Hour)
 	auth := service.NewAuthService(cfg.JWTSecret)
 
-	sessionSvc := service.NewSessionService(appCfg, pool, store, auth)
-	schemaSvc := service.NewSchemaService(store)
-	dataSvc := service.NewDataService(store)
+	sessionSvc := service.NewSessionService(deps.Config, deps.Pool, deps.Store, auth)
+	schemaSvc := service.NewSchemaService(deps.Store)
+	dataSvc := service.NewDataService(deps.Store)
 
-	unaryInterceptor := NewAuthInterceptor(auth, store, log)
+	unaryInterceptor := NewAuthInterceptor(auth, deps.Store, log)
 
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(unaryInterceptor),

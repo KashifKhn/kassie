@@ -8,15 +8,14 @@ import (
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/server/db"
-	"github.com/KashifKhn/kassie/internal/server/state"
 )
 
 type DataService struct {
 	pb.UnimplementedDataServiceServer
-	store *state.Store
+	store SessionStore
 }
 
-func NewDataService(store *state.Store) *DataService {
+func NewDataService(store SessionStore) *DataService {
 	return &DataService{
 		store: store,
 	}

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/KashifKhn/kassie/internal/server/service"
-	"github.com/KashifKhn/kassie/internal/server/state"
 	"github.com/KashifKhn/kassie/internal/shared/ctxutil"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"google.golang.org/grpc"
@@ -20,7 +19,7 @@ var publicMethods = map[string]bool{
 	"/kassie.v1.SessionService/GetProfiles": true,
 }
 
-func NewAuthInterceptor(auth *service.AuthService, store *state.Store, log *logger.Logger) grpc.UnaryServerInterceptor {
+func NewAuthInterceptor(auth TokenValidator, store SessionStore, log *logger.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if publicMethods[info.FullMethod] {
 			return handler(ctx, req)

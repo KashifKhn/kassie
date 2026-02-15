@@ -10,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/gateway"
 	"github.com/KashifKhn/kassie/internal/server/grpc"
+	"github.com/KashifKhn/kassie/internal/server/state"
 	"github.com/KashifKhn/kassie/internal/server/web"
 	"github.com/spf13/cobra"
 )
@@ -65,7 +67,16 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		JWTSecret: jwtSecret,
 	}
 
-	grpcServer, err := grpc.NewServer(grpcCfg, appConfig, appLogger)
+	pool := db.NewPool()
+	store := state.NewStore(7 * 24 * time.Hour)
+
+	grpcDeps := &grpc.ServerDeps{
+		Config: appConfig,
+		Pool:   pool,
+		Store:  store,
+	}
+
+	grpcServer, err := grpc.NewServer(grpcCfg, grpcDeps, appLogger)
 	if err != nil {
 		return fmt.Errorf("failed to create gRPC server: %w", err)
 	}

@@ -8,20 +8,19 @@ import (
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/state"
-	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/ctxutil"
 	"github.com/google/uuid"
 )
 
 type SessionService struct {
 	pb.UnimplementedSessionServiceServer
-	cfg   *config.Config
-	pool  *db.Pool
-	store *state.Store
+	cfg   ProfileProvider
+	pool  ConnectionPool
+	store SessionStore
 	auth  *AuthService
 }
 
-func NewSessionService(cfg *config.Config, pool *db.Pool, store *state.Store, auth *AuthService) *SessionService {
+func NewSessionService(cfg ProfileProvider, pool ConnectionPool, store SessionStore, auth *AuthService) *SessionService {
 	return &SessionService{
 		cfg:   cfg,
 		pool:  pool,
@@ -95,10 +94,11 @@ func (s *SessionService) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb
 }
 
 func (s *SessionService) GetProfiles(ctx context.Context, req *pb.GetProfilesRequest) (*pb.GetProfilesResponse, error) {
-	profiles := make([]*pb.ProfileInfo, 0, len(s.cfg.Profiles))
+	profileList := s.cfg.GetProfiles()
+	profiles := make([]*pb.ProfileInfo, 0, len(profileList))
 
-	for i := range s.cfg.Profiles {
-		p := &s.cfg.Profiles[i]
+	for i := range profileList {
+		p := &profileList[i]
 		profiles = append(profiles, &pb.ProfileInfo{
 			Name:       p.Name,
 			Hosts:      p.Hosts,
@@ -113,7 +113,7 @@ func (s *SessionService) GetProfiles(ctx context.Context, req *pb.GetProfilesReq
 	}, nil
 }
 
-func GetSessionFromContext(ctx context.Context, store *state.Store) (*state.Session, error) {
+func GetSessionFromContext(ctx context.Context, store SessionStore) (*state.Session, error) {
 	sessionID, ok := ctxutil.GetSessionID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("no session in context")

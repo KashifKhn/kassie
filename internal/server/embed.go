@@ -8,8 +8,10 @@ import (
 	"net"
 	"time"
 
+	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/gateway"
 	"github.com/KashifKhn/kassie/internal/server/grpc"
+	"github.com/KashifKhn/kassie/internal/server/state"
 	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 )
@@ -61,7 +63,16 @@ func NewEmbeddedServer(appCfg *config.Config, cfg *EmbeddedServerConfig, log *lo
 		JWTSecret: cfg.JWTSecret,
 	}
 
-	grpcServer, err := grpc.NewServer(grpcCfg, appCfg, log)
+	pool := db.NewPool()
+	store := state.NewStore(7 * 24 * time.Hour)
+
+	grpcDeps := &grpc.ServerDeps{
+		Config: appCfg,
+		Pool:   pool,
+		Store:  store,
+	}
+
+	grpcServer, err := grpc.NewServer(grpcCfg, grpcDeps, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC server: %w", err)
 	}
