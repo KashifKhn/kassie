@@ -7,6 +7,7 @@ import (
 	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
+	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -19,6 +20,9 @@ type GatewayConfig struct {
 	Port           int
 	GRPCAddress    string
 	AllowedOrigins []string
+	ReadTimeout    time.Duration
+	WriteTimeout   time.Duration
+	IdleTimeout    time.Duration
 }
 
 type Gateway struct {
@@ -78,12 +82,25 @@ func (g *Gateway) Start() error {
 
 	addr := fmt.Sprintf("%s:%d", g.cfg.Host, g.cfg.Port)
 
+	readTimeout := g.cfg.ReadTimeout
+	if readTimeout == 0 {
+		readTimeout = config.DefaultReadTimeout
+	}
+	writeTimeout := g.cfg.WriteTimeout
+	if writeTimeout == 0 {
+		writeTimeout = config.DefaultWriteTimeout
+	}
+	idleTimeout := g.cfg.IdleTimeout
+	if idleTimeout == 0 {
+		idleTimeout = config.DefaultIdleTimeout
+	}
+
 	g.server = &http.Server{
 		Addr:         addr,
 		Handler:      handler,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 	}
 
 	g.logger.With().Str("address", addr).Logger().Info("HTTP gateway listening")

@@ -8,13 +8,13 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
 	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/gateway"
 	"github.com/KashifKhn/kassie/internal/server/grpc"
 	"github.com/KashifKhn/kassie/internal/server/state"
 	"github.com/KashifKhn/kassie/internal/server/web"
+	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/spf13/cobra"
 )
 
@@ -35,8 +35,8 @@ Starts embedded gRPC server, HTTP API gateway, and web UI server.`,
 		RunE: runWeb,
 	}
 
-	cmd.Flags().IntVar(&webPort, "web-port", 9091, "web UI port")
-	cmd.Flags().IntVar(&apiPort, "api-port", 9090, "API gateway port")
+	cmd.Flags().IntVar(&webPort, "web-port", config.DefaultWebPort, "web UI port")
+	cmd.Flags().IntVar(&apiPort, "api-port", config.DefaultHTTPPort, "API gateway port")
 	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "don't auto-open browser")
 	cmd.Flags().StringVar(&webProfile, "profile", "", "default profile to connect")
 
@@ -62,13 +62,13 @@ func runWeb(cmd *cobra.Command, args []string) error {
 	grpcPort := apiPort - 1
 
 	grpcCfg := &grpc.ServerConfig{
-		Host:      "127.0.0.1",
+		Host:      config.DefaultHost,
 		Port:      grpcPort,
 		JWTSecret: jwtSecret,
 	}
 
 	pool := db.NewPool()
-	store := state.NewStore(7 * 24 * time.Hour)
+	store := state.NewStore(config.DefaultSessionTTL)
 
 	grpcDeps := &grpc.ServerDeps{
 		Config: appConfig,
@@ -93,9 +93,9 @@ func runWeb(cmd *cobra.Command, args []string) error {
 	}()
 
 	gatewayCfg := &gateway.GatewayConfig{
-		Host:           "127.0.0.1",
+		Host:           config.DefaultHost,
 		Port:           apiPort,
-		GRPCAddress:    fmt.Sprintf("127.0.0.1:%d", grpcPort),
+		GRPCAddress:    fmt.Sprintf("%s:%d", config.DefaultHost, grpcPort),
 		AllowedOrigins: []string{"*"},
 	}
 
@@ -116,7 +116,7 @@ func runWeb(cmd *cobra.Command, args []string) error {
 	}()
 
 	webCfg := &web.ServerConfig{
-		Host:           "127.0.0.1",
+		Host:           config.DefaultHost,
 		Port:           webPort,
 		AllowedOrigins: []string{"*"},
 	}
@@ -133,8 +133,8 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	webURL := fmt.Sprintf("http://127.0.0.1:%d", webPort)
-	apiURL := fmt.Sprintf("http://127.0.0.1:%d", apiPort)
+	webURL := fmt.Sprintf("http://%s:%d", config.DefaultHost, webPort)
+	apiURL := fmt.Sprintf("http://%s:%d", config.DefaultHost, apiPort)
 
 	appLogger.With().
 		Str("web_url", webURL).
@@ -165,7 +165,7 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		fmt.Println("\n\nServer error, shutting down...")
 	}
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), config.DefaultShutdownTime)
 	defer shutdownCancel()
 
 	if err := webServer.Stop(shutdownCtx); err != nil {

@@ -58,13 +58,13 @@ func NewEmbeddedServer(appCfg *config.Config, cfg *EmbeddedServerConfig, log *lo
 	}
 
 	grpcCfg := &grpc.ServerConfig{
-		Host:      "127.0.0.1",
+		Host:      config.DefaultHost,
 		Port:      cfg.GRPCPort,
 		JWTSecret: cfg.JWTSecret,
 	}
 
 	pool := db.NewPool()
-	store := state.NewStore(7 * 24 * time.Hour)
+	store := state.NewStore(config.DefaultSessionTTL)
 
 	grpcDeps := &grpc.ServerDeps{
 		Config: appCfg,
@@ -78,9 +78,9 @@ func NewEmbeddedServer(appCfg *config.Config, cfg *EmbeddedServerConfig, log *lo
 	}
 
 	gatewayCfg := &gateway.GatewayConfig{
-		Host:           "127.0.0.1",
+		Host:           config.DefaultHost,
 		Port:           cfg.HTTPPort,
-		GRPCAddress:    fmt.Sprintf("127.0.0.1:%d", cfg.GRPCPort),
+		GRPCAddress:    fmt.Sprintf("%s:%d", config.DefaultHost, cfg.GRPCPort),
 		AllowedOrigins: cfg.AllowedOrigins,
 	}
 
@@ -151,11 +151,11 @@ func (e *EmbeddedServer) GRPCAddress() string {
 }
 
 func (e *EmbeddedServer) HTTPAddress() string {
-	return fmt.Sprintf("127.0.0.1:%d", e.cfg.HTTPPort)
+	return fmt.Sprintf("%s:%d", config.DefaultHost, e.cfg.HTTPPort)
 }
 
 func getFreePort() (int, error) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:0", config.DefaultHost))
 	if err != nil {
 		return 0, err
 	}

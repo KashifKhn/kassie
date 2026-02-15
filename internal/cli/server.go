@@ -6,12 +6,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/gateway"
 	"github.com/KashifKhn/kassie/internal/server/grpc"
 	"github.com/KashifKhn/kassie/internal/server/state"
+	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/spf13/cobra"
 )
 
@@ -32,9 +32,9 @@ to a shared Kassie instance.`,
 		RunE: runServer,
 	}
 
-	cmd.Flags().IntVar(&grpcPort, "grpc-port", 50051, "gRPC server port")
-	cmd.Flags().IntVar(&httpPort, "http-port", 8080, "HTTP gateway port")
-	cmd.Flags().StringVar(&bindHost, "host", "0.0.0.0", "bind address")
+	cmd.Flags().IntVar(&grpcPort, "grpc-port", config.DefaultGRPCPort, "gRPC server port")
+	cmd.Flags().IntVar(&httpPort, "http-port", config.DefaultHTTPPort, "HTTP gateway port")
+	cmd.Flags().StringVar(&bindHost, "host", config.DefaultServerHost, "bind address")
 
 	return cmd
 }
@@ -56,7 +56,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	}
 
 	pool := db.NewPool()
-	store := state.NewStore(7 * 24 * time.Hour)
+	store := state.NewStore(config.DefaultSessionTTL)
 
 	grpcDeps := &grpc.ServerDeps{
 		Config: appConfig,
@@ -83,7 +83,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	gatewayCfg := &gateway.GatewayConfig{
 		Host:           bindHost,
 		Port:           httpPort,
-		GRPCAddress:    fmt.Sprintf("%s:%d", "127.0.0.1", grpcPort),
+		GRPCAddress:    fmt.Sprintf("%s:%d", config.DefaultHost, grpcPort),
 		AllowedOrigins: []string{"*"},
 	}
 
@@ -118,7 +118,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 		appLogger.Info("server context cancelled")
 	}
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), config.DefaultShutdownTime)
 	defer shutdownCancel()
 
 	if err := httpGateway.Stop(shutdownCtx); err != nil {
