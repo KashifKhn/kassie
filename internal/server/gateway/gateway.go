@@ -78,7 +78,7 @@ func (g *Gateway) RegisterServices(ctx context.Context) error {
 }
 
 func (g *Gateway) Start() error {
-	handler := g.corsMiddleware(g.mux)
+	handler := g.securityHeadersMiddleware(g.corsMiddleware(g.mux))
 
 	addr := fmt.Sprintf("%s:%d", g.cfg.Host, g.cfg.Port)
 
@@ -145,6 +145,18 @@ func (g *Gateway) corsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (g *Gateway) securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
 
 		next.ServeHTTP(w, r)
 	})
