@@ -81,6 +81,10 @@ export default defineConfig({
           text: 'Architecture',
           items: [
             { text: 'Overview', link: '/architecture/' },
+            { text: 'Client-Server Model', link: '/architecture/client-server' },
+            { text: 'Authentication', link: '/architecture/authentication' },
+            { text: 'State Management', link: '/architecture/state-management' },
+            { text: 'Protocol Design', link: '/architecture/protocol' },
           ]
         }
       ],
@@ -90,6 +94,10 @@ export default defineConfig({
           text: 'Development',
           items: [
             { text: 'Overview', link: '/development/' },
+            { text: 'Setup', link: '/development/setup' },
+            { text: 'Building', link: '/development/building' },
+            { text: 'Testing', link: '/development/testing' },
+            { text: 'Architecture Decisions', link: '/development/architecture-decisions' },
             { text: 'Contributing', link: '/development/contributing' },
           ]
         }
@@ -100,6 +108,10 @@ export default defineConfig({
           text: 'Examples',
           items: [
             { text: 'Overview', link: '/examples/' },
+            { text: 'Basic Queries', link: '/examples/basic-queries' },
+            { text: 'Advanced Filtering', link: '/examples/advanced-filtering' },
+            { text: 'Custom Configurations', link: '/examples/custom-configs' },
+            { text: 'Scripting & Automation', link: '/examples/scripting' },
           ]
         }
       ]

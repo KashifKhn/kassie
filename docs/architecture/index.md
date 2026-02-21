@@ -224,10 +224,8 @@ SSL/TLS to Cassandra/ScyllaDB:
 
 ## Learn More
 
-Additional architecture documentation pages coming soon:
-- Client-Server Model - Detailed architecture
-- Authentication - Auth system design
-- State Management - State handling
-- Protocol Design - gRPC protocol details
-
-For the complete architecture document, see [n_docs/ARCHITECTURE.md](https://github.com/kashifKhn/kassie/blob/main/n_docs/ARCHITECTURE.md) in the repository.
+Explore specific aspects of the architecture in detail:
+- [Client-Server Model](/architecture/client-server) — Deployment modes, communication patterns, and web asset embedding
+- [Authentication](/architecture/authentication) — JWT token system, auth flow, and security considerations
+- [State Management](/architecture/state-management) — Server, TUI, and Web state layers
+- [Protocol Design](/architecture/protocol) — Protobuf definitions, services, message types, and pagination
