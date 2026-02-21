@@ -5,9 +5,14 @@ Kassie is a dual-client (TUI + Web) database explorer for Cassandra/ScyllaDB wit
 ## Architecture
 
 **Single Binary with Embedded Web UI**: The `make build` command creates a unified binary that embeds the web UI assets. When running `kassie web`, it starts three servers:
+
 - gRPC server (internal port, auto-assigned)
 - HTTP API Gateway (port 9090, serves `/api/v1/*`)
 - Web UI server (port 9091, serves static files)
+
+## Notes
+
+Always run the `make lint && make test` after each phase or code changes this must setp
 
 ## Build Commands
 
