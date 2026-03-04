@@ -291,8 +291,8 @@ func TestLoaderLoadFromPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "config with environment variable interpolation" {
-				os.Setenv("TEST_PASSWORD_LOADER", "secret123")
-				defer os.Unsetenv("TEST_PASSWORD_LOADER")
+				_ = os.Setenv("TEST_PASSWORD_LOADER", "secret123")
+				defer func() { _ = os.Unsetenv("TEST_PASSWORD_LOADER") }()
 			}
 
 			loader := NewLoader()
@@ -518,7 +518,7 @@ func TestLoaderExists(t *testing.T) {
 func TestLoadConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", originalHome)
+	defer func() { _ = os.Setenv("HOME", originalHome) }()
 
 	validConfig := Config{
 		Version: "1.0",
@@ -541,7 +541,7 @@ func TestLoadConfig(t *testing.T) {
 	data, _ := json.Marshal(validConfig)
 	_ = os.WriteFile(configPath, data, 0644)
 
-	os.Setenv("HOME", tmpDir)
+	_ = os.Setenv("HOME", tmpDir)
 
 	config, err := LoadConfig()
 	if err != nil {
@@ -586,9 +586,9 @@ func TestLoadConfigFromPath(t *testing.T) {
 func TestSaveConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", originalHome)
+	defer func() { _ = os.Setenv("HOME", originalHome) }()
 
-	os.Setenv("HOME", tmpDir)
+	_ = os.Setenv("HOME", tmpDir)
 
 	validConfig := &Config{
 		Version: "1.0",
