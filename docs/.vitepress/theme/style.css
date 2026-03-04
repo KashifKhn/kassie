@@ -31,3 +31,24 @@
   font-size: 14px;
   font-weight: 500;
 }
+
+.VPHomeHero .actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.VPHomeHero .actions::after {
+  content: "curl -fsSL https://raw.githubusercontent.com/KashifKhn/kassie/main/install.sh | sh";
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--vp-c-divider);
+  background-color: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-2);
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-all;
+}
