@@ -97,7 +97,7 @@ func (s *Server) spaHandler(distFS fs.FS) http.HandlerFunc {
 				http.Error(w, "Not Found", http.StatusNotFound)
 				return
 			}
-			defer indexFile.Close()
+			defer func() { _ = indexFile.Close() }()
 
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			if _, copyErr := io.Copy(w, indexFile); copyErr != nil {
@@ -105,7 +105,7 @@ func (s *Server) spaHandler(distFS fs.FS) http.HandlerFunc {
 			}
 			return
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		stat, err := file.Stat()
 		if err != nil {
@@ -119,7 +119,7 @@ func (s *Server) spaHandler(distFS fs.FS) http.HandlerFunc {
 				http.Error(w, "Not Found", http.StatusNotFound)
 				return
 			}
-			defer indexFile.Close()
+			defer func() { _ = indexFile.Close() }()
 
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			if _, copyErr := io.Copy(w, indexFile); copyErr != nil {

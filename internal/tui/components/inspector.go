@@ -157,7 +157,7 @@ func copyToClipboard(text string) error {
 		return err
 	}
 
-	stdin.Close()
+	_ = stdin.Close()
 	return cmd.Wait()
 }
 

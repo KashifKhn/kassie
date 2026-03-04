@@ -117,7 +117,7 @@ func (s *Server) Stop() error {
 	}
 
 	if s.listener != nil {
-		s.listener.Close()
+		_ = s.listener.Close()
 	}
 
 	return nil

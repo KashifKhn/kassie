@@ -78,7 +78,11 @@ func runTUI(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to server: %w", err)
 	}
-	defer clientConn.Close()
+	defer func() {
+		if err := clientConn.Close(); err != nil {
+			appLogger.With().Err(err).Logger().Warn("failed to close client connection")
+		}
+	}()
 
 	if tuiProfile != "" {
 		ctxLogin, cancelLogin := context.WithTimeout(context.Background(), 10*time.Second)
