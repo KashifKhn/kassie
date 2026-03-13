@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -150,4 +152,12 @@ func getDefaultConfig() *config.Config {
 
 func Execute() error {
 	return NewRootCmd().Execute()
+}
+
+func generateSecret() string {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return hex.EncodeToString([]byte("fallback-kassie-secret-key-change"))
+	}
+	return hex.EncodeToString(bytes)
 }

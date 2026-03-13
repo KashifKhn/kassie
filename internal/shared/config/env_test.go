@@ -178,8 +178,10 @@ func TestInterpolateEnvVars(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			for k, v := range tt.envVars {
-				os.Setenv(k, v)
-				defer os.Unsetenv(k)
+				if err := os.Setenv(k, v); err != nil {
+					t.Fatalf("failed to set env var %s: %v", k, err)
+				}
+				defer func(key string) { _ = os.Unsetenv(key) }(k)
 			}
 
 			got, err := InterpolateEnvVars(tt.input)
@@ -410,8 +412,10 @@ func TestInterpolateProfile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			for k, v := range tt.envVars {
-				os.Setenv(k, v)
-				defer os.Unsetenv(k)
+				if err := os.Setenv(k, v); err != nil {
+					t.Fatalf("failed to set env var %s: %v", k, err)
+				}
+				defer func(key string) { _ = os.Unsetenv(key) }(k)
 			}
 
 			profile := tt.profile
@@ -522,8 +526,10 @@ func TestInterpolateConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			for k, v := range tt.envVars {
-				os.Setenv(k, v)
-				defer os.Unsetenv(k)
+				if err := os.Setenv(k, v); err != nil {
+					t.Fatalf("failed to set env var %s: %v", k, err)
+				}
+				defer func(key string) { _ = os.Unsetenv(key) }(k)
 			}
 
 			err := InterpolateConfig(&tt.config)

@@ -2,12 +2,16 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"time"
 
+	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/gateway"
 	"github.com/KashifKhn/kassie/internal/server/grpc"
+	"github.com/KashifKhn/kassie/internal/server/state"
 	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 )
@@ -24,13 +28,17 @@ type EmbeddedServer struct {
 	httpGateway *gateway.Gateway
 	cfg         *EmbeddedServerConfig
 	logger      *logger.Logger
-	ctx         context.Context
 	cancel      context.CancelFunc
 }
 
 func NewEmbeddedServer(appCfg *config.Config, cfg *EmbeddedServerConfig, log *logger.Logger) (*EmbeddedServer, error) {
 	if cfg.JWTSecret == "" {
-		cfg.JWTSecret = "embedded-default-secret"
+		secret, err := generateRandomSecret(32)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate JWT secret: %w", err)
+		}
+		cfg.JWTSecret = secret
+		log.Warn("no JWT secret provided, generated random secret for this session")
 	}
 
 	if cfg.GRPCPort == 0 {
@@ -50,52 +58,64 @@ func NewEmbeddedServer(appCfg *config.Config, cfg *EmbeddedServerConfig, log *lo
 	}
 
 	grpcCfg := &grpc.ServerConfig{
-		Host:      "127.0.0.1",
+		Host:      config.DefaultHost,
 		Port:      cfg.GRPCPort,
 		JWTSecret: cfg.JWTSecret,
 	}
 
-	grpcServer, err := grpc.NewServer(grpcCfg, appCfg, log)
+	pool := db.NewPool()
+	store := state.NewStore(config.DefaultSessionTTL)
+
+	grpcDeps := &grpc.ServerDeps{
+		Config: appCfg,
+		Pool:   pool,
+		Store:  store,
+	}
+
+	grpcServer, err := grpc.NewServer(grpcCfg, grpcDeps, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC server: %w", err)
 	}
 
 	gatewayCfg := &gateway.GatewayConfig{
-		Host:           "127.0.0.1",
+		Host:           config.DefaultHost,
 		Port:           cfg.HTTPPort,
-		GRPCAddress:    fmt.Sprintf("127.0.0.1:%d", cfg.GRPCPort),
+		GRPCAddress:    fmt.Sprintf("%s:%d", config.DefaultHost, cfg.GRPCPort),
 		AllowedOrigins: cfg.AllowedOrigins,
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	httpGateway, err := gateway.NewGateway(gatewayCfg, log)
 	if err != nil {
+		cancel()
 		return nil, fmt.Errorf("failed to create HTTP gateway: %w", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	if err := httpGateway.RegisterServices(ctx); err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to register gateway services: %w", err)
+	}
 
 	return &EmbeddedServer{
 		grpcServer:  grpcServer,
 		httpGateway: httpGateway,
 		cfg:         cfg,
 		logger:      log,
-		ctx:         ctx,
 		cancel:      cancel,
 	}, nil
 }
 
 func (e *EmbeddedServer) Start() error {
+	if err := e.grpcServer.Listen(); err != nil {
+		return fmt.Errorf("failed to start gRPC listener: %w", err)
+	}
+
 	go func() {
-		if err := e.grpcServer.Start(); err != nil {
+		if err := e.grpcServer.Serve(); err != nil {
 			e.logger.With().Err(err).Logger().Error("gRPC server failed")
 		}
 	}()
-
-	time.Sleep(100 * time.Millisecond)
-
-	if err := e.httpGateway.RegisterServices(e.ctx); err != nil {
-		return fmt.Errorf("failed to register gateway services: %w", err)
-	}
 
 	go func() {
 		if err := e.httpGateway.Start(); err != nil {
@@ -131,16 +151,24 @@ func (e *EmbeddedServer) GRPCAddress() string {
 }
 
 func (e *EmbeddedServer) HTTPAddress() string {
-	return fmt.Sprintf("127.0.0.1:%d", e.cfg.HTTPPort)
+	return fmt.Sprintf("%s:%d", config.DefaultHost, e.cfg.HTTPPort)
 }
 
 func getFreePort() (int, error) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:0", config.DefaultHost))
 	if err != nil {
 		return 0, err
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	addr := listener.Addr().(*net.TCPAddr)
 	return addr.Port, nil
+}
+
+func generateRandomSecret(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }

@@ -24,13 +24,11 @@ make test
 
 ## Development Guides
 
-- [Contributing](/development/contributing) - Contribution guidelines including setup, building, and testing
-
-Additional detailed guides coming soon:
-- Development environment setup
-- Build system details  
-- Testing strategies
-- Architecture decision records
+- [Setup](/development/setup) — Development environment and prerequisites
+- [Building](/development/building) — Build system and cross-compilation
+- [Testing](/development/testing) — Running and writing tests
+- [Architecture Decisions](/development/architecture-decisions) — ADRs and design rationale
+- [Contributing](/development/contributing) — Contribution guidelines and PR process
 
 ## Prerequisites
 

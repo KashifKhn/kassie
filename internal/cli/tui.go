@@ -52,7 +52,7 @@ func runTUI(cmd *cobra.Command, args []string) error {
 	} else {
 		jwtSecret := os.Getenv("KASSIE_JWT_SECRET")
 		if jwtSecret == "" {
-			jwtSecret = "tui-mode-secret"
+			jwtSecret = generateSecret()
 		}
 
 		embeddedCfg := &server.EmbeddedServerConfig{
@@ -71,7 +71,6 @@ func runTUI(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to start embedded server: %w", err)
 		}
 
-		time.Sleep(150 * time.Millisecond)
 		grpcAddr = embedded.GRPCAddress()
 	}
 
@@ -79,7 +78,11 @@ func runTUI(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to server: %w", err)
 	}
-	defer clientConn.Close()
+	defer func() {
+		if err := clientConn.Close(); err != nil {
+			appLogger.With().Err(err).Logger().Warn("failed to close client connection")
+		}
+	}()
 
 	if tuiProfile != "" {
 		ctxLogin, cancelLogin := context.WithTimeout(context.Background(), 10*time.Second)

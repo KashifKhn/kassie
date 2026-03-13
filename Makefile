@@ -1,4 +1,11 @@
-.PHONY: setup proto build build-server embed-web web dev-tui dev-web dev-server test test-unit test-int lint fmt clean
+.PHONY: setup proto build build-server embed-web web dev-tui dev-web dev-server doc-dev doc-build test test-unit test-int lint fmt clean install
+
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+LDFLAGS := -X github.com/KashifKhn/kassie/internal/shared/version.Version=$(VERSION) \
+           -X github.com/KashifKhn/kassie/internal/shared/version.Commit=$(COMMIT) \
+           -X github.com/KashifKhn/kassie/internal/shared/version.BuildDate=$(BUILD_DATE)
 
 setup:
 	@echo "Installing protoc plugins..."
@@ -14,9 +21,9 @@ proto:
 	@echo "Generating protobuf code..."
 	./scripts/gen-proto.sh
 
-build: web embed-web
+build: lint test web embed-web
 	@echo "Building kassie binary with embedded web assets..."
-	go build -o kassie cmd/kassie/main.go
+	go build -ldflags="$(LDFLAGS)" -o kassie cmd/kassie/main.go
 	@echo "Cleaning up copied assets..."
 	@find internal/server/web/dist -mindepth 1 ! -name '.gitkeep' -delete 2>/dev/null || true
 
@@ -27,7 +34,7 @@ embed-web:
 
 build-server:
 	@echo "Building server only..."
-	go build -tags=noui -o kassie cmd/kassie/main.go
+	go build -ldflags="$(LDFLAGS)" -tags=noui -o kassie cmd/kassie/main.go
 
 web:
 	@echo "Building web UI..."
@@ -49,6 +56,14 @@ dev-web:
 dev-server:
 	@echo "Running server for web development on port 9090..."
 	go run cmd/kassie/main.go server --http-port 9090
+
+doc-dev:
+	@echo "Running docs dev server..."
+	cd docs && pnpm dev
+
+doc-build:
+	@echo "Building docs..."
+	cd docs && pnpm install && pnpm run build
 
 test:
 	@echo "Running all tests..."
@@ -77,3 +92,8 @@ clean:
 	rm -rf web/dist
 	rm -rf api/gen/go/*
 	rm -rf api/gen/ts/*
+
+install: build
+	@echo "Installing kassie to /usr/local/bin..."
+	@cp kassie /usr/local/bin/
+	@echo "Installation complete!"

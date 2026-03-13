@@ -7,6 +7,7 @@ import (
 	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
+	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -19,6 +20,9 @@ type GatewayConfig struct {
 	Port           int
 	GRPCAddress    string
 	AllowedOrigins []string
+	ReadTimeout    time.Duration
+	WriteTimeout   time.Duration
+	IdleTimeout    time.Duration
 }
 
 type Gateway struct {
@@ -74,16 +78,29 @@ func (g *Gateway) RegisterServices(ctx context.Context) error {
 }
 
 func (g *Gateway) Start() error {
-	handler := g.corsMiddleware(g.mux)
+	handler := g.securityHeadersMiddleware(g.corsMiddleware(g.mux))
 
 	addr := fmt.Sprintf("%s:%d", g.cfg.Host, g.cfg.Port)
+
+	readTimeout := g.cfg.ReadTimeout
+	if readTimeout == 0 {
+		readTimeout = config.DefaultReadTimeout
+	}
+	writeTimeout := g.cfg.WriteTimeout
+	if writeTimeout == 0 {
+		writeTimeout = config.DefaultWriteTimeout
+	}
+	idleTimeout := g.cfg.IdleTimeout
+	if idleTimeout == 0 {
+		idleTimeout = config.DefaultIdleTimeout
+	}
 
 	g.server = &http.Server{
 		Addr:         addr,
 		Handler:      handler,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 	}
 
 	g.logger.With().Str("address", addr).Logger().Info("HTTP gateway listening")
@@ -128,6 +145,18 @@ func (g *Gateway) corsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (g *Gateway) securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
 
 		next.ServeHTTP(w, r)
 	})

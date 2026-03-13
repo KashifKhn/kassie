@@ -48,8 +48,8 @@ Configure profiles for different environments.
 
 ## Example Guides
 
-More detailed examples coming soon. For now, see the inline examples above and refer to the [Guide](/guide/) section for step-by-step tutorials.
-
-## More Examples
-
-See the [Guide](/guide/) section for step-by-step tutorials.
+Explore detailed example guides:
+- [Basic Queries](/examples/basic-queries) — Browsing keyspaces, tables, and rows
+- [Advanced Filtering](/examples/advanced-filtering) — WHERE clauses, operators, and filter patterns
+- [Custom Configurations](/examples/custom-configs) — Multi-env profiles, SSL/TLS, themes
+- [Scripting & Automation](/examples/scripting) — API scripts, health checks, and CI/CD

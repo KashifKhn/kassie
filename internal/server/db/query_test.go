@@ -1,7 +1,6 @@
 package db
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -18,20 +17,23 @@ func TestQueryBuilderSelectAll(t *testing.T) {
 			keyspace: "mykeyspace",
 			table:    "mytable",
 			limit:    0,
-			want:     "SELECT * FROM mykeyspace.mytable",
+			want:     `SELECT * FROM "mykeyspace"."mytable"`,
 		},
 		{
 			name:     "with limit",
 			keyspace: "mykeyspace",
 			table:    "mytable",
 			limit:    100,
-			want:     "SELECT * FROM mykeyspace.mytable LIMIT 100",
+			want:     `SELECT * FROM "mykeyspace"."mytable" LIMIT 100`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			qb := NewQueryBuilder(tt.keyspace, tt.table)
+			qb, err := NewQueryBuilder(tt.keyspace, tt.table)
+			if err != nil {
+				t.Fatalf("NewQueryBuilder() error = %v", err)
+			}
 			got := qb.SelectAll(tt.limit)
 
 			if got != tt.want {
@@ -56,7 +58,7 @@ func TestQueryBuilderSelectWithWhere(t *testing.T) {
 			table:       "users",
 			whereClause: "id = ?",
 			limit:       0,
-			want:        "SELECT * FROM mykeyspace.users WHERE id = ?",
+			want:        `SELECT * FROM "mykeyspace"."users" WHERE id = ?`,
 		},
 		{
 			name:        "complex where with limit",
@@ -64,13 +66,16 @@ func TestQueryBuilderSelectWithWhere(t *testing.T) {
 			table:       "users",
 			whereClause: "age > ? AND city = ?",
 			limit:       50,
-			want:        "SELECT * FROM mykeyspace.users WHERE age > ? AND city = ? LIMIT 50",
+			want:        `SELECT * FROM "mykeyspace"."users" WHERE age > ? AND city = ? LIMIT 50`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			qb := NewQueryBuilder(tt.keyspace, tt.table)
+			qb, err := NewQueryBuilder(tt.keyspace, tt.table)
+			if err != nil {
+				t.Fatalf("NewQueryBuilder() error = %v", err)
+			}
 			got := qb.SelectWithWhere(tt.whereClause, tt.limit)
 
 			if got != tt.want {
@@ -81,9 +86,12 @@ func TestQueryBuilderSelectWithWhere(t *testing.T) {
 }
 
 func TestQueryBuilderCount(t *testing.T) {
-	qb := NewQueryBuilder("mykeyspace", "mytable")
+	qb, err := NewQueryBuilder("mykeyspace", "mytable")
+	if err != nil {
+		t.Fatalf("NewQueryBuilder() error = %v", err)
+	}
 	got := qb.Count()
-	want := "SELECT COUNT(*) FROM mykeyspace.mytable"
+	want := `SELECT COUNT(*) FROM "mykeyspace"."mytable"`
 
 	if got != want {
 		t.Errorf("Count() = %q, want %q", got, want)
@@ -97,27 +105,47 @@ func TestQueryBuilderInsert(t *testing.T) {
 		table    string
 		columns  []string
 		want     string
+		wantErr  bool
 	}{
 		{
 			name:     "single column",
 			keyspace: "mykeyspace",
 			table:    "users",
 			columns:  []string{"id"},
-			want:     "INSERT INTO mykeyspace.users (id) VALUES (?)",
+			want:     `INSERT INTO "mykeyspace"."users" ("id") VALUES (?)`,
 		},
 		{
 			name:     "multiple columns",
 			keyspace: "mykeyspace",
 			table:    "users",
 			columns:  []string{"id", "name", "email"},
-			want:     "INSERT INTO mykeyspace.users (id, name, email) VALUES (?, ?, ?)",
+			want:     `INSERT INTO "mykeyspace"."users" ("id", "name", "email") VALUES (?, ?, ?)`,
+		},
+		{
+			name:     "empty columns",
+			keyspace: "mykeyspace",
+			table:    "users",
+			columns:  []string{},
+			wantErr:  true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			qb := NewQueryBuilder(tt.keyspace, tt.table)
-			got := qb.Insert(tt.columns)
+			qb, err := NewQueryBuilder(tt.keyspace, tt.table)
+			if err != nil {
+				t.Fatalf("NewQueryBuilder() error = %v", err)
+			}
+			got, err := qb.Insert(tt.columns)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Insert() expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Insert() unexpected error: %v", err)
+			}
 
 			if got != tt.want {
 				t.Errorf("Insert() = %q, want %q", got, tt.want)
@@ -134,6 +162,7 @@ func TestQueryBuilderUpdate(t *testing.T) {
 		columns     []string
 		whereClause string
 		want        string
+		wantErr     bool
 	}{
 		{
 			name:        "single column",
@@ -141,7 +170,7 @@ func TestQueryBuilderUpdate(t *testing.T) {
 			table:       "users",
 			columns:     []string{"name"},
 			whereClause: "id = ?",
-			want:        "UPDATE mykeyspace.users SET name = ? WHERE id = ?",
+			want:        `UPDATE "mykeyspace"."users" SET "name" = ? WHERE id = ?`,
 		},
 		{
 			name:        "multiple columns",
@@ -149,14 +178,34 @@ func TestQueryBuilderUpdate(t *testing.T) {
 			table:       "users",
 			columns:     []string{"name", "email", "age"},
 			whereClause: "id = ?",
-			want:        "UPDATE mykeyspace.users SET name = ?, email = ?, age = ? WHERE id = ?",
+			want:        `UPDATE "mykeyspace"."users" SET "name" = ?, "email" = ?, "age" = ? WHERE id = ?`,
+		},
+		{
+			name:        "empty columns",
+			keyspace:    "mykeyspace",
+			table:       "users",
+			columns:     []string{},
+			whereClause: "id = ?",
+			wantErr:     true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			qb := NewQueryBuilder(tt.keyspace, tt.table)
-			got := qb.Update(tt.columns, tt.whereClause)
+			qb, err := NewQueryBuilder(tt.keyspace, tt.table)
+			if err != nil {
+				t.Fatalf("NewQueryBuilder() error = %v", err)
+			}
+			got, err := qb.Update(tt.columns, tt.whereClause)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Update() expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Update() unexpected error: %v", err)
+			}
 
 			if got != tt.want {
 				t.Errorf("Update() = %q, want %q", got, tt.want)
@@ -166,9 +215,12 @@ func TestQueryBuilderUpdate(t *testing.T) {
 }
 
 func TestQueryBuilderDelete(t *testing.T) {
-	qb := NewQueryBuilder("mykeyspace", "users")
+	qb, err := NewQueryBuilder("mykeyspace", "users")
+	if err != nil {
+		t.Fatalf("NewQueryBuilder() error = %v", err)
+	}
 	got := qb.Delete("id = ?")
-	want := "DELETE FROM mykeyspace.users WHERE id = ?"
+	want := `DELETE FROM "mykeyspace"."users" WHERE id = ?`
 
 	if got != want {
 		t.Errorf("Delete() = %q, want %q", got, want)
@@ -185,42 +237,121 @@ func TestListKeyspaces(t *testing.T) {
 }
 
 func TestListTables(t *testing.T) {
-	got := ListTables("mykeyspace")
-	want := "SELECT table_name FROM system_schema.tables WHERE keyspace_name = 'mykeyspace'"
+	got, err := ListTables("mykeyspace")
+	if err != nil {
+		t.Fatalf("ListTables() error = %v", err)
+	}
+	want := "SELECT table_name FROM system_schema.tables WHERE keyspace_name = ?"
 
 	if got != want {
 		t.Errorf("ListTables() = %q, want %q", got, want)
 	}
 }
 
-func TestDescribeTable(t *testing.T) {
-	got := DescribeTable("mykeyspace", "mytable")
-
-	if !strings.Contains(got, "system_schema.columns") {
-		t.Error("DescribeTable() should query system_schema.columns")
-	}
-
-	if !strings.Contains(got, "mykeyspace") {
-		t.Error("DescribeTable() should include keyspace name")
-	}
-
-	if !strings.Contains(got, "mytable") {
-		t.Error("DescribeTable() should include table name")
+func TestListTables_InvalidKeyspace(t *testing.T) {
+	_, err := ListTables("bad;keyspace")
+	if err == nil {
+		t.Error("ListTables() expected error for invalid keyspace, got nil")
 	}
 }
 
-func TestNewQueryBuilder(t *testing.T) {
-	qb := NewQueryBuilder("test_keyspace", "test_table")
+func TestDescribeTable(t *testing.T) {
+	got, err := DescribeTable("mykeyspace", "mytable")
+	if err != nil {
+		t.Fatalf("DescribeTable() error = %v", err)
+	}
+	want := "SELECT column_name, type, kind FROM system_schema.columns WHERE keyspace_name = ? AND table_name = ?"
 
-	if qb == nil {
-		t.Fatal("NewQueryBuilder() returned nil")
+	if got != want {
+		t.Errorf("DescribeTable() = %q, want %q", got, want)
+	}
+}
+
+func TestDescribeTable_InvalidIdentifiers(t *testing.T) {
+	tests := []struct {
+		name     string
+		keyspace string
+		table    string
+	}{
+		{"invalid keyspace", "bad;ks", "table1"},
+		{"invalid table", "ks", "bad;table"},
+		{"injection attempt", "ks'; DROP KEYSPACE foo; --", "table1"},
 	}
 
-	if qb.keyspace != "test_keyspace" {
-		t.Errorf("keyspace = %q, want %q", qb.keyspace, "test_keyspace")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := DescribeTable(tt.keyspace, tt.table)
+			if err == nil {
+				t.Error("DescribeTable() expected error for invalid identifier, got nil")
+			}
+		})
+	}
+}
+
+func TestNewQueryBuilder_Validation(t *testing.T) {
+	tests := []struct {
+		name     string
+		keyspace string
+		table    string
+		wantErr  bool
+	}{
+		{"valid", "test_keyspace", "test_table", false},
+		{"empty keyspace", "", "test_table", true},
+		{"empty table", "test_keyspace", "", true},
+		{"invalid keyspace chars", "test;keyspace", "test_table", true},
+		{"invalid table chars", "test_keyspace", "test;table", true},
+		{"injection keyspace", "ks'; DROP TABLE foo; --", "tbl", true},
 	}
 
-	if qb.table != "test_table" {
-		t.Errorf("table = %q, want %q", qb.table, "test_table")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qb, err := NewQueryBuilder(tt.keyspace, tt.table)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("NewQueryBuilder() expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("NewQueryBuilder() unexpected error: %v", err)
+			}
+			if qb == nil {
+				t.Fatal("NewQueryBuilder() returned nil")
+			}
+		})
+	}
+}
+
+func TestQuoteIdentifier(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr bool
+	}{
+		{"simple", "users", `"users"`, false},
+		{"with underscore", "my_table", `"my_table"`, false},
+		{"empty", "", "", true},
+		{"semicolon", "bad;name", "", true},
+		{"space", "bad name", "", true},
+		{"quote", `bad"name`, "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := QuoteIdentifier(tt.input)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("QuoteIdentifier() expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("QuoteIdentifier() unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("QuoteIdentifier() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }

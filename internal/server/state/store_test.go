@@ -9,7 +9,7 @@ import (
 
 func TestStore_CreateAndGet(t *testing.T) {
 	store := NewStore(30 * time.Minute)
-	defer store.CloseAll()
+	defer store.Close()
 
 	profile := &config.Profile{
 		Name:  "test",
@@ -39,7 +39,7 @@ func TestStore_CreateAndGet(t *testing.T) {
 
 func TestStore_GetNonExistent(t *testing.T) {
 	store := NewStore(30 * time.Minute)
-	defer store.CloseAll()
+	defer store.Close()
 
 	_, err := store.Get("non-existent")
 	if err != ErrSessionNotFound {
@@ -49,7 +49,7 @@ func TestStore_GetNonExistent(t *testing.T) {
 
 func TestStore_Delete(t *testing.T) {
 	store := NewStore(30 * time.Minute)
-	defer store.CloseAll()
+	defer store.Close()
 
 	profile := &config.Profile{
 		Name:  "test",
@@ -77,7 +77,7 @@ func TestStore_Delete(t *testing.T) {
 
 func TestStore_Expiry(t *testing.T) {
 	store := NewStore(100 * time.Millisecond)
-	defer store.CloseAll()
+	defer store.Close()
 
 	profile := &config.Profile{
 		Name:  "test",
@@ -97,6 +97,7 @@ func TestStore_Expiry(t *testing.T) {
 
 func TestStore_CloseAll(t *testing.T) {
 	store := NewStore(30 * time.Minute)
+	defer store.Close()
 
 	profile := &config.Profile{
 		Name:  "test",
@@ -115,17 +116,5 @@ func TestStore_CloseAll(t *testing.T) {
 
 	if store.Count() != 0 {
 		t.Errorf("expected count 0 after CloseAll, got %d", store.Count())
-	}
-}
-
-func (s *Store) CloseAll() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for id, session := range s.sessions {
-		if session.Connection != nil && !session.Connection.Closed() {
-			session.Connection.Close()
-		}
-		delete(s.sessions, id)
 	}
 }

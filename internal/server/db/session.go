@@ -29,7 +29,6 @@ func (s *Session) FetchOne(ctx context.Context, dest map[string]interface{}, stm
 
 func (s *Session) FetchAll(ctx context.Context, stmt string, values ...interface{}) ([]map[string]interface{}, error) {
 	iter := s.QueryContext(ctx, stmt, values...).Iter()
-	defer iter.Close()
 
 	var results []map[string]interface{}
 	for {
@@ -54,7 +53,6 @@ func (s *Session) FetchWithPaging(ctx context.Context, stmt string, pageSize int
 	}
 
 	iter := query.Iter()
-	defer iter.Close()
 
 	var results []map[string]interface{}
 	for {
@@ -81,5 +79,8 @@ func (s *Session) Close() {
 }
 
 func (s *Session) Closed() bool {
+	if s.session == nil {
+		return true
+	}
 	return s.session.Closed()
 }

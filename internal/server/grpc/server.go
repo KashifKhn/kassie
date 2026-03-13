@@ -7,10 +7,7 @@ import (
 	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
-	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/service"
-	"github.com/KashifKhn/kassie/internal/server/state"
-	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -32,20 +29,24 @@ type Server struct {
 	logger         *logger.Logger
 }
 
-func NewServer(cfg *ServerConfig, appCfg *config.Config, log *logger.Logger) (*Server, error) {
+type ServerDeps struct {
+	Config service.ProfileProvider
+	Pool   service.ConnectionPool
+	Store  service.SessionStore
+}
+
+func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server, error) {
 	if cfg.JWTSecret == "" {
-		cfg.JWTSecret = "default-secret-change-in-production"
+		return nil, fmt.Errorf("JWT secret is required")
 	}
 
-	pool := db.NewPool()
-	store := state.NewStore(7 * 24 * time.Hour)
 	auth := service.NewAuthService(cfg.JWTSecret)
 
-	sessionSvc := service.NewSessionService(appCfg, pool, store, auth)
-	schemaSvc := service.NewSchemaService(store)
-	dataSvc := service.NewDataService(store)
+	sessionSvc := service.NewSessionService(deps.Config, deps.Pool, deps.Store, auth)
+	schemaSvc := service.NewSchemaService(deps.Store)
+	dataSvc := service.NewDataService(deps.Store)
 
-	unaryInterceptor := NewAuthInterceptor(auth, store, log)
+	unaryInterceptor := NewAuthInterceptor(auth, deps.Store, log)
 
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(unaryInterceptor),
@@ -72,6 +73,13 @@ func NewServer(cfg *ServerConfig, appCfg *config.Config, log *logger.Logger) (*S
 }
 
 func (s *Server) Start() error {
+	if err := s.Listen(); err != nil {
+		return err
+	}
+	return s.Serve()
+}
+
+func (s *Server) Listen() error {
 	addr := fmt.Sprintf("%s:%d", s.cfg.Host, s.cfg.Port)
 
 	listener, err := net.Listen("tcp", addr)
@@ -81,11 +89,13 @@ func (s *Server) Start() error {
 
 	s.listener = listener
 	s.logger.With().Str("address", addr).Logger().Info("gRPC server listening")
+	return nil
+}
 
-	if err := s.grpcServer.Serve(listener); err != nil {
+func (s *Server) Serve() error {
+	if err := s.grpcServer.Serve(s.listener); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)
 	}
-
 	return nil
 }
 
@@ -107,7 +117,7 @@ func (s *Server) Stop() error {
 	}
 
 	if s.listener != nil {
-		s.listener.Close()
+		_ = s.listener.Close()
 	}
 
 	return nil
@@ -121,10 +131,13 @@ func (s *Server) Address() string {
 }
 
 func (s *Server) ServeAsync(ctx context.Context) error {
-	errChan := make(chan error, 1)
+	if err := s.Listen(); err != nil {
+		return err
+	}
 
+	errChan := make(chan error, 1)
 	go func() {
-		if err := s.Start(); err != nil {
+		if err := s.Serve(); err != nil {
 			errChan <- err
 		}
 	}()
@@ -132,9 +145,9 @@ func (s *Server) ServeAsync(ctx context.Context) error {
 	select {
 	case err := <-errChan:
 		return err
-	case <-time.After(100 * time.Millisecond):
-		return nil
 	case <-ctx.Done():
 		return s.Stop()
+	default:
+		return nil
 	}
 }

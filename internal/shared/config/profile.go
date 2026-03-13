@@ -145,3 +145,7 @@ func (c *Config) SetDefaults() {
 		c.Clients.TUI.Theme = "default"
 	}
 }
+
+func (c *Config) GetProfiles() []Profile {
+	return c.Profiles
+}

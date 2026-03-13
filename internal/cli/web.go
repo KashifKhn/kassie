@@ -8,11 +8,13 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
+	"github.com/KashifKhn/kassie/internal/server/db"
 	"github.com/KashifKhn/kassie/internal/server/gateway"
 	"github.com/KashifKhn/kassie/internal/server/grpc"
+	"github.com/KashifKhn/kassie/internal/server/state"
 	"github.com/KashifKhn/kassie/internal/server/web"
+	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/spf13/cobra"
 )
 
@@ -33,8 +35,8 @@ Starts embedded gRPC server, HTTP API gateway, and web UI server.`,
 		RunE: runWeb,
 	}
 
-	cmd.Flags().IntVar(&webPort, "web-port", 9091, "web UI port")
-	cmd.Flags().IntVar(&apiPort, "api-port", 9090, "API gateway port")
+	cmd.Flags().IntVar(&webPort, "web-port", config.DefaultWebPort, "web UI port")
+	cmd.Flags().IntVar(&apiPort, "api-port", config.DefaultHTTPPort, "API gateway port")
 	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "don't auto-open browser")
 	cmd.Flags().StringVar(&webProfile, "profile", "", "default profile to connect")
 
@@ -53,36 +55,47 @@ func runWeb(cmd *cobra.Command, args []string) error {
 
 	jwtSecret := os.Getenv("KASSIE_JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "web-mode-secret"
-		appLogger.Warn("using default JWT secret, set KASSIE_JWT_SECRET env variable")
+		jwtSecret = generateSecret()
+		appLogger.Warn("no KASSIE_JWT_SECRET set, generated random secret for this session")
 	}
 
 	grpcPort := apiPort - 1
 
 	grpcCfg := &grpc.ServerConfig{
-		Host:      "127.0.0.1",
+		Host:      config.DefaultHost,
 		Port:      grpcPort,
 		JWTSecret: jwtSecret,
 	}
 
-	grpcServer, err := grpc.NewServer(grpcCfg, appConfig, appLogger)
+	pool := db.NewPool()
+	store := state.NewStore(config.DefaultSessionTTL)
+
+	grpcDeps := &grpc.ServerDeps{
+		Config: appConfig,
+		Pool:   pool,
+		Store:  store,
+	}
+
+	grpcServer, err := grpc.NewServer(grpcCfg, grpcDeps, appLogger)
 	if err != nil {
 		return fmt.Errorf("failed to create gRPC server: %w", err)
 	}
 
+	if err := grpcServer.Listen(); err != nil {
+		return fmt.Errorf("failed to start gRPC listener: %w", err)
+	}
+
 	go func() {
-		if err := grpcServer.Start(); err != nil {
+		if err := grpcServer.Serve(); err != nil {
 			appLogger.With().Err(err).Logger().Error("gRPC server failed")
 			cancel()
 		}
 	}()
 
-	time.Sleep(100 * time.Millisecond)
-
 	gatewayCfg := &gateway.GatewayConfig{
-		Host:           "127.0.0.1",
+		Host:           config.DefaultHost,
 		Port:           apiPort,
-		GRPCAddress:    fmt.Sprintf("127.0.0.1:%d", grpcPort),
+		GRPCAddress:    fmt.Sprintf("%s:%d", config.DefaultHost, grpcPort),
 		AllowedOrigins: []string{"*"},
 	}
 
@@ -102,10 +115,8 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	time.Sleep(100 * time.Millisecond)
-
 	webCfg := &web.ServerConfig{
-		Host:           "127.0.0.1",
+		Host:           config.DefaultHost,
 		Port:           webPort,
 		AllowedOrigins: []string{"*"},
 	}
@@ -122,10 +133,8 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	time.Sleep(100 * time.Millisecond)
-
-	webURL := fmt.Sprintf("http://127.0.0.1:%d", webPort)
-	apiURL := fmt.Sprintf("http://127.0.0.1:%d", apiPort)
+	webURL := fmt.Sprintf("http://%s:%d", config.DefaultHost, webPort)
+	apiURL := fmt.Sprintf("http://%s:%d", config.DefaultHost, apiPort)
 
 	appLogger.With().
 		Str("web_url", webURL).
@@ -156,7 +165,7 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		fmt.Println("\n\nServer error, shutting down...")
 	}
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), config.DefaultShutdownTime)
 	defer shutdownCancel()
 
 	if err := webServer.Stop(shutdownCtx); err != nil {

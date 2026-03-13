@@ -13,7 +13,7 @@ func TestNewClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if c.conn == nil {
 		t.Fatal("expected conn to be set")
@@ -34,7 +34,7 @@ func TestIsAuthenticated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if c.IsAuthenticated() {
 		t.Fatal("expected not authenticated initially")
@@ -54,7 +54,7 @@ func TestProfile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if c.Profile() != "" {
 		t.Fatal("expected empty profile initially")
@@ -74,7 +74,7 @@ func TestNeedsRefresh(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if c.needsRefresh() {
 		t.Fatal("should not need refresh without token")
@@ -86,7 +86,7 @@ func TestRefreshNoToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	err = c.Refresh(context.Background())
 	if err == nil {

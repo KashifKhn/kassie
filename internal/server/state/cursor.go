@@ -25,15 +25,18 @@ type Cursor struct {
 }
 
 type CursorStore struct {
-	cursors map[string]*Cursor
-	mu      sync.RWMutex
-	ttl     time.Duration
+	cursors  map[string]*Cursor
+	mu       sync.RWMutex
+	ttl      time.Duration
+	done     chan struct{}
+	stopOnce sync.Once
 }
 
 func NewCursorStore(ttl time.Duration) *CursorStore {
 	store := &CursorStore{
 		cursors: make(map[string]*Cursor),
 		ttl:     ttl,
+		done:    make(chan struct{}),
 	}
 	go store.cleanup()
 	return store
@@ -60,8 +63,8 @@ func (cs *CursorStore) Create(pageState []byte, keyspace, table, filter string, 
 }
 
 func (cs *CursorStore) Get(id string) (*Cursor, error) {
-	cs.mu.RLock()
-	defer cs.mu.RUnlock()
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 
 	cursor, exists := cs.cursors[id]
 	if !exists {
@@ -69,6 +72,7 @@ func (cs *CursorStore) Get(id string) (*Cursor, error) {
 	}
 
 	if time.Since(cursor.LastUsed) > cs.ttl {
+		delete(cs.cursors, id)
 		return nil, ErrCursorExpired
 	}
 
@@ -86,16 +90,27 @@ func (cs *CursorStore) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		cs.mu.Lock()
-		now := time.Now()
-		for id, cursor := range cs.cursors {
-			if now.Sub(cursor.LastUsed) > cs.ttl {
-				delete(cs.cursors, id)
+	for {
+		select {
+		case <-cs.done:
+			return
+		case <-ticker.C:
+			cs.mu.Lock()
+			now := time.Now()
+			for id, cursor := range cs.cursors {
+				if now.Sub(cursor.LastUsed) > cs.ttl {
+					delete(cs.cursors, id)
+				}
 			}
+			cs.mu.Unlock()
 		}
-		cs.mu.Unlock()
 	}
+}
+
+func (cs *CursorStore) Stop() {
+	cs.stopOnce.Do(func() {
+		close(cs.done)
+	})
 }
 
 func (cs *CursorStore) Count() int {
