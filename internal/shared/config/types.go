@@ -1,6 +1,9 @@
 package config
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var (
 	ErrProfileNotFound  = errors.New("profile not found")
@@ -11,6 +14,8 @@ var (
 	ErrNoProfiles       = errors.New("no profiles defined")
 	ErrInvalidPageSize  = errors.New("invalid page size")
 	ErrInvalidTimeout   = errors.New("invalid timeout")
+	ErrInvalidPoolSize  = errors.New("invalid pool size")
+	ErrInvalidConsistency = errors.New("invalid consistency level")
 )
 
 type Config struct {
@@ -21,12 +26,38 @@ type Config struct {
 }
 
 type Profile struct {
-	Name     string      `json:"name"`
-	Hosts    []string    `json:"hosts"`
-	Port     int         `json:"port"`
-	Keyspace string      `json:"keyspace,omitempty"`
-	Auth     *AuthConfig `json:"auth,omitempty"`
-	SSL      *SSLConfig  `json:"ssl,omitempty"`
+	Name       string           `json:"name"`
+	Hosts      []string         `json:"hosts"`
+	Port       int              `json:"port"`
+	Keyspace   string           `json:"keyspace,omitempty"`
+	Auth       *AuthConfig      `json:"auth,omitempty"`
+	SSL        *SSLConfig       `json:"ssl,omitempty"`
+	Connection *ConnTuningConfig `json:"connection,omitempty"`
+}
+
+type ConnTuningConfig struct {
+	Consistency string `json:"consistency,omitempty"`
+	Timeout     string `json:"timeout,omitempty"`
+	PoolSize    int    `json:"pool_size,omitempty"`
+}
+
+func (c *ConnTuningConfig) Validate() error {
+	if c == nil {
+		return nil
+	}
+	if _, err := ParseConsistencyLevel(c.Consistency); err != nil {
+		return err
+	}
+	if c.Timeout != "" {
+		d, err := time.ParseDuration(c.Timeout)
+		if err != nil || d <= 0 || d > 5*time.Minute {
+			return ErrInvalidTimeout
+		}
+	}
+	if c.PoolSize < 0 || c.PoolSize > 100 {
+		return ErrInvalidPoolSize
+	}
+	return nil
 }
 
 type AuthConfig struct {
@@ -72,6 +103,9 @@ func (p *Profile) Validate() error {
 	}
 	if p.Port < 1 || p.Port > 65535 {
 		return ErrInvalidPort
+	}
+	if err := p.Connection.Validate(); err != nil {
+		return err
 	}
 	return nil
 }
