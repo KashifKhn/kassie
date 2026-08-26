@@ -41,6 +41,10 @@ func (d *DataService) ExecuteQuery(ctx context.Context, req *pb.ExecuteQueryRequ
 		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
+	if d.queries != nil {
+		d.queries.Record(session.Profile.Name, cql)
+	}
+
 	pbRows := convertRows(rows)
 
 	var cursorID string

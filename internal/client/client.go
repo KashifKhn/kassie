@@ -16,6 +16,7 @@ type Client struct {
 	session pb.SessionServiceClient
 	schema  pb.SchemaServiceClient
 	data    pb.DataServiceClient
+	history pb.HistoryServiceClient
 
 	mu           sync.RWMutex
 	accessToken  string
@@ -36,6 +37,7 @@ func New(addr string) (*Client, error) {
 	c.session = pb.NewSessionServiceClient(conn)
 	c.schema = pb.NewSchemaServiceClient(conn)
 	c.data = pb.NewDataServiceClient(conn)
+	c.history = pb.NewHistoryServiceClient(conn)
 
 	return c, nil
 }
@@ -207,6 +209,44 @@ func (c *Client) ExecuteQuery(ctx context.Context, cql string, pageSize int32) (
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 	return resp, nil
+}
+
+func (c *Client) ListQueryHistory(ctx context.Context, limit int32) ([]*pb.QueryHistoryEntry, error) {
+	resp, err := c.history.ListQueryHistory(ctx, &pb.ListQueryHistoryRequest{Limit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list query history: %w", err)
+	}
+	return resp.Entries, nil
+}
+
+func (c *Client) ClearQueryHistory(ctx context.Context) error {
+	if _, err := c.history.ClearQueryHistory(ctx, &pb.ClearQueryHistoryRequest{}); err != nil {
+		return fmt.Errorf("failed to clear query history: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) SaveQuery(ctx context.Context, name, cql string) (*pb.SavedQuery, error) {
+	resp, err := c.history.SaveQuery(ctx, &pb.SaveQueryRequest{Name: name, Cql: cql})
+	if err != nil {
+		return nil, fmt.Errorf("failed to save query: %w", err)
+	}
+	return resp.Query, nil
+}
+
+func (c *Client) ListSavedQueries(ctx context.Context) ([]*pb.SavedQuery, error) {
+	resp, err := c.history.ListSavedQueries(ctx, &pb.ListSavedQueriesRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list saved queries: %w", err)
+	}
+	return resp.Queries, nil
+}
+
+func (c *Client) DeleteSavedQuery(ctx context.Context, name string) error {
+	if _, err := c.history.DeleteSavedQuery(ctx, &pb.DeleteSavedQueryRequest{Name: name}); err != nil {
+		return fmt.Errorf("failed to delete saved query: %w", err)
+	}
+	return nil
 }
 
 func (c *Client) Profile() string {

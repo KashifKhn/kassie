@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -87,9 +88,10 @@ func startRealServer(t *testing.T) string {
 	}
 
 	srv, err := servergrpc.NewServer(cfg, &servergrpc.ServerDeps{
-		Config: provider,
-		Pool:   pool,
-		Store:  store,
+		Config:  provider,
+		Pool:    pool,
+		Store:   store,
+		Queries: state.NewQueryStore(filepath.Join(t.TempDir(), "queries.json")),
 	}, testLogger(t))
 	if err != nil {
 		t.Fatalf("new server: %v", err)
@@ -370,4 +372,84 @@ func cellID(row *pb.Row) int64 {
 		return iv.IntVal
 	}
 	return -1
+}
+
+func TestQueryHistoryIntegration(t *testing.T) {
+	seedExportTable(t)
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	ctx := context.Background()
+
+	t.Run("execute query records history", func(t *testing.T) {
+		if _, err := c.ExecuteQuery(ctx, fmt.Sprintf("SELECT id FROM %s.export_items LIMIT 5", exportKeyspace), 10); err != nil {
+			t.Fatalf("execute: %v", err)
+		}
+		if _, err := c.ExecuteQuery(ctx, fmt.Sprintf("SELECT count(*) FROM %s.export_items", exportKeyspace), 10); err != nil {
+			t.Fatalf("execute: %v", err)
+		}
+
+		entries, err := c.ListQueryHistory(ctx, 10)
+		if err != nil {
+			t.Fatalf("list history: %v", err)
+		}
+		if len(entries) != 2 {
+			t.Fatalf("history entries = %d, want 2", len(entries))
+		}
+		if !strings.Contains(entries[0].Cql, "count(*)") {
+			t.Errorf("most recent first: %q", entries[0].Cql)
+		}
+
+		if err := c.ClearQueryHistory(ctx); err != nil {
+			t.Fatalf("clear: %v", err)
+		}
+		entries, err = c.ListQueryHistory(ctx, 10)
+		if err != nil {
+			t.Fatalf("re-list: %v", err)
+		}
+		if len(entries) != 0 {
+			t.Fatalf("history after clear = %d, want 0", len(entries))
+		}
+	})
+
+	t.Run("saved queries crud and validation", func(t *testing.T) {
+		saved, err := c.SaveQuery(ctx, "top-items", fmt.Sprintf("SELECT * FROM %s.export_items LIMIT 10", exportKeyspace))
+		if err != nil {
+			t.Fatalf("save: %v", err)
+		}
+		if saved.Name != "top-items" {
+			t.Errorf("saved name = %q", saved.Name)
+		}
+
+		list, err := c.ListSavedQueries(ctx)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(list) != 1 || list[0].Name != "top-items" {
+			t.Fatalf("saved list = %+v", list)
+		}
+
+		if _, err := c.SaveQuery(ctx, "bad;name", "SELECT 1"); err == nil {
+			t.Error("invalid name accepted")
+		}
+
+		if _, err := c.SaveQuery(ctx, "top-items", "SELECT id FROM x"); err != nil {
+			t.Fatalf("upsert rejected: %v", err)
+		}
+		list, _ = c.ListSavedQueries(ctx)
+		if len(list) != 1 || list[0].Cql != "SELECT id FROM x" {
+			t.Fatalf("upsert result = %+v", list)
+		}
+
+		if _, err := c.ExecuteQuery(ctx, "SELECT id FROM missing_table_xyz", 5); err == nil {
+			t.Log("note: query against missing table returned nil error")
+		}
+
+		if err := c.DeleteSavedQuery(ctx, "top-items"); err != nil {
+			t.Fatalf("delete: %v", err)
+		}
+		if err := c.DeleteSavedQuery(ctx, "top-items"); err == nil {
+			t.Error("deleting missing query must fail")
+		}
+	})
 }
