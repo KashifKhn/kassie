@@ -62,7 +62,7 @@ func startStubServer(t *testing.T) (*recordingStats, pb.SessionServiceClient) {
 	t.Helper()
 
 	lis := bufconn.Listen(1024 * 1024)
-	srv := grpc.NewServer(servergrpc.ServerOptions(nil)...)
+	srv := grpc.NewServer(servergrpc.ServerOptions(nil, nil)...)
 	pb.RegisterSessionServiceServer(srv, &stubSessionService{})
 
 	go func() { _ = srv.Serve(lis) }()

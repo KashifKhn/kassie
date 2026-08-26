@@ -39,17 +39,23 @@ type ServerDeps struct {
 	Store  service.SessionStore
 }
 
-func ServerOptions(interceptor grpc.UnaryServerInterceptor) []grpc.ServerOption {
+func ServerOptions(interceptor grpc.UnaryServerInterceptor, streamInterceptor grpc.StreamServerInterceptor) []grpc.ServerOption {
 	interceptors := []grpc.UnaryServerInterceptor{compressResponseInterceptor()}
 	if interceptor != nil {
 		interceptors = append(interceptors, interceptor)
 	}
 
-	return []grpc.ServerOption{
+	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(interceptors...),
 		grpc.MaxRecvMsgSize(config.MaxMessageSize),
 		grpc.MaxSendMsgSize(config.MaxMessageSize),
 	}
+
+	if streamInterceptor != nil {
+		opts = append(opts, grpc.ChainStreamInterceptor(streamInterceptor))
+	}
+
+	return opts
 }
 
 func compressResponseInterceptor() grpc.UnaryServerInterceptor {
@@ -74,7 +80,9 @@ func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server
 
 	unaryInterceptor := NewAuthInterceptor(auth, deps.Store, log)
 
-	grpcServer := grpc.NewServer(ServerOptions(unaryInterceptor)...)
+	streamInterceptor := NewStreamAuthInterceptor(auth, deps.Store, log)
+
+	grpcServer := grpc.NewServer(ServerOptions(unaryInterceptor, streamInterceptor)...)
 
 	pb.RegisterSessionServiceServer(grpcServer, sessionSvc)
 	pb.RegisterSchemaServiceServer(grpcServer, schemaSvc)

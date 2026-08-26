@@ -16,13 +16,16 @@ func DefaultCallOptions() []grpc.CallOption {
 	}
 }
 
-func DialOptions(interceptor grpc.UnaryClientInterceptor) []grpc.DialOption {
+func DialOptions(unary grpc.UnaryClientInterceptor, stream grpc.StreamClientInterceptor) []grpc.DialOption {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(DefaultCallOptions()...),
 	}
-	if interceptor != nil {
-		opts = append(opts, grpc.WithUnaryInterceptor(interceptor))
+	if unary != nil {
+		opts = append(opts, grpc.WithUnaryInterceptor(unary))
+	}
+	if stream != nil {
+		opts = append(opts, grpc.WithStreamInterceptor(stream))
 	}
 	return opts
 }
