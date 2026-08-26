@@ -54,8 +54,8 @@ func (s *Session) FetchWithPaging(ctx context.Context, stmt string, pageSize int
 
 	iter := query.Iter()
 
-	var results []map[string]interface{}
-	for {
+	results := make([]map[string]interface{}, 0, pageSize)
+	for len(results) < pageSize {
 		row := make(map[string]interface{})
 		if !iter.MapScan(row) {
 			break
@@ -64,6 +64,11 @@ func (s *Session) FetchWithPaging(ctx context.Context, stmt string, pageSize int
 	}
 
 	nextPageState := iter.PageState()
+	if nextPageState != nil {
+		pageStateCopy := make([]byte, len(nextPageState))
+		copy(pageStateCopy, nextPageState)
+		nextPageState = pageStateCopy
+	}
 
 	if err := iter.Close(); err != nil {
 		return nil, nil, fmt.Errorf("query iteration failed: %w", err)

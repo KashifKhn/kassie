@@ -17,4 +17,6 @@ const (
 	DefaultWriteTimeout = 15 * time.Second
 	DefaultIdleTimeout  = 60 * time.Second
 	DefaultShutdownTime = 10 * time.Second
+
+	MaxMessageSize = 10 * 1024 * 1024
 )
