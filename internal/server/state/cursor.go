@@ -19,6 +19,7 @@ type Cursor struct {
 	Keyspace  string
 	Table     string
 	Filter    string
+	CQL       string
 	PageSize  int
 	CreatedAt time.Time
 	LastUsed  time.Time
@@ -53,6 +54,24 @@ func (cs *CursorStore) Create(pageState []byte, keyspace, table, filter string, 
 		Keyspace:  keyspace,
 		Table:     table,
 		Filter:    filter,
+		PageSize:  pageSize,
+		CreatedAt: time.Now(),
+		LastUsed:  time.Now(),
+	}
+
+	cs.cursors[id] = cursor
+	return id
+}
+
+func (cs *CursorStore) CreateWithCQL(pageState []byte, cql string, pageSize int) string {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	id := uuid.New().String()
+	cursor := &Cursor{
+		ID:        id,
+		PageState: pageState,
+		CQL:       cql,
 		PageSize:  pageSize,
 		CreatedAt: time.Now(),
 		LastUsed:  time.Now(),

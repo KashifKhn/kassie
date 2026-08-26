@@ -35,6 +35,13 @@ service DataService {
       body: "*"
     };
   }
+
+  rpc ExecuteQuery(ExecuteQueryRequest) returns (ExecuteQueryResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/data/cql"
+      body: "*"
+    };
+  }
 }
 
 enum ExportFormat {
@@ -95,4 +102,16 @@ message FilterRowsResponse {
 
 message Row {
   map<string, CellValue> cells = 1;
+}
+
+message ExecuteQueryRequest {
+  string cql = 1;
+  int32 page_size = 2;
+}
+
+message ExecuteQueryResponse {
+  repeated Row rows = 1;
+  string cursor_id = 2;
+  bool has_more = 3;
+  int64 total_fetched = 4;
 }

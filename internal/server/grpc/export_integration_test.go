@@ -298,3 +298,76 @@ func TestExportRowsIntegration(t *testing.T) {
 		}
 	})
 }
+
+func TestExecuteQueryIntegration(t *testing.T) {
+	seedExportTable(t)
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	ctx := context.Background()
+
+	t.Run("select all and page via cursor", func(t *testing.T) {
+		resp, err := c.ExecuteQuery(ctx, fmt.Sprintf("SELECT id, label FROM %s.export_items", exportKeyspace), 100)
+		if err != nil {
+			t.Fatalf("execute query: %v", err)
+		}
+		if resp.TotalFetched != 100 || !resp.HasMore || resp.CursorId == "" {
+			t.Fatalf("first page: total=%d hasMore=%v cursor=%q", resp.TotalFetched, resp.HasMore, resp.CursorId)
+		}
+
+		seen := map[float64]bool{}
+		for _, row := range resp.Rows {
+			if iv := cellID(row); iv >= 0 {
+				seen[float64(iv)] = true
+			}
+		}
+
+		pages := 1
+		cursorID := resp.CursorId
+		for cursorID != "" {
+			pageResp, err := c.GetNextPage(ctx, cursorID)
+			if err != nil {
+				t.Fatalf("page %d: %v", pages+1, err)
+			}
+			for _, row := range pageResp.Rows {
+				if iv := row.Cells["id"].GetIntVal(); iv != 0 {
+					seen[float64(iv)] = true
+				}
+			}
+			cursorID = pageResp.CursorId
+			pages++
+			if pages > 10 {
+				t.Fatal("paging did not terminate")
+			}
+		}
+
+		if len(seen) != exportRowCount {
+			t.Fatalf("saw %d distinct ids across %d pages, want %d", len(seen), pages, exportRowCount)
+		}
+	})
+
+	t.Run("rejects write statements", func(t *testing.T) {
+		_, err := c.ExecuteQuery(ctx, fmt.Sprintf("DROP KEYSPACE %s", exportKeyspace), 10)
+		if err == nil || !strings.Contains(err.Error(), "only SELECT") {
+			t.Fatalf("expected SELECT-only rejection, got %v", err)
+		}
+	})
+
+	t.Run("rejects multiple statements", func(t *testing.T) {
+		_, err := c.ExecuteQuery(ctx, "SELECT a FROM b; SELECT c FROM d", 10)
+		if err == nil || !strings.Contains(err.Error(), "multiple statements") {
+			t.Fatalf("expected multiple statement rejection, got %v", err)
+		}
+	})
+}
+
+func cellID(row *pb.Row) int64 {
+	cell, ok := row.Cells["id"]
+	if !ok || cell == nil {
+		return -1
+	}
+	if iv, ok := cell.Value.(*pb.CellValue_IntVal); ok {
+		return iv.IntVal
+	}
+	return -1
+}

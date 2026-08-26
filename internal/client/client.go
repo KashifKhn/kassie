@@ -198,6 +198,17 @@ func (c *Client) ExportRows(ctx context.Context, keyspace, table, where string, 
 	}
 }
 
+func (c *Client) ExecuteQuery(ctx context.Context, cql string, pageSize int32) (*pb.ExecuteQueryResponse, error) {
+	resp, err := c.data.ExecuteQuery(ctx, &pb.ExecuteQueryRequest{
+		Cql:      cql,
+		PageSize: pageSize,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	return resp, nil
+}
+
 func (c *Client) Profile() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
