@@ -69,6 +69,10 @@ func (g *Gateway) RegisterServices(ctx context.Context) error {
 		return fmt.Errorf("failed to register data service: %w", err)
 	}
 
+	if err := pb.RegisterHistoryServiceHandlerFromEndpoint(ctx, g.mux, g.cfg.GRPCAddress, opts); err != nil {
+		return fmt.Errorf("failed to register history service: %w", err)
+	}
+
 	g.logger.With().Str("grpc_address", g.cfg.GRPCAddress).Logger().Info("registered gRPC gateway services")
 
 	return nil
