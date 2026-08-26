@@ -138,6 +138,17 @@ func (c *Client) GetTableSchema(ctx context.Context, keyspace, table string) (*p
 	return resp.Schema, nil
 }
 
+func (c *Client) GetTableStats(ctx context.Context, keyspace, table string) (*pb.TableStats, error) {
+	resp, err := c.schema.GetTableStats(ctx, &pb.GetTableStatsRequest{
+		Keyspace: keyspace,
+		Table:    table,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get table stats: %w", err)
+	}
+	return resp.Stats, nil
+}
+
 func (c *Client) QueryRows(ctx context.Context, keyspace, table string, pageSize int32) (*pb.QueryRowsResponse, error) {
 	resp, err := c.data.QueryRows(ctx, &pb.QueryRowsRequest{
 		Keyspace: keyspace,
