@@ -33,6 +33,12 @@ service SessionService {
       get: "/api/v1/profiles"
     };
   }
+
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/metrics"
+    };
+  }
 }
 
 message LoginRequest {
@@ -153,4 +159,16 @@ message DeleteSavedQueryRequest {
 
 message DeleteSavedQueryResponse {
   bool deleted = 1;
+}
+
+message GetMetricsRequest {}
+
+message Metrics {
+  int64 active_sessions = 1;
+  int64 active_cursors = 2;
+  int64 uptime_seconds = 3;
+}
+
+message GetMetricsResponse {
+  Metrics metrics = 1;
 }
