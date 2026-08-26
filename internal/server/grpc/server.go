@@ -11,7 +11,10 @@ import (
 	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/encoding/gzip"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 type ServerConfig struct {
@@ -36,6 +39,28 @@ type ServerDeps struct {
 	Store  service.SessionStore
 }
 
+func ServerOptions(interceptor grpc.UnaryServerInterceptor) []grpc.ServerOption {
+	interceptors := []grpc.UnaryServerInterceptor{compressResponseInterceptor()}
+	if interceptor != nil {
+		interceptors = append(interceptors, interceptor)
+	}
+
+	return []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(interceptors...),
+		grpc.MaxRecvMsgSize(config.MaxMessageSize),
+		grpc.MaxSendMsgSize(config.MaxMessageSize),
+	}
+}
+
+func compressResponseInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		if err := grpc.SetSendCompressor(ctx, gzip.Name); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to set response compressor: %v", err)
+		}
+		return handler(ctx, req)
+	}
+}
+
 func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server, error) {
 	if cfg.JWTSecret == "" {
 		return nil, fmt.Errorf("JWT secret is required")
@@ -49,11 +74,7 @@ func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server
 
 	unaryInterceptor := NewAuthInterceptor(auth, deps.Store, log)
 
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryInterceptor),
-		grpc.MaxRecvMsgSize(config.MaxMessageSize),
-		grpc.MaxSendMsgSize(config.MaxMessageSize),
-	)
+	grpcServer := grpc.NewServer(ServerOptions(unaryInterceptor)...)
 
 	pb.RegisterSessionServiceServer(grpcServer, sessionSvc)
 	pb.RegisterSchemaServiceServer(grpcServer, schemaSvc)

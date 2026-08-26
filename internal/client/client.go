@@ -7,9 +7,7 @@ import (
 	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
-	"github.com/KashifKhn/kassie/internal/shared/config"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Client struct {
@@ -28,15 +26,7 @@ type Client struct {
 func New(addr string) (*Client, error) {
 	c := &Client{}
 
-	conn, err := grpc.NewClient(
-		addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(config.MaxMessageSize),
-			grpc.MaxCallSendMsgSize(config.MaxMessageSize),
-		),
-		grpc.WithUnaryInterceptor(c.authInterceptor()),
-	)
+	conn, err := grpc.NewClient(addr, DialOptions(c.authInterceptor())...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
