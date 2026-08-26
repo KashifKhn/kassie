@@ -128,3 +128,16 @@ func GetSessionFromContext(ctx context.Context, store SessionStore) (*state.Sess
 	session.LastAccess = time.Now()
 	return session, nil
 }
+
+func (s *SessionService) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) (*pb.GetMetricsResponse, error) {
+	if _, err := GetSessionFromContext(ctx, s.store); err != nil {
+		return nil, err
+	}
+
+	return &pb.GetMetricsResponse{
+		Metrics: &pb.Metrics{
+			ActiveSessions: int64(s.store.Count()),
+			ActiveCursors:  int64(s.store.TotalCursors()),
+		},
+	}, nil
+}

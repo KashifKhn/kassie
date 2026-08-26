@@ -260,6 +260,14 @@ func (c *Client) DeleteSavedQuery(ctx context.Context, name string) error {
 	return nil
 }
 
+func (c *Client) GetMetrics(ctx context.Context) (*pb.Metrics, error) {
+	resp, err := c.session.GetMetrics(ctx, &pb.GetMetricsRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metrics: %w", err)
+	}
+	return resp.Metrics, nil
+}
+
 func (c *Client) Profile() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()

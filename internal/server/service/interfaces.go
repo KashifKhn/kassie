@@ -11,6 +11,8 @@ type SessionStore interface {
 	Create(id string, profile *config.Profile, conn *db.Session) *state.Session
 	Get(id string) (*state.Session, error)
 	Delete(id string)
+	Count() int
+	TotalCursors() int
 	CloseAll()
 	Close()
 }

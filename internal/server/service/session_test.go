@@ -247,3 +247,15 @@ func TestGetSessionFromContext_NoSessionID(t *testing.T) {
 		t.Errorf("expected Internal, got %v", st.Code())
 	}
 }
+
+func (m *mockSessionStore) Count() int {
+	return len(m.sessions)
+}
+
+func (m *mockSessionStore) TotalCursors() int {
+	total := 0
+	for _, sess := range m.sessions {
+		total += sess.Cursors.Count()
+	}
+	return total
+}

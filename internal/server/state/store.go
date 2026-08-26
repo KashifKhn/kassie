@@ -124,6 +124,17 @@ func (s *Store) Count() int {
 	return len(s.sessions)
 }
 
+func (s *Store) TotalCursors() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	total := 0
+	for _, session := range s.sessions {
+		total += session.Cursors.Count()
+	}
+	return total
+}
+
 func (s *Store) CloseAll() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
