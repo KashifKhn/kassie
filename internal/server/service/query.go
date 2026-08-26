@@ -36,7 +36,7 @@ func (d *DataService) ExecuteQuery(ctx context.Context, req *pb.ExecuteQueryRequ
 		pageSize = maxQueryPageSize
 	}
 
-	rows, nextPageState, err := session.Connection.FetchWithPaging(ctx, cql, pageSize, nil)
+	page, err := session.Connection.FetchPage(ctx, cql, pageSize, nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
@@ -45,7 +45,8 @@ func (d *DataService) ExecuteQuery(ctx context.Context, req *pb.ExecuteQueryRequ
 		d.queries.Record(session.Profile.Name, cql)
 	}
 
-	pbRows := convertRows(rows)
+	pbRows := convertTypedRows(page)
+	nextPageState := page.NextPageState
 
 	var cursorID string
 	hasMore := len(nextPageState) > 0
@@ -58,7 +59,7 @@ func (d *DataService) ExecuteQuery(ctx context.Context, req *pb.ExecuteQueryRequ
 		Rows:         pbRows,
 		CursorId:     cursorID,
 		HasMore:      hasMore,
-		TotalFetched: int64(len(rows)),
+		TotalFetched: int64(len(page.Rows)),
 	}, nil
 }
 

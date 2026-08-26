@@ -474,3 +474,85 @@ func TestTableStatsIntegration(t *testing.T) {
 		t.Error("empty table accepted")
 	}
 }
+
+func TestTypedCellsIntegration(t *testing.T) {
+	host, port := cassandraAddr(t)
+	cluster := gocql.NewCluster(host)
+	cluster.Port = port
+	cluster.Consistency = gocql.One
+	cluster.Timeout = 15 * time.Second
+
+	session, err := cluster.CreateSession()
+	if err != nil {
+		t.Skipf("cassandra not reachable: %v", err)
+	}
+
+	ks := "kassie_types_it"
+	must := func(q string) {
+		t.Helper()
+		if err := session.Query(q).Exec(); err != nil {
+			t.Fatalf("exec %q: %v", q, err)
+		}
+	}
+	must(fmt.Sprintf(`DROP KEYSPACE IF EXISTS %s`, ks))
+	must(fmt.Sprintf(`CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}`, ks))
+	must(fmt.Sprintf(`CREATE TABLE %s.rich (id int PRIMARY KEY, payload blob, attrs map<text,int>, tags list<text>, at timestamp, uid uuid)`, ks))
+	must(fmt.Sprintf(`INSERT INTO %s.rich (id, payload, attrs, tags, at, uid) VALUES (1, 0xdeadbeef, {'a': 1}, ['x','y'], '2026-08-26 12:00:00+0000', 550e8400-e29b-41d4-a716-446655440000)`, ks))
+	session.Close()
+
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	resp, err := c.QueryRows(context.Background(), ks, "rich", 10)
+	if err != nil {
+		t.Fatalf("query rows: %v", err)
+	}
+	if len(resp.Rows) != 1 {
+		t.Fatalf("rows = %d", len(resp.Rows))
+	}
+
+	cells := resp.Rows[0].Cells
+
+	if b := cells["payload"].GetBytesVal(); len(b) != 4 || b[0] != 0xDE {
+		t.Errorf("blob roundtrip failed: %x", b)
+	}
+	if cells["payload"].CqlType != "blob" {
+		t.Errorf("blob cql_type = %q", cells["payload"].CqlType)
+	}
+
+	if got := cells["attrs"].GetStringVal(); got != `{"a":1}` {
+		t.Errorf("map json = %q", got)
+	}
+	if cells["attrs"].CqlType != "map<varchar, int>" {
+		t.Errorf("map cql_type = %q", cells["attrs"].CqlType)
+	}
+
+	if got := cells["tags"].GetStringVal(); got != `["x","y"]` {
+		t.Errorf("list json = %q", got)
+	}
+
+	if got := cells["at"].GetStringVal(); !strings.HasPrefix(got, "2026-08-26T12:00:00") {
+		t.Errorf("timestamp = %q", got)
+	}
+
+	if got := cells["uid"].GetStringVal(); got != "550e8400-e29b-41d4-a716-446655440000" {
+		t.Errorf("uuid = %q", got)
+	}
+
+	first, err := c.QueryRows(context.Background(), ks, "rich", 1)
+	if err != nil {
+		t.Fatalf("page one: %v", err)
+	}
+	if !first.HasMore {
+		t.Skip("table too small to exercise typed GetNextPage")
+	}
+	next, err := c.GetNextPage(context.Background(), first.CursorId)
+	if err != nil {
+		t.Fatalf("typed next page: %v", err)
+	}
+	if len(next.Rows) > 0 {
+		if cell := next.Rows[0].Cells["payload"]; cell != nil && cell.CqlType != "blob" {
+			t.Errorf("GetNextPage lost type info: %q", cell.CqlType)
+		}
+	}
+}
