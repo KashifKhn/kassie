@@ -80,6 +80,7 @@ func (s *Session) FetchWithPaging(ctx context.Context, stmt string, pageSize int
 
 type Page struct {
 	Columns       []string
+	Types         []string
 	Rows          [][]interface{}
 	NextPageState []byte
 }
@@ -94,11 +95,13 @@ func (s *Session) FetchPage(ctx context.Context, stmt string, pageSize int, page
 
 	cols := iter.Columns()
 	columns := make([]string, len(cols))
+	types := make([]string, len(cols))
 	for i, c := range cols {
 		columns[i] = c.Name
+		types[i] = CQLTypeString(c.TypeInfo)
 	}
 
-	page := &Page{Columns: columns}
+	page := &Page{Columns: columns, Types: types}
 	for len(page.Rows) < pageSize {
 		rd, err := iter.RowData()
 		if err != nil {

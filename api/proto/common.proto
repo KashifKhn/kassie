@@ -27,6 +27,7 @@ message CellValue {
     bytes bytes_val = 5;
   }
   bool is_null = 6;
+  string cql_type = 7;
 }
 
 message ViewState {
