@@ -80,9 +80,12 @@ func (d *DataService) GetNextPage(ctx context.Context, req *pb.GetNextPageReques
 		return nil, status.Errorf(codes.NotFound, "cursor not found or expired: %v", err)
 	}
 
-	query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, cursor.Keyspace, cursor.Table)
-	if cursor.Filter != "" {
-		query += " WHERE " + cursor.Filter
+	query := cursor.CQL
+	if query == "" {
+		query = fmt.Sprintf(`SELECT * FROM "%s"."%s"`, cursor.Keyspace, cursor.Table)
+		if cursor.Filter != "" {
+			query += " WHERE " + cursor.Filter
+		}
 	}
 
 	rows, nextPageState, err := session.Connection.FetchWithPaging(ctx, query, cursor.PageSize, cursor.PageState)
@@ -96,7 +99,11 @@ func (d *DataService) GetNextPage(ctx context.Context, req *pb.GetNextPageReques
 	hasMore := len(nextPageState) > 0
 
 	if hasMore {
-		newCursorID = session.Cursors.Create(nextPageState, cursor.Keyspace, cursor.Table, cursor.Filter, cursor.PageSize)
+		if cursor.CQL != "" {
+			newCursorID = session.Cursors.CreateWithCQL(nextPageState, cursor.CQL, cursor.PageSize)
+		} else {
+			newCursorID = session.Cursors.Create(nextPageState, cursor.Keyspace, cursor.Table, cursor.Filter, cursor.PageSize)
+		}
 	}
 
 	session.Cursors.Delete(req.CursorId)
