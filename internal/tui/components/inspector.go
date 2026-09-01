@@ -1,6 +1,7 @@
 package components
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -308,6 +309,12 @@ func cellToInspectable(cell *pb.CellValue) any {
 
 	switch v := cell.Value.(type) {
 	case *pb.CellValue_StringVal:
+		if looksLikeCollection(cell.CqlType, v.StringVal) {
+			var parsed any
+			if err := json.Unmarshal([]byte(v.StringVal), &parsed); err == nil {
+				return parsed
+			}
+		}
 		return v.StringVal
 	case *pb.CellValue_IntVal:
 		return v.IntVal
@@ -334,13 +341,20 @@ func formatRowTable(row *pb.Row, theme styles.Theme, maxWidth int, horizontalOff
 	sort.Strings(keys)
 
 	type rowData struct {
-		key   string
-		value string
-		raw   any
+		key         string
+		cqlType     string
+		valueLines  []string
+		isNull      bool
+		isNumber    bool
+		isBool      bool
+		isString    bool
 	}
 
 	rows := make([]rowData, 0, len(keys))
 	maxKeyLen := 0
+	maxTypeLen := 0
+
+	showTypes := maxWidth >= 60
 
 	for _, key := range keys {
 		if len(key) > maxKeyLen {
@@ -348,118 +362,188 @@ func formatRowTable(row *pb.Row, theme styles.Theme, maxWidth int, horizontalOff
 		}
 
 		cell := row.Cells[key]
-		value := cellToInspectable(cell)
+		rd := rowData{key: key, valueLines: []string{"null"}, isNull: true}
+		if cell != nil && !cell.IsNull {
+			rd.isNull = false
+			rd.cqlType = cell.CqlType
+			if len(cell.CqlType) > maxTypeLen {
+				maxTypeLen = len(cell.CqlType)
+			}
 
-		var valueStr string
-		if value == nil {
-			valueStr = "null"
-		} else {
-			switch v := value.(type) {
-			case string:
-				valueStr = fmt.Sprintf("\"%s\"", v)
-			case int64:
-				valueStr = fmt.Sprintf("%d", v)
-			case float64:
-				valueStr = fmt.Sprintf("%g", v)
-			case bool:
-				valueStr = fmt.Sprintf("%t", v)
+			switch v := cell.Value.(type) {
+			case *pb.CellValue_StringVal:
+				rd.valueLines = collectionValueLines(v.StringVal, cell.CqlType)
+				rd.isString = true
+			case *pb.CellValue_IntVal:
+				rd.valueLines = []string{fmt.Sprintf("%d", v.IntVal)}
+				rd.isNumber = true
+			case *pb.CellValue_DoubleVal:
+				rd.valueLines = []string{fmt.Sprintf("%g", v.DoubleVal)}
+				rd.isNumber = true
+			case *pb.CellValue_BoolVal:
+				rd.valueLines = []string{fmt.Sprintf("%t", v.BoolVal)}
+				rd.isBool = true
+			case *pb.CellValue_BytesVal:
+				rd.valueLines = hexDumpLines(v.BytesVal, 8)
 			default:
-				valueStr = fmt.Sprintf("%v", v)
+				rd.valueLines = []string{"null"}
+				rd.isNull = true
 			}
 		}
 
-		rows = append(rows, rowData{key: key, value: valueStr, raw: value})
+		rows = append(rows, rd)
 	}
 
-	// Fixed key column width - adjust based on available width
 	keyColWidth := maxKeyLen
-
-	// In narrow panels, constrain key width more aggressively
 	if maxWidth < 100 {
-		// Very narrow - limit keys to 15 chars
-		if keyColWidth > 15 {
-			keyColWidth = 15
-		}
+		keyColWidth = minInt(keyColWidth, 15)
 	} else if maxWidth < 150 {
-		// Narrow - limit keys to 20 chars
-		if keyColWidth > 20 {
-			keyColWidth = 20
-		}
+		keyColWidth = minInt(keyColWidth, 20)
 	} else {
-		// Wide panel - allow up to 30 chars
-		if keyColWidth > 30 {
-			keyColWidth = 30
-		}
+		keyColWidth = minInt(keyColWidth, 30)
 	}
 
-	// Calculate value column width based on remaining space
-	valueColWidth := maxWidth - keyColWidth - 4 // 4 for separator and padding
+	typeColWidth := 0
+	if showTypes && maxTypeLen > 0 {
+		typeColWidth = minInt(maxTypeLen, 24)
+	}
+
+	valueColWidth := maxWidth - keyColWidth - typeColWidth - 6
 	if valueColWidth < 10 {
 		valueColWidth = 10
 	}
 
-	keyStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("51")).
-		Bold(true)
-
-	nullStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240")).
-		Italic(true)
-
+	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("51")).Bold(true)
+	typeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	nullStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
 	stringStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
 	numberStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
 	boolStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+	blobStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
 	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 
 	var lines []string
 
-	// No top border - just render rows
+	blankKey := padRight("", keyColWidth)
+	blankType := ""
+	if typeColWidth > 0 {
+		blankType = typeStyle.Render(padRight("", typeColWidth) + " │ ")
+	}
+
 	for _, rd := range rows {
-		// Truncate key if needed
 		keyStr := rd.key
 		if len(keyStr) > keyColWidth {
 			keyStr = keyStr[:keyColWidth-3] + "..."
 		}
-		keyPadded := padRight(keyStr, keyColWidth)
+		keyCell := keyStyle.Render(padRight(keyStr, keyColWidth))
 
-		// Apply horizontal scroll to value
-		valueStr := rd.value
-		if horizontalOffset > 0 && horizontalOffset < len(valueStr) {
-			valueStr = valueStr[horizontalOffset:]
-		} else if horizontalOffset >= len(valueStr) {
-			valueStr = ""
+		typeCell := ""
+		if typeColWidth > 0 {
+			typeStr := rd.cqlType
+			if len(typeStr) > typeColWidth {
+				typeStr = typeStr[:typeColWidth-3] + "..."
+			}
+			typeCell = typeStyle.Render(padRight(typeStr, typeColWidth) + " │ ")
 		}
 
-		// Truncate value to visible width (no padding to prevent overflow)
-		if len(valueStr) > valueColWidth {
-			valueStr = valueStr[:valueColWidth]
-		}
+		for i, valueLine := range rd.valueLines {
+			if horizontalOffset > 0 && horizontalOffset < len(valueLine) {
+				valueLine = valueLine[horizontalOffset:]
+			} else if horizontalOffset >= len(valueLine) {
+				valueLine = ""
+			}
+			if len(valueLine) > valueColWidth {
+				valueLine = valueLine[:valueColWidth]
+			}
 
-		var styleToUse lipgloss.Style
-		if rd.raw == nil {
-			styleToUse = nullStyle
-		} else {
-			switch rd.raw.(type) {
-			case string:
+			var styleToUse lipgloss.Style
+			switch {
+			case rd.isNull:
+				styleToUse = nullStyle
+			case rd.isString:
 				styleToUse = stringStyle
-			case int64, float64:
+			case rd.isNumber:
 				styleToUse = numberStyle
-			case bool:
+			case rd.isBool:
 				styleToUse = boolStyle
 			default:
-				styleToUse = lipgloss.NewStyle()
+				styleToUse = blobStyle
+			}
+
+			sep := borderStyle.Render(" │ ")
+			if i == 0 {
+				lines = append(lines, keyCell+sep+typeCell+styleToUse.Render(valueLine))
+			} else {
+				lines = append(lines, blankKey+sep+blankType+styleToUse.Render(valueLine))
 			}
 		}
-
-		separator := borderStyle.Render(" │ ")
-		keyCell := keyStyle.Render(keyPadded)
-		valueCell := styleToUse.Render(valueStr)
-
-		line := keyCell + separator + valueCell
-		lines = append(lines, line)
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func collectionValueLines(value string, cqlType string) []string {
+	if !looksLikeCollection(cqlType, value) {
+		return []string{fmt.Sprintf("%q", value)}
+	}
+
+	var buf bytes.Buffer
+	if err := json.Indent(&buf, []byte(value), "", "  "); err != nil {
+		return []string{fmt.Sprintf("%q", value)}
+	}
+	return strings.Split(buf.String(), "\n")
+}
+
+func looksLikeCollection(cqlType, value string) bool {
+	if strings.HasPrefix(value, "{") || strings.HasPrefix(value, "[") {
+		return true
+	}
+	lower := strings.ToLower(cqlType)
+	return strings.Contains(lower, "map") || strings.Contains(lower, "list") ||
+		strings.Contains(lower, "set") || strings.Contains(lower, "tuple")
+}
+
+func hexDumpLines(data []byte, maxLines int) []string {
+	if len(data) == 0 {
+		return []string{"<empty blob>"}
+	}
+
+	var lines []string
+	const bytesPerLine = 16
+
+	shown := len(data)
+	if maxLines > 0 {
+		shown = minInt(shown, maxLines*bytesPerLine)
+	}
+
+	for offset := 0; offset < shown; offset += bytesPerLine {
+		end := minInt(offset+bytesPerLine, shown)
+		chunk := data[offset:end]
+
+		hex := make([]string, len(chunk))
+		ascii := make([]rune, len(chunk))
+		for i, b := range chunk {
+			hex[i] = fmt.Sprintf("%02x", b)
+			if b >= 0x20 && b < 0x7f {
+				ascii[i] = rune(b)
+			} else {
+				ascii[i] = '.'
+			}
+		}
+
+		hexPart := strings.Join(hex, " ")
+		if len(chunk) < bytesPerLine {
+			hexPart += strings.Repeat("   ", bytesPerLine-len(chunk))
+		}
+
+		lines = append(lines, fmt.Sprintf("%08x  %s  |%s|", offset, hexPart, string(ascii)))
+	}
+
+	if len(data) > shown {
+		lines = append(lines, fmt.Sprintf("... %d more bytes", len(data)-shown))
+	}
+
+	return lines
 }
 
 func padRight(s string, length int) string {

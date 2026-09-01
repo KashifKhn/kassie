@@ -11,6 +11,7 @@ interface DataGridProps {
   table: string;
   whereClause?: string;
   onRowSelect?: (row: Row) => void;
+  onCellSelect?: (columnName: string, cell: CellValue) => void;
 }
 
 export function DataGrid({
@@ -18,6 +19,7 @@ export function DataGrid({
   table,
   whereClause,
   onRowSelect,
+  onCellSelect,
 }: DataGridProps) {
   const { pageSize } = useUiStore();
   const [cursorId, setCursorId] = useState<string | null>(null);
@@ -311,7 +313,7 @@ export function DataGrid({
           rowCount={displayRows.length}
           rowHeight={40}
           rowComponent={RowRenderer}
-          rowProps={{ rows: displayRows, columns, onRowSelect }}
+          rowProps={{ rows: displayRows, columns, onRowSelect, onCellSelect }}
         />
       </div>
 
@@ -387,6 +389,7 @@ interface RowData {
   rows: Row[];
   columns: Array<{ name: string }>;
   onRowSelect?: (row: Row) => void;
+  onCellSelect?: (columnName: string, cell: CellValue) => void;
 }
 
 function RowRenderer({
@@ -395,6 +398,7 @@ function RowRenderer({
   rows,
   columns,
   onRowSelect,
+  onCellSelect,
 }: {
   index: number;
   style: React.CSSProperties;
@@ -428,6 +432,14 @@ function RowRenderer({
             color: 'var(--text-primary)',
             borderRight: '1px solid var(--border-primary)',
           }}
+          onClick={(e) => {
+            const cell = row.cells[column.name];
+            if (onCellSelect && cell && !cell.isNull) {
+              e.stopPropagation();
+              onCellSelect(column.name, cell);
+            }
+          }}
+          title={onCellSelect ? 'Click to inspect cell' : undefined}
         >
           {formatCellValue(row.cells[column.name])}
         </div>
