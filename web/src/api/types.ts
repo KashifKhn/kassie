@@ -88,12 +88,12 @@ export interface GetTableSchemaResponse {
 }
 
 export type CellValue = 
-  | { stringVal: string; isNull: false }
-  | { intVal: number; isNull: false }
-  | { doubleVal: number; isNull: false }
-  | { boolVal: boolean; isNull: false }
-  | { bytesVal: Uint8Array; isNull: false }
-  | { isNull: true };
+  | { stringVal: string; isNull: false; cqlType?: string }
+  | { intVal: number; isNull: false; cqlType?: string }
+  | { doubleVal: number; isNull: false; cqlType?: string }
+  | { boolVal: boolean; isNull: false; cqlType?: string }
+  | { bytesVal: Uint8Array; isNull: false; cqlType?: string }
+  | { isNull: true; cqlType?: string };
 
 export interface Row {
   cells: Record<string, CellValue>;
