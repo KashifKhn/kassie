@@ -9,6 +9,7 @@ import { FilterBar } from '@/components/filterbar/FilterBar';
 import { DataGrid } from '@/components/datagrid/DataGrid';
 import { Inspector } from '@/components/inspector/Inspector';
 import { CellDetailModal } from '@/components/celldetail/CellDetailModal';
+import { QueryEditor } from '@/components/queryeditor/QueryEditor';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToastStore } from '@/stores/toastStore';
@@ -64,6 +65,7 @@ export function ExplorerPage() {
         >
           {selectedKeyspace && selectedTable ? (
             <>
+              <QueryEditor />
               <FilterBar onFilter={handleFilter} onClear={handleClearFilter} />
               <div 
                 className="flex-1 overflow-hidden"
