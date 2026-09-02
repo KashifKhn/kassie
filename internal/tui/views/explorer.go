@@ -25,7 +25,8 @@ type ExplorerView struct {
 	grid             components.DataGrid
 	inspect          components.Inspector
 	filter           components.FilterBar
-	queryBar   components.QueryBar
+	queryBar         components.QueryBar
+	queryList        components.QueryList
 	status           components.StatusBar
 	active           pane
 	profile          string
@@ -61,6 +62,7 @@ func NewExplorerView(theme styles.Theme) ExplorerView {
 		inspect:     components.NewInspector(theme),
 		filter:      components.NewFilterBar(theme),
 		queryBar:    components.NewQueryBar(theme),
+		queryList:   components.NewQueryList(theme),
 		status:      components.NewStatusBar(theme),
 		active:      paneSidebar,
 		schemaCache: schemaCache,
@@ -74,6 +76,7 @@ func (v ExplorerView) Reload(c *client.Client) (ExplorerView, tea.Cmd) {
 	v.inspect = components.NewInspector(v.theme)
 	v.filter = components.NewFilterBar(v.theme)
 	v.queryBar = components.NewQueryBar(v.theme)
+	v.queryList = components.NewQueryList(v.theme)
 	v.active = paneSidebar
 
 	return v, tea.Batch(
@@ -134,6 +137,14 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 	case components.QueryCanceledMsg:
 		v.queryBar = v.queryBar.Deactivate()
 		return v, nil
+	case components.QueryPickedMsg:
+		v.queryList = v.queryList.Deactivate()
+		var cmd tea.Cmd
+		v.grid, cmd = v.grid.LoadQuery(c, m.CQL)
+		return v, cmd
+	case components.QueryListClosedMsg:
+		v.queryList = v.queryList.Deactivate()
+		return v, nil
 	case tea.KeyMsg:
 		if m.String() == "r" {
 			var cmd tea.Cmd
@@ -143,6 +154,12 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 		if m.String() == "q" {
 			return v, nil
 		}
+	}
+
+	if v.queryList.IsActive() {
+		var cmd tea.Cmd
+		v.queryList, cmd = v.queryList.Update(msg, c)
+		return v, cmd
 	}
 
 	if v.queryBar.IsActive() {
@@ -262,7 +279,11 @@ func (v ExplorerView) View(width, height int) string {
 	border := v.theme.Panel
 	filterHeight := 0
 	filterView := ""
-	if v.queryBar.IsActive() {
+	if v.queryList.IsActive() {
+		listView := v.queryList.View(width)
+		filterHeight = lipgloss.Height(listView) + 1
+		filterView = listView
+	} else if v.queryBar.IsActive() {
 		queryView := v.queryBar.View(width)
 		filterHeight = lipgloss.Height(queryView) + 1
 		filterView = queryView
@@ -401,6 +422,18 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 		if !v.queryBar.IsActive() {
 			v.queryBar = v.queryBar.Activate()
 			return v, nil
+		}
+	case "ctrl+y":
+		if !v.queryList.IsActive() && !v.queryBar.IsActive() {
+			var activateCmd tea.Cmd
+			v.queryList, activateCmd = v.queryList.Activate(components.QueryListHistory)
+			return v, activateCmd
+		}
+	case "ctrl+p":
+		if !v.queryList.IsActive() && !v.queryBar.IsActive() {
+			var activateCmd tea.Cmd
+			v.queryList, activateCmd = v.queryList.Activate(components.QueryListSaved)
+			return v, activateCmd
 		}
 	case "/":
 		if v.active == paneSidebar && v.viewMode == viewModeFull {
