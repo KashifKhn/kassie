@@ -153,6 +153,7 @@ func (a *App) updateHelp() {
 		"",
 		"  " + keyStyle.Render("Ctrl+F") + "              Search in sidebar (fuzzy) or grid (text)",
 		"  " + keyStyle.Render("Ctrl+O") + "              Run an ad-hoc read-only SELECT query",
+		"  " + keyStyle.Render("Ctrl+Y / Ctrl+P") + "       Browse query history / saved queries",
 		"  " + keyStyle.Render("E") + "                   Stream full table export to ~/kassie-*.csv",
 		"  " + keyStyle.Render("/") + "                   Open WHERE filter (grid) or search (sidebar)",
 		"  " + keyStyle.Render("s") + "                   Toggle system keyspaces visibility",
