@@ -10,6 +10,7 @@ import { DataGrid } from '@/components/datagrid/DataGrid';
 import { Inspector } from '@/components/inspector/Inspector';
 import { CellDetailModal } from '@/components/celldetail/CellDetailModal';
 import { QueryEditor } from '@/components/queryeditor/QueryEditor';
+import { ExportButton } from '@/components/export/ExportButton';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToastStore } from '@/stores/toastStore';
@@ -65,8 +66,21 @@ export function ExplorerPage() {
         >
           {selectedKeyspace && selectedTable ? (
             <>
-              <QueryEditor />
-              <FilterBar onFilter={handleFilter} onClear={handleClearFilter} />
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <QueryEditor />
+                </div>
+              </div>
+              <div className="flex items-center justify-between px-1">
+                <div className="flex-1">
+                  <FilterBar onFilter={handleFilter} onClear={handleClearFilter} />
+                </div>
+                <ExportButton
+                  keyspace={selectedKeyspace}
+                  table={selectedTable}
+                  whereClause={whereClause}
+                />
+              </div>
               <div 
                 className="flex-1 overflow-hidden"
                 style={{ padding: '20px' }}
