@@ -55,7 +55,7 @@ func NewGateway(cfg *GatewayConfig, log *logger.Logger) (*Gateway, error) {
 }
 
 func (g *Gateway) RegisterServices(ctx context.Context) error {
-	opts := client.DialOptions(nil)
+	opts := client.DialOptions(nil, nil)
 
 	if err := pb.RegisterSessionServiceHandlerFromEndpoint(ctx, g.mux, g.cfg.GRPCAddress, opts); err != nil {
 		return fmt.Errorf("failed to register session service: %w", err)

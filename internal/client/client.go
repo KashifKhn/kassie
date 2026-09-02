@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
 	"time"
 
@@ -26,7 +27,7 @@ type Client struct {
 func New(addr string) (*Client, error) {
 	c := &Client{}
 
-	conn, err := grpc.NewClient(addr, DialOptions(c.authInterceptor())...)
+	conn, err := grpc.NewClient(addr, DialOptions(c.authInterceptor(), c.streamAuthInterceptor())...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
@@ -166,6 +167,35 @@ func (c *Client) FilterRows(ctx context.Context, keyspace, table, where string, 
 		return nil, fmt.Errorf("failed to filter rows: %w", err)
 	}
 	return resp, nil
+}
+
+func (c *Client) ExportRows(ctx context.Context, keyspace, table, where string, format pb.ExportFormat, fetchSize int32, onChunk func(*pb.ExportChunk) error) error {
+	stream, err := c.data.ExportRows(ctx, &pb.ExportRowsRequest{
+		Keyspace:    keyspace,
+		Table:       table,
+		WhereClause: where,
+		Format:      format,
+		FetchSize:   fetchSize,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start export: %w", err)
+	}
+
+	for {
+		chunk, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("export failed: %w", err)
+		}
+		if err := onChunk(chunk); err != nil {
+			return err
+		}
+		if chunk.Done {
+			return nil
+		}
+	}
 }
 
 func (c *Client) Profile() string {
