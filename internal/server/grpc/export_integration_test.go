@@ -556,3 +556,35 @@ func TestTypedCellsIntegration(t *testing.T) {
 		}
 	}
 }
+
+func TestMetricsIntegration(t *testing.T) {
+	seedExportTable(t)
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	ctx := context.Background()
+
+	if _, err := c.ExecuteQuery(ctx, fmt.Sprintf("SELECT id FROM %s.export_items LIMIT 5", exportKeyspace), 2); err != nil {
+		t.Fatalf("setup query: %v", err)
+	}
+
+	metrics, err := c.GetMetrics(ctx)
+	if err != nil {
+		t.Fatalf("metrics: %v", err)
+	}
+	if metrics.ActiveSessions < 1 {
+		t.Errorf("active_sessions = %d, want >= 1", metrics.ActiveSessions)
+	}
+	if metrics.ActiveCursors < 1 {
+		t.Errorf("active_cursors = %d, want >= 1 (query with has_more creates cursor)", metrics.ActiveCursors)
+	}
+
+	anon, err := client.New(addr)
+	if err != nil {
+		t.Fatalf("client: %v", err)
+	}
+	defer anon.Close()
+	if _, err := anon.GetMetrics(ctx); err == nil {
+		t.Error("unauthenticated metrics must fail")
+	}
+}
