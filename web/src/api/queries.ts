@@ -16,6 +16,7 @@ import type {
   GetNextPageResponse,
   FilterRowsRequest,
   FilterRowsResponse,
+  TableStats,
   ExecuteQueryRequest,
   ExecuteQueryResponse,
   QueryHistoryEntry,
@@ -50,6 +51,7 @@ export const queryKeys = {
     queries: () => ['history', 'queries'] as const,
     saved: () => ['history', 'saved'] as const,
   },
+  stats: (keyspace: string, table: string) => ['stats', keyspace, table] as const,
   data: {
     rows: (keyspace: string, table: string, pageSize: number) =>
       ['rows', keyspace, table, pageSize] as const,
@@ -187,6 +189,20 @@ export const dataApi = {
         request
       );
       return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+};
+
+export const statsApi = {
+  getTableStats: async (keyspace: string, table: string): Promise<TableStats> => {
+    try {
+      const response = await apiClient.post<{ stats: TableStats }>('/schema/stats', {
+        keyspace,
+        table,
+      });
+      return response.data.stats;
     } catch (error) {
       throw handleApiError(error);
     }
