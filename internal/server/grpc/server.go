@@ -8,6 +8,7 @@ import (
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/server/service"
+	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -50,8 +51,8 @@ func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server
 
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(unaryInterceptor),
-		grpc.MaxRecvMsgSize(10*1024*1024),
-		grpc.MaxSendMsgSize(10*1024*1024),
+		grpc.MaxRecvMsgSize(config.MaxMessageSize),
+		grpc.MaxSendMsgSize(config.MaxMessageSize),
 	)
 
 	pb.RegisterSessionServiceServer(grpcServer, sessionSvc)

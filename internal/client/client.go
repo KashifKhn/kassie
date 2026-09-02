@@ -7,6 +7,7 @@ import (
 	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
+	"github.com/KashifKhn/kassie/internal/shared/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -30,6 +31,10 @@ func New(addr string) (*Client, error) {
 	conn, err := grpc.NewClient(
 		addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(config.MaxMessageSize),
+			grpc.MaxCallSendMsgSize(config.MaxMessageSize),
+		),
 		grpc.WithUnaryInterceptor(c.authInterceptor()),
 	)
 	if err != nil {

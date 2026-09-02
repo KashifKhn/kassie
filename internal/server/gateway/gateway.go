@@ -58,6 +58,10 @@ func NewGateway(cfg *GatewayConfig, log *logger.Logger) (*Gateway, error) {
 func (g *Gateway) RegisterServices(ctx context.Context) error {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(config.MaxMessageSize),
+			grpc.MaxCallSendMsgSize(config.MaxMessageSize),
+		),
 	}
 
 	if err := pb.RegisterSessionServiceHandlerFromEndpoint(ctx, g.mux, g.cfg.GRPCAddress, opts); err != nil {
