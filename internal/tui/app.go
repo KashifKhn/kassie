@@ -152,6 +152,7 @@ func (a *App) updateHelp() {
 		headerStyle.Render("━━━ SEARCH & FILTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"),
 		"",
 		"  " + keyStyle.Render("Ctrl+F") + "              Search in sidebar (fuzzy) or grid (text)",
+		"  " + keyStyle.Render("Ctrl+O") + "              Run an ad-hoc read-only SELECT query",
 		"  " + keyStyle.Render("/") + "                   Open WHERE filter (grid) or search (sidebar)",
 		"  " + keyStyle.Render("s") + "                   Toggle system keyspaces visibility",
 		"  " + keyStyle.Render("n / N") + "               Next/Previous search match",

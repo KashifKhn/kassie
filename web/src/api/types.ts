@@ -135,6 +135,29 @@ export interface FilterRowsResponse {
   hasMore: boolean;
 }
 
+export interface ExecuteQueryRequest {
+  cql: string;
+  pageSize: number;
+}
+
+export interface ExecuteQueryResponse {
+  rows: Row[];
+  cursorId: string;
+  hasMore: boolean;
+  totalFetched: number;
+}
+
+export interface QueryHistoryEntry {
+  cql: string;
+  executedAt: number;
+}
+
+export interface SavedQuery {
+  name: string;
+  cql: string;
+  createdAt: number;
+}
+
 export interface ApiError {
   code: string;
   message: string;
