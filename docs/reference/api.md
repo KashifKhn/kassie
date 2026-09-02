@@ -472,6 +472,140 @@ Query rows with a CQL WHERE clause filter.
 
 **Note:** WHERE clause must be valid CQL syntax without the `WHERE` keyword.
 
+### Execute Query (CQL)
+
+Run an ad-hoc read-only SELECT statement.
+
+**POST** `/api/v1/data/cql`
+
+```json
+{
+  "cql": "SELECT id, name FROM app_data.users LIMIT 100",
+  "page_size": 100
+}
+```
+
+**Response:**
+```json
+{
+  "rows": [{ "cells": { "id": { "intVal": 1, "isNull": false } } }],
+  "cursor_id": "cursor_abc123",
+  "has_more": true,
+  "total_fetched": 100
+}
+```
+
+**Requires:** Authorization header
+
+**Constraints:**
+- Only `SELECT` statements are allowed
+- Multiple statements are rejected
+- `page_size` is capped at 1000
+- Results page through the standard `cursor_id` (see Get Next Page)
+
+**Status Codes:**
+- `200`: Success
+- `400`: Invalid query (non-SELECT, multiple statements, too long)
+- `401`: Unauthorized
+- `500`: Query execution error
+
+### Export Rows (Streaming)
+
+Stream a table (optionally filtered) as CSV or newline-delimited JSON chunks.
+
+**POST** `/api/v1/data/export`
+
+```json
+{
+  "keyspace": "app_data",
+  "table": "users",
+  "where_clause": "region = 'eu'",
+  "format": "EXPORT_FORMAT_CSV",
+  "fetch_size": 1000
+}
+```
+
+**Response:** chunked stream; each line is an `ExportChunk`:
+```json
+{ "data": "<base64>", "rows_exported": 1000, "done": false }
+```
+
+Concatenate `data` (after base64-decoding) across chunks in order until the
+chunk with `done: true`. The server streams ~512KB chunks and pages through
+Cassandra internally, so exports work for arbitrarily large tables.
+
+**Requires:** Authorization header
+
+**Status Codes:**
+- `200`: Success (streaming)
+- `400`: Invalid keyspace/table/WHERE clause
+- `401`: Unauthorized
+
+### Get Table Stats
+
+Row count and partition size statistics for a table.
+
+**POST** `/api/v1/schema/stats`
+
+```json
+{
+  "keyspace": "app_data",
+  "table": "users"
+}
+```
+
+**Response:**
+```json
+{
+  "stats": {
+    "row_count": 125000,
+    "mean_partition_size_bytes": 2048,
+    "max_partition_size_bytes": 18432,
+    "estimate_available": true
+  }
+}
+```
+
+Prefers `system.size_estimates`; falls back to exact `COUNT(*)` when
+estimates are not materialized (check `estimate_available`).
+
+### Query History
+
+List recently executed ad-hoc queries for the authenticated profile.
+
+**GET** `/api/v1/history/queries?limit=50`
+
+```json
+{
+  "entries": [{ "cql": "SELECT id FROM app_data.users", "executed_at": 1756170000 }]
+}
+```
+
+### Saved Queries
+
+List, create, and delete named queries. Saved queries are per-profile and
+persisted server-side.
+
+**GET** `/api/v1/history/saved` → `{ "queries": [{ "name": "eu-users", "cql": "...", "created_at": 1756170000 }] }`
+
+**POST** `/api/v1/history/saved` (body: `{ "name": "eu-users", "cql": "SELECT ..." }`)
+
+**DELETE** `/api/v1/history/saved/{name}`
+
+### Metrics
+
+Active session and pagination-cursor counts.
+
+**GET** `/api/v1/metrics`
+
+```json
+{
+  "metrics": { "active_sessions": 3, "active_cursors": 7, "uptime_seconds": 0 }
+}
+```
+
+**Requires:** Authorization header
+
 ---
 
 ## Common Data Types
@@ -490,15 +624,25 @@ message CellValue {
     bytes bytes_val = 5;
   }
   bool is_null = 6;
+  string cql_type = 7;
 }
 ```
 
 **Cassandra Type Mappings:**
-- `text`, `varchar`, `ascii`, `uuid`, `timeuuid`, `inet` → `string_val`
-- `int`, `bigint`, `smallint`, `tinyint`, `counter`, `timestamp` → `int_val`
-- `float`, `double`, `decimal` → `double_val`
+- `text`, `varchar`, `ascii` → `string_val`
+- `uuid`, `timeuuid` → `string_val` (canonical string form)
+- `inet` → `string_val`
+- `timestamp` → `string_val` (RFC3339Nano)
+- `int`, `bigint`, `smallint`, `tinyint`, `counter` → `int_val`
+- `float`, `double` → `double_val`
+- `decimal` → `string_val`
 - `boolean` → `bool_val`
-- `blob`, `varint` → `bytes_val`
+- `blob` → `bytes_val` (raw bytes; render as hex client-side)
+- `map`, `list`, `set`, `tuple`, UDTs → `string_val` (JSON-encoded)
+
+The `cql_type` field carries the exact CQL type signature
+(e.g. `map<varchar, int>`, `list<bigint>`, `blob`) so clients can
+render type-aware inspectors.
 - `null` → `is_null = true`
 
 ---

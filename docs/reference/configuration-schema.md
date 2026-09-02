@@ -110,6 +110,42 @@ SSL/TLS connection settings.
 }
 ```
 
+### ConnTuningConfig
+
+Optional per-profile connection tuning. All fields are optional; unset
+fields fall back to defaults (consistency `QUORUM`, timeout `10s`,
+pool size `5`).
+
+| Field | Type | Required | Default | Description | Validation |
+|-------|------|----------|---------|-------------|------------|
+| `consistency` | string | No | `QUORUM` | CQL consistency level | One of: ANY, ONE, TWO, THREE, QUORUM, LOCAL_QUORUM, EACH_QUORUM, LOCAL_ONE, ALL (case-insensitive) |
+| `timeout` | string | No | `10s` | Query timeout as a Go duration | Positive duration, max `5m` |
+| `pool_size` | integer | No | 5 | Connection pool size per host | Range: 1-100 |
+
+**Example**:
+```json
+{
+  "consistency": "LOCAL_QUORUM",
+  "timeout": "30s",
+  "pool_size": 10
+}
+```
+
+Attach it to a profile via the `connection` key:
+
+```json
+{
+  "name": "prod",
+  "hosts": ["10.0.0.1"],
+  "port": 9042,
+  "connection": {
+    "consistency": "LOCAL_QUORUM",
+    "timeout": "30s",
+    "pool_size": 10
+  }
+}
+```
+
 ### DefaultConfig
 
 Default settings for database operations.
