@@ -8,18 +8,21 @@ import (
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/server/db"
+	"github.com/KashifKhn/kassie/internal/server/state"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type DataService struct {
 	pb.UnimplementedDataServiceServer
-	store SessionStore
+	store   SessionStore
+	queries *state.QueryStore
 }
 
-func NewDataService(store SessionStore) *DataService {
+func NewDataService(store SessionStore, queries *state.QueryStore) *DataService {
 	return &DataService{
-		store: store,
+		store:   store,
+		queries: queries,
 	}
 }
 
