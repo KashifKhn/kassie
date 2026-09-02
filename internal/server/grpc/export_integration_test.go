@@ -453,3 +453,24 @@ func TestQueryHistoryIntegration(t *testing.T) {
 		}
 	})
 }
+
+func TestTableStatsIntegration(t *testing.T) {
+	seedExportTable(t)
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	stats, err := c.GetTableStats(context.Background(), exportKeyspace, "export_items")
+	if err != nil {
+		t.Fatalf("table stats: %v", err)
+	}
+	if stats.RowCount < exportRowCount && !stats.EstimateAvailable {
+		t.Fatalf("row_count = %d, want >= %d (estimate_available=%v)", stats.RowCount, exportRowCount, stats.EstimateAvailable)
+	}
+
+	if _, err := c.GetTableStats(context.Background(), "bad;ks", "tbl"); err == nil {
+		t.Error("invalid keyspace accepted")
+	}
+	if _, err := c.GetTableStats(context.Background(), exportKeyspace, ""); err == nil {
+		t.Error("empty table accepted")
+	}
+}
