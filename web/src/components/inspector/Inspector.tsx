@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import JsonView from '@uiw/react-json-view';
 import { Copy, Check, FileJson } from 'lucide-react';
+import { TableStatsCard } from '@/components/stats/TableStatsCard';
+import { useUiStore } from '@/stores/uiStore';
 import type { Row, CellValue } from '@/api/types';
 
 interface InspectorProps {
@@ -8,6 +10,7 @@ interface InspectorProps {
 }
 
 export function Inspector({ row }: InspectorProps) {
+  const { selectedKeyspace, selectedTable } = useUiStore();
   const [copied, setCopied] = useState(false);
 
   if (!row) {
@@ -98,6 +101,9 @@ export function Inspector({ row }: InspectorProps) {
         style={{ padding: '20px' }}
       >
         <div className="space-y-6 animate-fade-in">
+          {selectedKeyspace && selectedTable && (
+            <TableStatsCard keyspace={selectedKeyspace} table={selectedTable} />
+          )}
           <div>
             <h4 
               className="text-xs font-mono font-bold tracking-wider uppercase mb-3"

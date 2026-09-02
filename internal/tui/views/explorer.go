@@ -1,6 +1,7 @@
 package views
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/KashifKhn/kassie/internal/tui/cache"
 	"github.com/KashifKhn/kassie/internal/tui/components"
 	"github.com/KashifKhn/kassie/internal/tui/styles"
+	pb "github.com/KashifKhn/kassie/api/gen/go"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -104,9 +106,13 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 		v.message = ""
 		return v, nil
 	case components.TableSelectedMsg:
+		v.inspect.ClearStats()
 		var cmd tea.Cmd
 		v.grid, cmd = v.grid.LoadTable(c, m.Keyspace, m.Table)
-		return v, cmd
+		return v, tea.Batch(cmd, fetchTableStatsCmd(c, m.Keyspace, m.Table))
+	case TableStatsLoadedMsg:
+		v.inspect.SetStats(m.Stats)
+		return v, nil
 	case components.KeyspaceSelectedMsg:
 		v.filter = v.filter.Deactivate()
 		return v, nil
@@ -361,6 +367,22 @@ func (v ExplorerView) View(width, height int) string {
 
 	return lipgloss.JoinVertical(lipgloss.Left, parts...)
 }
+
+func fetchTableStatsCmd(c *client.Client, keyspace, table string) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		stats, err := c.GetTableStats(ctx, keyspace, table)
+		if err != nil {
+			return tableStatsErrMsg{Err: err}
+		}
+		return TableStatsLoadedMsg{Stats: stats}
+	}
+}
+
+type tableStatsErrMsg struct{ Err error }
+type TableStatsLoadedMsg struct{ Stats *pb.TableStats }
 
 func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, tea.Cmd) {
 	key, ok := msg.(tea.KeyMsg)

@@ -23,6 +23,7 @@ type Inspector struct {
 	totalLines    int
 	maxLineWidth  int
 	displayMode   displayMode
+	stats         *pb.TableStats
 	contentWidth  int
 	contentHeight int
 	isFullscreen  bool
@@ -168,6 +169,15 @@ func (i *Inspector) View(width, height int) string {
 	}
 
 	if i.row == nil {
+		if i.stats != nil {
+			content := lipgloss.JoinVertical(
+				lipgloss.Left,
+				lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("51")).Render("Table Stats"),
+				"",
+				formatStatsTable(i.stats),
+			)
+			return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, content)
+		}
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, i.theme.Dim.Render("Select a row"))
 	}
 
@@ -580,4 +590,68 @@ func wrapJSON(jsonStr string, maxWidth int, horizontalOffset int) string {
 	}
 
 	return strings.Join(processedLines, "\n")
+}
+
+func (i *Inspector) SetStats(stats *pb.TableStats) {
+	i.stats = stats
+}
+
+func (i *Inspector) ClearStats() {
+	i.stats = nil
+}
+
+func formatStatsTable(stats *pb.TableStats) string {
+	if stats == nil {
+		return ""
+	}
+
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
+
+	rows := [][2]string{
+		{"rows", formatStatCount(stats.RowCount)},
+		{"avg partition", formatStatBytes(stats.MeanPartitionSizeBytes)},
+		{"max partition", formatStatBytes(stats.MaxPartitionSizeBytes)},
+	}
+
+	var lines []string
+	source := "estimate"
+	if !stats.EstimateAvailable {
+		source = "count(*)"
+	}
+	lines = append(lines, labelStyle.Render("stats ("+source+")"))
+	for _, row := range rows {
+		lines = append(lines, "  "+labelStyle.Render(padRight(row[0], 14))+valueStyle.Render(row[1]))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func formatStatCount(n int64) string {
+	if n <= 0 {
+		return "—"
+	}
+	if n >= 1_000_000 {
+		return fmt.Sprintf("%.1fM", float64(n)/1_000_000)
+	}
+	if n >= 1_000 {
+		return fmt.Sprintf("%.1fk", float64(n)/1_000)
+	}
+	return fmt.Sprintf("%d", n)
+}
+
+func formatStatBytes(n int64) string {
+	if n <= 0 {
+		return "—"
+	}
+	units := []string{"B", "KB", "MB", "GB", "TB"}
+	value := float64(n)
+	unit := 0
+	for value >= 1024 && unit < len(units)-1 {
+		value /= 1024
+		unit++
+	}
+	if unit == 0 {
+		return fmt.Sprintf("%d B", n)
+	}
+	return fmt.Sprintf("%.1f %s", value, units[unit])
 }

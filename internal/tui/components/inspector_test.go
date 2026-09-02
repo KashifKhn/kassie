@@ -116,3 +116,42 @@ func TestFormatRowJSONUnwrapsCollections(t *testing.T) {
 		t.Errorf("collection not unwrapped in JSON mode: %q", out)
 	}
 }
+
+func TestFormatStatsTable(t *testing.T) {
+	out := formatStatsTable(&pb.TableStats{
+		RowCount:                1234567,
+		MeanPartitionSizeBytes:  2048,
+		MaxPartitionSizeBytes:   4096,
+		EstimateAvailable:       true,
+	})
+
+	if !strings.Contains(out, "1.2M") {
+		t.Errorf("row count formatting: %q", out)
+	}
+	if !strings.Contains(out, "2.0 KB") {
+		t.Errorf("bytes formatting: %q", out)
+	}
+	if !strings.Contains(out, "estimate") {
+		t.Errorf("source label: %q", out)
+	}
+}
+
+func TestFormatStatsCountFallback(t *testing.T) {
+	out := formatStatsTable(&pb.TableStats{RowCount: 42, EstimateAvailable: false})
+	if !strings.Contains(out, "count(*)") {
+		t.Errorf("fallback label: %q", out)
+	}
+	if !strings.Contains(out, "42") {
+		t.Errorf("count: %q", out)
+	}
+}
+
+func TestInspectorShowsStatsWithoutRow(t *testing.T) {
+	insp := NewInspector(styles.DefaultTheme())
+	insp.SetStats(&pb.TableStats{RowCount: 5})
+
+	view := insp.View(80, 24)
+	if !strings.Contains(view, "Table Stats") {
+		t.Errorf("stats not rendered when no row selected: %q", view)
+	}
+}

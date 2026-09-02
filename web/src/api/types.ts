@@ -158,6 +158,13 @@ export interface SavedQuery {
   createdAt: number;
 }
 
+export interface TableStats {
+  rowCount: number;
+  meanPartitionSizeBytes: number;
+  maxPartitionSizeBytes: number;
+  estimateAvailable: boolean;
+}
+
 export interface ApiError {
   code: string;
   message: string;
