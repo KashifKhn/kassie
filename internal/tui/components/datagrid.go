@@ -142,6 +142,39 @@ func (g DataGrid) ApplyFilter(c *client.Client, where string) (DataGrid, tea.Cmd
 	return g, g.fetchFilterCmd(c, g.keyspace, g.table, where, g.pageSize)
 }
 
+func (g DataGrid) LoadQuery(c *client.Client, cql string) (DataGrid, tea.Cmd) {
+	g.keyspace = ""
+	g.table = ""
+	g.filter = ""
+	g.selected = 0
+	g.viewportOffset = 0
+	g.colOffset = 0
+	g.cursorID = ""
+	g.hasMore = false
+	g.loading = true
+	g.rows = nil
+	g.cachedColWidths = nil
+	g.status = "Running query..."
+	g.searchQuery = ""
+	g.matchedRows = nil
+	g.matchIndex = 0
+
+	return g, g.executeQueryCmd(c, cql, g.pageSize)
+}
+
+func (g DataGrid) executeQueryCmd(c *client.Client, cql string, pageSize int32) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		resp, err := c.ExecuteQuery(ctx, cql, pageSize)
+		if err != nil {
+			return dataErrMsg{Err: err}
+		}
+		return rowsMsg{Rows: resp.Rows, CursorID: resp.CursorId, HasMore: resp.HasMore, Filter: ""}
+	}
+}
+
 func (g DataGrid) Refresh(c *client.Client) (DataGrid, tea.Cmd) {
 	if g.keyspace == "" || g.table == "" {
 		return g, nil
@@ -269,11 +302,15 @@ func (g DataGrid) View(width, height int) string {
 		return ""
 	}
 
-	if g.table == "" {
+	if g.table == "" && len(g.rows) == 0 {
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, g.theme.Dim.Render("Select a table"))
 	}
 
-	header := g.theme.Accent.Render(fmt.Sprintf("%s.%s", g.keyspace, g.table))
+	headerLabel := fmt.Sprintf("%s.%s", g.keyspace, g.table)
+	if g.keyspace == "" && g.table == "" && len(g.rows) > 0 {
+		headerLabel = "query results"
+	}
+	header := g.theme.Accent.Render(headerLabel)
 	gridWidth := width
 	columns := g.columns
 	if len(columns) == 0 && len(g.rows) > 0 {

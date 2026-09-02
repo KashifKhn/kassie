@@ -16,6 +16,10 @@ import type {
   GetNextPageResponse,
   FilterRowsRequest,
   FilterRowsResponse,
+  ExecuteQueryRequest,
+  ExecuteQueryResponse,
+  QueryHistoryEntry,
+  SavedQuery,
 } from './types';
 
 export const queryClient = new QueryClient({
@@ -41,6 +45,10 @@ export const queryKeys = {
     tables: (keyspace: string) => ['tables', keyspace] as const,
     tableSchema: (keyspace: string, table: string) =>
       ['tableSchema', keyspace, table] as const,
+  },
+  history: {
+    queries: () => ['history', 'queries'] as const,
+    saved: () => ['history', 'saved'] as const,
   },
   data: {
     rows: (keyspace: string, table: string, pageSize: number) =>
@@ -165,6 +173,73 @@ export const dataApi = {
         request
       );
       return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  executeQuery: async (
+    request: ExecuteQueryRequest
+  ): Promise<ExecuteQueryResponse> => {
+    try {
+      const response = await apiClient.post<ExecuteQueryResponse>(
+        '/data/cql',
+        request
+      );
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+};
+
+export const historyApi = {
+  listHistory: async (limit: number): Promise<QueryHistoryEntry[]> => {
+    try {
+      const response = await apiClient.get<{ entries: QueryHistoryEntry[] }>(
+        '/history/queries',
+        { params: { limit } }
+      );
+      return response.data.entries ?? [];
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  clearHistory: async (): Promise<void> => {
+    try {
+      await apiClient.post('/history/queries/clear');
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  saveQuery: async (name: string, cql: string): Promise<SavedQuery> => {
+    try {
+      const response = await apiClient.post<{ query: SavedQuery }>(
+        '/history/saved',
+        { name, cql }
+      );
+      return response.data.query;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  listSavedQueries: async (): Promise<SavedQuery[]> => {
+    try {
+      const response = await apiClient.get<{ queries: SavedQuery[] }>(
+        '/history/saved'
+      );
+      return response.data.queries ?? [];
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  deleteSavedQuery: async (name: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/history/saved/${encodeURIComponent(name)}`);
     } catch (error) {
       throw handleApiError(error);
     }
