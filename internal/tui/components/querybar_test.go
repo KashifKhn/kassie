@@ -98,3 +98,68 @@ func TestQueryBarInvalidKeepsOpen(t *testing.T) {
 func teabt(s string) tea.KeyMsg {
 	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s)}
 }
+
+func TestQueryBarSuggestionsAndTab(t *testing.T) {
+	bar := NewQueryBar(styles.DefaultTheme())
+	bar.SetSources([]string{"app_data"}, func(ks string) []string {
+		if ks == "app_data" {
+			return []string{"users"}
+		}
+		return nil
+	}, nil)
+	bar = bar.Activate()
+
+	bar, _ = bar.Update(teabt("SELECT * FROM app"))
+	if len(bar.suggestions) == 0 {
+		t.Fatal("expected keyspace suggestion for 'app'")
+	}
+	if bar.suggestions[0].Label != "app_data" {
+		t.Errorf("first suggestion = %q, want app_data", bar.suggestions[0].Label)
+	}
+
+	bar, _ = bar.Update(teaKey(tea.KeyTab))
+	value := bar.input.Value()
+	if !strings.HasSuffix(value, "app_data ") {
+		t.Errorf("tab accept: value = %q, want suffix 'app_data '", value)
+	}
+}
+
+func TestQueryBarUpDownCyclesSuggestions(t *testing.T) {
+	bar := NewQueryBar(styles.DefaultTheme())
+	bar = bar.Activate()
+	bar, _ = bar.Update(teabt("A"))
+
+	if len(bar.suggestions) < 2 {
+		t.Fatalf("expected multiple keyword suggestions, got %d", len(bar.suggestions))
+	}
+
+	bar, _ = bar.Update(teaKey(tea.KeyDown))
+	if bar.suggestSel != 1 {
+		t.Errorf("after down: sel = %d, want 1", bar.suggestSel)
+	}
+	bar, _ = bar.Update(teaKey(tea.KeyUp))
+	if bar.suggestSel != 0 {
+		t.Errorf("after up: sel = %d, want 0", bar.suggestSel)
+	}
+}
+
+func TestQueryBarViewShowsSuggestions(t *testing.T) {
+	bar := NewQueryBar(styles.DefaultTheme())
+	bar = bar.Activate()
+	bar, _ = bar.Update(teabt("SELECT"))
+
+	out := bar.View(80)
+	if !strings.Contains(out, "SELECT") {
+		t.Errorf("suggestion line missing: %q", out)
+	}
+	if !strings.Contains(out, "▸") {
+		t.Errorf("selection marker missing: %q", out)
+	}
+	if !strings.Contains(out, "(keyword)") {
+		t.Errorf("kind annotation missing: %q", out)
+	}
+}
+
+func teaKey(key tea.KeyType) tea.KeyMsg {
+	return tea.KeyMsg{Type: key}
+}

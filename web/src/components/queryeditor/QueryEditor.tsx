@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Play, Loader2, AlertCircle, ChevronDown, ChevronUp, Clock, Bookmark, Trash2 } from 'lucide-react';
-import { dataApi, historyApi, queryKeys } from '@/api/queries';
+import { complete } from '@/lib/completion';
+import type { Suggestion } from '@/lib/completion';
+import { dataApi, historyApi, queryClient, queryKeys, schemaApi } from '@/api/queries';
+import { useUiStore } from '@/stores/uiStore';
+import type { TableSchema } from '@/api/types';
 import type { Row, CellValue, ExecuteQueryResponse, QueryHistoryEntry, SavedQuery } from '@/api/types';
 
 interface QueryEditorProps {
@@ -19,6 +23,16 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
   const [cql, setCql] = useState('');
   const [results, setResults] = useState<ExecuteQueryResponse | null>(null);
   const [allRows, setAllRows] = useState<Row[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestSel, setSuggestSel] = useState(0);
+  const [suggestActive, setSuggestActive] = useState(false);
+
+  const { selectedKeyspace, selectedTable } = useUiStore();
+
+  const keyspaceCache = useQuery({
+    queryKey: queryKeys.schema.keyspaces(),
+    queryFn: schemaApi.listKeyspaces,
+  });
 
   const historyQuery = useQuery({
     queryKey: queryKeys.history.queries(),
@@ -40,6 +54,38 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
       onResults?.({ rows: data.rows, cursorId: data.cursorId, hasMore: data.hasMore });
     },
   });
+
+  const refreshSuggestions = (text: string) => {
+    const next = complete(text, {
+      keyspaces: (keyspaceCache.data?.keyspaces ?? []).map((ks) => ks.name),
+      tablesFor: (ks) =>
+        queryClient.getQueryData<string[]>(queryKeys.schema.tables(ks)) ?? [],
+      columnsFor: (ks, tbl) => {
+        const cached = queryClient.getQueryData<{ schema: TableSchema }>(
+          queryKeys.schema.tableSchema(ks, tbl)
+        );
+        return cached?.schema.columns ?? [];
+      },
+      defaultKeyspace: selectedKeyspace ?? undefined,
+      defaultTable: selectedTable ?? undefined,
+    });
+    setSuggestions(next);
+    setSuggestSel(0);
+  };
+
+  const acceptSuggestion = (s: Suggestion) => {
+    const prefix = trailingPartial(cql);
+    let label = s.label;
+    if (cql.endsWith('.')) {
+      label = s.label.split('.').pop() ?? s.label;
+    }
+    const next = prefix
+      ? cql.slice(0, cql.length - prefix.length) + label + ' '
+      : cql + label + ' ';
+    setCql(next);
+    setSuggestions([]);
+    setSuggestActive(false);
+  };
 
   const handleExecute = () => {
     if (!cql.trim()) return;
@@ -87,15 +133,51 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
       {expanded && (
         <div className="px-4 pb-4 space-y-3 animate-fade-in">
           <div className="flex gap-2">
-            <textarea
-              value={cql}
-              onChange={(e) => setCql(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  handleExecute();
-                }
-              }}
-              placeholder="SELECT * FROM keyspace.table WHERE ... LIMIT 100"
+            <div className="relative flex-1">
+              <textarea
+                value={cql}
+                onChange={(e) => {
+                  setCql(e.target.value);
+                  if (suggestActive) refreshSuggestions(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    handleExecute();
+                    return;
+                  }
+                  if (suggestActive && suggestions.length > 0) {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSuggestSel((prev) => (prev + 1) % suggestions.length);
+                      return;
+                    }
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSuggestSel((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+                      return;
+                    }
+                    if (e.key === 'Tab') {
+                      e.preventDefault();
+                      const picked = suggestions[suggestSel];
+                      if (picked) acceptSuggestion(picked);
+                      return;
+                    }
+                    if (e.key === 'Escape') {
+                      setSuggestActive(false);
+                      setSuggestions([]);
+                      return;
+                    }
+                    if (e.key === ' ' && e.ctrlKey) {
+                      e.preventDefault();
+                      return;
+                    }
+                  } else if (e.key === ' ' && e.ctrlKey) {
+                    e.preventDefault();
+                    setSuggestActive(true);
+                    refreshSuggestions(cql);
+                  }
+                }}
+              placeholder="SELECT * FROM keyspace.table WHERE ... (Ctrl+Space autocomplete)"
               rows={3}
               className="flex-1 px-3 py-2 text-sm font-mono rounded-lg resize-none outline-none"
               style={{
@@ -122,6 +204,18 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
               )}
               Run
             </button>
+              {suggestActive && suggestions.length > 0 && (
+                <SuggestionList
+                  suggestions={suggestions}
+                  selected={suggestSel}
+                  onSelect={(i) => {
+                    const picked = suggestions[i];
+                    if (picked) acceptSuggestion(picked);
+                  }}
+                  onHover={setSuggestSel}
+                />
+              )}
+            </div>
           </div>
 
           <QueryPickers
@@ -160,6 +254,62 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
       )}
     </div>
   );
+}
+
+function SuggestionList({
+  suggestions,
+  selected,
+  onSelect,
+  onHover,
+}: {
+  suggestions: Suggestion[];
+  selected: number;
+  onSelect: (index: number) => void;
+  onHover: (index: number) => void;
+}) {
+  const kindColor: Record<Suggestion['kind'], string> = {
+    keyword: 'var(--text-tertiary)',
+    keyspace: 'var(--accent-primary)',
+    table: '#22c55e',
+    column: '#f59e0b',
+  };
+
+  return (
+    <div
+      className="absolute z-30 left-0 top-full mt-1 w-80 max-h-56 overflow-auto rounded-lg animate-fade-in"
+      style={{
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border-primary)',
+        boxShadow: 'var(--shadow-lg)',
+      }}
+    >
+      {suggestions.slice(0, 8).map((s, i) => (
+        <div
+          key={s.label + i}
+          className="flex items-center justify-between gap-2 px-3 py-1.5 text-xs font-mono cursor-pointer"
+          style={{
+            background: i === selected ? 'var(--bg-secondary)' : 'transparent',
+            borderBottom: '1px solid var(--border-primary)',
+          }}
+          onClick={() => onSelect(i)}
+          onMouseEnter={() => onHover(i)}
+        >
+          <span style={{ color: i === selected ? 'var(--text-primary)' : kindColor[s.kind] }}>
+            {s.label}
+          </span>
+          <span className="flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
+            {s.detail && <span>{s.detail}</span>}
+            <span className="text-[10px] italic">{s.kind}</span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function trailingPartial(text: string): string {
+  const match = /[^\s.,()=<>*;']*$/.exec(text);
+  return match ? match[0] : '';
 }
 
 interface QueryPickersProps {
