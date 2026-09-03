@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/client"
 	"github.com/KashifKhn/kassie/internal/tui/cache"
+	"github.com/KashifKhn/kassie/internal/tui/completion"
 	"github.com/KashifKhn/kassie/internal/tui/components"
 	"github.com/KashifKhn/kassie/internal/tui/styles"
-	pb "github.com/KashifKhn/kassie/api/gen/go"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -240,7 +241,7 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 		}
 	}
 
-	v, cmd = v.handleNavigation(msg, cmd)
+	v, cmd = v.handleNavigation(msg, cmd, c)
 	return v, cmd
 }
 
@@ -384,7 +385,24 @@ func fetchTableStatsCmd(c *client.Client, keyspace, table string) tea.Cmd {
 type tableStatsErrMsg struct{ Err error }
 type TableStatsLoadedMsg struct{ Stats *pb.TableStats }
 
-func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, tea.Cmd) {
+func (v ExplorerView) schemaColumnsLister() components.ColumnLister {
+	return func(keyspace, table string) []completion.Column {
+		if v.schemaCache == nil || keyspace == "" || table == "" {
+			return nil
+		}
+		schema, ok := v.schemaCache.Get(keyspace, table)
+		if !ok || schema == nil {
+			return nil
+		}
+		cols := make([]completion.Column, 0, len(schema.Columns))
+		for _, col := range schema.Columns {
+			cols = append(cols, completion.Column{Name: col.Name, CqlType: col.Type})
+		}
+		return cols
+	}
+}
+
+func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd, c *client.Client) (ExplorerView, tea.Cmd) {
 	key, ok := msg.(tea.KeyMsg)
 	if !ok {
 		return v, cmd
@@ -443,7 +461,13 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd) (ExplorerView, 
 	case "ctrl+o":
 		if !v.queryBar.IsActive() {
 			v.queryBar = v.queryBar.Activate()
-			return v, nil
+			v.queryBar.SetDefaultTable(v.grid.Keyspace(), v.grid.Table())
+			v.queryBar.SetColumnLister(v.schemaColumnsLister())
+			cmds := []tea.Cmd{components.FetchQueryBarKeyspacesCmd(c)}
+			if ks := v.grid.Keyspace(); ks != "" {
+				cmds = append(cmds, components.FetchQueryBarTablesCmd(c, ks))
+			}
+			return v, tea.Batch(cmds...)
 		}
 	case "ctrl+y":
 		if !v.queryList.IsActive() && !v.queryBar.IsActive() {
