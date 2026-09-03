@@ -102,3 +102,14 @@ func TestSchemaService_GetTableSchema_MissingTable(t *testing.T) {
 		t.Errorf("expected InvalidArgument, got %v", st.Code())
 	}
 }
+
+func (m *mockSchemaStore) Count() int {
+	if m.session == nil {
+		return 0
+	}
+	return 1
+}
+
+func (m *mockSchemaStore) TotalCursors() int {
+	return 0
+}

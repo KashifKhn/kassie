@@ -118,3 +118,28 @@ func TestStore_CloseAll(t *testing.T) {
 		t.Errorf("expected count 0 after CloseAll, got %d", store.Count())
 	}
 }
+
+func TestStoreTotalCursors(t *testing.T) {
+	store := NewStore(time.Hour)
+	defer store.CloseAll()
+
+	p1 := &config.Profile{Name: "a", Hosts: []string{"h"}, Port: 9042}
+	p2 := &config.Profile{Name: "b", Hosts: []string{"h"}, Port: 9042}
+
+	s1 := store.Create("sess1", p1, nil)
+	store.Create("sess2", p2, nil)
+
+	if got := store.TotalCursors(); got != 0 {
+		t.Fatalf("initial cursors = %d, want 0", got)
+	}
+
+	s1.Cursors.Create([]byte("ps1"), "ks", "tbl", "", 10)
+	s1.Cursors.Create([]byte("ps2"), "ks", "tbl", "", 10)
+
+	if got := store.Count(); got != 2 {
+		t.Errorf("sessions = %d, want 2", got)
+	}
+	if got := store.TotalCursors(); got != 2 {
+		t.Errorf("cursors = %d, want 2", got)
+	}
+}

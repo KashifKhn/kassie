@@ -50,6 +50,38 @@ func (c *Client) authInterceptor() grpc.UnaryClientInterceptor {
 	}
 }
 
+func (c *Client) streamAuthInterceptor() grpc.StreamClientInterceptor {
+	return func(
+		ctx context.Context,
+		desc *grpc.StreamDesc,
+		cc *grpc.ClientConn,
+		method string,
+		streamer grpc.Streamer,
+		opts ...grpc.CallOption,
+	) (grpc.ClientStream, error) {
+		if publicMethods[method] {
+			return streamer(ctx, desc, cc, method, opts...)
+		}
+
+		ctx = c.attachToken(ctx)
+
+		stream, err := streamer(ctx, desc, cc, method, opts...)
+		if err == nil {
+			return stream, nil
+		}
+		if !isAuthError(err) {
+			return nil, err
+		}
+
+		if refreshErr := c.Refresh(ctx); refreshErr != nil {
+			return nil, err
+		}
+
+		ctx = c.attachToken(ctx)
+		return streamer(ctx, desc, cc, method, opts...)
+	}
+}
+
 func (c *Client) attachToken(ctx context.Context) context.Context {
 	c.mu.RLock()
 	token := c.accessToken

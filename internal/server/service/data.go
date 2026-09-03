@@ -8,18 +8,21 @@ import (
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/server/db"
+	"github.com/KashifKhn/kassie/internal/server/state"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type DataService struct {
 	pb.UnimplementedDataServiceServer
-	store SessionStore
+	store   SessionStore
+	queries *state.QueryStore
 }
 
-func NewDataService(store SessionStore) *DataService {
+func NewDataService(store SessionStore, queries *state.QueryStore) *DataService {
 	return &DataService{
-		store: store,
+		store:   store,
+		queries: queries,
 	}
 }
 
@@ -43,12 +46,13 @@ func (d *DataService) QueryRows(ctx context.Context, req *pb.QueryRowsRequest) (
 	pageSize := normalizePageSize(int(req.PageSize))
 
 	query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, req.Keyspace, req.Table)
-	rows, nextPageState, err := session.Connection.FetchWithPaging(ctx, query, pageSize, nil)
+	page, err := session.Connection.FetchPage(ctx, query, pageSize, nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to query rows: %v", err)
 	}
 
-	pbRows := convertRows(rows)
+	pbRows := convertTypedRows(page)
+	nextPageState := page.NextPageState
 
 	var cursorID string
 	hasMore := len(nextPageState) > 0
@@ -61,7 +65,7 @@ func (d *DataService) QueryRows(ctx context.Context, req *pb.QueryRowsRequest) (
 		Rows:         pbRows,
 		CursorId:     cursorID,
 		HasMore:      hasMore,
-		TotalFetched: int64(len(rows)),
+		TotalFetched: int64(len(page.Rows)),
 	}, nil
 }
 
@@ -80,23 +84,31 @@ func (d *DataService) GetNextPage(ctx context.Context, req *pb.GetNextPageReques
 		return nil, status.Errorf(codes.NotFound, "cursor not found or expired: %v", err)
 	}
 
-	query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, cursor.Keyspace, cursor.Table)
-	if cursor.Filter != "" {
-		query += " WHERE " + cursor.Filter
+	query := cursor.CQL
+	if query == "" {
+		query = fmt.Sprintf(`SELECT * FROM "%s"."%s"`, cursor.Keyspace, cursor.Table)
+		if cursor.Filter != "" {
+			query += " WHERE " + cursor.Filter
+		}
 	}
 
-	rows, nextPageState, err := session.Connection.FetchWithPaging(ctx, query, cursor.PageSize, cursor.PageState)
+	page, err := session.Connection.FetchPage(ctx, query, cursor.PageSize, cursor.PageState)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to fetch next page: %v", err)
 	}
 
-	pbRows := convertRows(rows)
+	pbRows := convertTypedRows(page)
+	nextPageState := page.NextPageState
 
 	var newCursorID string
 	hasMore := len(nextPageState) > 0
 
 	if hasMore {
-		newCursorID = session.Cursors.Create(nextPageState, cursor.Keyspace, cursor.Table, cursor.Filter, cursor.PageSize)
+		if cursor.CQL != "" {
+			newCursorID = session.Cursors.CreateWithCQL(nextPageState, cursor.CQL, cursor.PageSize)
+		} else {
+			newCursorID = session.Cursors.Create(nextPageState, cursor.Keyspace, cursor.Table, cursor.Filter, cursor.PageSize)
+		}
 	}
 
 	session.Cursors.Delete(req.CursorId)
@@ -136,12 +148,13 @@ func (d *DataService) FilterRows(ctx context.Context, req *pb.FilterRowsRequest)
 	pageSize := normalizePageSize(int(req.PageSize))
 
 	query := fmt.Sprintf(`SELECT * FROM "%s"."%s" WHERE %s`, req.Keyspace, req.Table, req.WhereClause)
-	rows, nextPageState, err := session.Connection.FetchWithPaging(ctx, query, pageSize, nil)
+	page, err := session.Connection.FetchPage(ctx, query, pageSize, nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to filter rows: %v", err)
 	}
 
-	pbRows := convertRows(rows)
+	pbRows := convertTypedRows(page)
+	nextPageState := page.NextPageState
 
 	var cursorID string
 	hasMore := len(nextPageState) > 0
@@ -155,57 +168,6 @@ func (d *DataService) FilterRows(ctx context.Context, req *pb.FilterRowsRequest)
 		CursorId: cursorID,
 		HasMore:  hasMore,
 	}, nil
-}
-
-func convertRows(rows []map[string]interface{}) []*pb.Row {
-	pbRows := make([]*pb.Row, 0, len(rows))
-	for _, row := range rows {
-		pbRows = append(pbRows, rowToPbRow(row))
-	}
-	return pbRows
-}
-
-func rowToPbRow(row map[string]interface{}) *pb.Row {
-	cells := make(map[string]*pb.CellValue)
-
-	for key, value := range row {
-		cells[key] = interfaceToCellValue(value)
-	}
-
-	return &pb.Row{
-		Cells: cells,
-	}
-}
-
-func interfaceToCellValue(value interface{}) *pb.CellValue {
-	if value == nil {
-		return &pb.CellValue{IsNull: true}
-	}
-
-	cell := &pb.CellValue{IsNull: false}
-
-	switch v := value.(type) {
-	case string:
-		cell.Value = &pb.CellValue_StringVal{StringVal: v}
-	case int:
-		cell.Value = &pb.CellValue_IntVal{IntVal: int64(v)}
-	case int32:
-		cell.Value = &pb.CellValue_IntVal{IntVal: int64(v)}
-	case int64:
-		cell.Value = &pb.CellValue_IntVal{IntVal: v}
-	case float32:
-		cell.Value = &pb.CellValue_DoubleVal{DoubleVal: float64(v)}
-	case float64:
-		cell.Value = &pb.CellValue_DoubleVal{DoubleVal: v}
-	case bool:
-		cell.Value = &pb.CellValue_BoolVal{BoolVal: v}
-	case []byte:
-		cell.Value = &pb.CellValue_BytesVal{BytesVal: v}
-	default:
-		cell.Value = &pb.CellValue_StringVal{StringVal: fmt.Sprintf("%v", v)}
-	}
-
-	return cell
 }
 
 var (

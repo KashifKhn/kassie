@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/gocql/gocql"
 )
@@ -54,8 +55,8 @@ func (s *Session) FetchWithPaging(ctx context.Context, stmt string, pageSize int
 
 	iter := query.Iter()
 
-	var results []map[string]interface{}
-	for {
+	results := make([]map[string]interface{}, 0, pageSize)
+	for len(results) < pageSize {
 		row := make(map[string]interface{})
 		if !iter.MapScan(row) {
 			break
@@ -64,12 +65,70 @@ func (s *Session) FetchWithPaging(ctx context.Context, stmt string, pageSize int
 	}
 
 	nextPageState := iter.PageState()
+	if nextPageState != nil {
+		pageStateCopy := make([]byte, len(nextPageState))
+		copy(pageStateCopy, nextPageState)
+		nextPageState = pageStateCopy
+	}
 
 	if err := iter.Close(); err != nil {
 		return nil, nil, fmt.Errorf("query iteration failed: %w", err)
 	}
 
 	return results, nextPageState, nil
+}
+
+type Page struct {
+	Columns       []string
+	Types         []string
+	Rows          [][]interface{}
+	NextPageState []byte
+}
+
+func (s *Session) FetchPage(ctx context.Context, stmt string, pageSize int, pageState []byte, values ...interface{}) (*Page, error) {
+	query := s.QueryContext(ctx, stmt, values...).PageSize(pageSize)
+	if pageState != nil {
+		query = query.PageState(pageState)
+	}
+
+	iter := query.Iter()
+
+	cols := iter.Columns()
+	columns := make([]string, len(cols))
+	types := make([]string, len(cols))
+	for i, c := range cols {
+		columns[i] = c.Name
+		types[i] = CQLTypeString(c.TypeInfo)
+	}
+
+	page := &Page{Columns: columns, Types: types}
+	for len(page.Rows) < pageSize {
+		rd, err := iter.RowData()
+		if err != nil {
+			return nil, fmt.Errorf("row data unavailable: %w", err)
+		}
+		if !iter.Scan(rd.Values...) {
+			break
+		}
+		row := make([]interface{}, len(rd.Values))
+		for i, v := range rd.Values {
+			row[i] = reflect.Indirect(reflect.ValueOf(v)).Interface()
+		}
+		page.Rows = append(page.Rows, row)
+	}
+
+	nextPageState := iter.PageState()
+	if nextPageState != nil {
+		stateCopy := make([]byte, len(nextPageState))
+		copy(stateCopy, nextPageState)
+		page.NextPageState = stateCopy
+	}
+
+	if err := iter.Close(); err != nil {
+		return nil, fmt.Errorf("query iteration failed: %w", err)
+	}
+
+	return page, nil
 }
 
 func (s *Session) Close() {

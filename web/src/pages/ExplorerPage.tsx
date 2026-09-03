@@ -8,11 +8,14 @@ import { Sidebar } from '@/components/sidebar/Sidebar';
 import { FilterBar } from '@/components/filterbar/FilterBar';
 import { DataGrid } from '@/components/datagrid/DataGrid';
 import { Inspector } from '@/components/inspector/Inspector';
+import { CellDetailModal } from '@/components/celldetail/CellDetailModal';
+import { QueryEditor } from '@/components/queryeditor/QueryEditor';
+import { ExportButton } from '@/components/export/ExportButton';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToastStore } from '@/stores/toastStore';
 import { sessionApi } from '@/api/queries';
-import type { Row } from '@/api/types';
+import type { Row, CellValue } from '@/api/types';
 
 export function ExplorerPage() {
   const navigate = useNavigate();
@@ -21,6 +24,10 @@ export function ExplorerPage() {
   const { success } = useToastStore();
   const [selectedRow, setSelectedRow] = useState<Row | null>(null);
   const [whereClause, setWhereClause] = useState<string>('');
+  const [inspectedCell, setInspectedCell] = useState<{
+    columnName: string;
+    cell: CellValue;
+  } | null>(null);
 
   const logoutMutation = useMutation({
     mutationFn: sessionApi.logout,
@@ -48,9 +55,10 @@ export function ExplorerPage() {
   };
 
   return (
-    <Layout
-      header={<Header onLogout={handleLogout} />}
-      sidebar={<Sidebar />}
+    <>
+      <Layout
+        header={<Header onLogout={handleLogout} />}
+        sidebar={<Sidebar />}
       main={
         <div 
           className="flex h-full flex-col"
@@ -58,7 +66,21 @@ export function ExplorerPage() {
         >
           {selectedKeyspace && selectedTable ? (
             <>
-              <FilterBar onFilter={handleFilter} onClear={handleClearFilter} />
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <QueryEditor />
+                </div>
+              </div>
+              <div className="flex items-center justify-between px-1">
+                <div className="flex-1">
+                  <FilterBar onFilter={handleFilter} onClear={handleClearFilter} />
+                </div>
+                <ExportButton
+                  keyspace={selectedKeyspace}
+                  table={selectedTable}
+                  whereClause={whereClause}
+                />
+              </div>
               <div 
                 className="flex-1 overflow-hidden"
                 style={{ padding: '20px' }}
@@ -77,6 +99,9 @@ export function ExplorerPage() {
                     table={selectedTable}
                     whereClause={whereClause}
                     onRowSelect={handleRowSelect}
+                    onCellSelect={(columnName, cell) =>
+                      setInspectedCell({ columnName, cell })
+                    }
                   />
                 </div>
               </div>
@@ -126,6 +151,14 @@ export function ExplorerPage() {
         </div>
       }
       inspector={<Inspector row={selectedRow} />}
-    />
+      />
+      {inspectedCell && (
+        <CellDetailModal
+          columnName={inspectedCell.columnName}
+          cell={inspectedCell.cell}
+          onClose={() => setInspectedCell(null)}
+        />
+      )}
+    </>
   );
 }

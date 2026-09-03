@@ -90,12 +90,12 @@ export const GetTableSchemaResponseSchema = z.object({
 });
 
 export const CellValueSchema = z.union([
-  z.object({ stringVal: z.string(), isNull: z.literal(false) }),
-  z.object({ intVal: z.number(), isNull: z.literal(false) }),
-  z.object({ doubleVal: z.number(), isNull: z.literal(false) }),
-  z.object({ boolVal: z.boolean(), isNull: z.literal(false) }),
-  z.object({ bytesVal: z.instanceof(Uint8Array), isNull: z.literal(false) }),
-  z.object({ isNull: z.literal(true) }),
+  z.object({ stringVal: z.string(), isNull: z.literal(false), cqlType: z.string().optional() }),
+  z.object({ intVal: z.number(), isNull: z.literal(false), cqlType: z.string().optional() }),
+  z.object({ doubleVal: z.number(), isNull: z.literal(false), cqlType: z.string().optional() }),
+  z.object({ boolVal: z.boolean(), isNull: z.literal(false), cqlType: z.string().optional() }),
+  z.object({ bytesVal: z.instanceof(Uint8Array), isNull: z.literal(false), cqlType: z.string().optional() }),
+  z.object({ isNull: z.literal(true), cqlType: z.string().optional() }),
 ]);
 
 export const RowSchema = z.object({
