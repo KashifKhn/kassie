@@ -88,12 +88,12 @@ export interface GetTableSchemaResponse {
 }
 
 export type CellValue = 
-  | { stringVal: string; isNull: false }
-  | { intVal: number; isNull: false }
-  | { doubleVal: number; isNull: false }
-  | { boolVal: boolean; isNull: false }
-  | { bytesVal: Uint8Array; isNull: false }
-  | { isNull: true };
+  | { stringVal: string; isNull: false; cqlType?: string }
+  | { intVal: number; isNull: false; cqlType?: string }
+  | { doubleVal: number; isNull: false; cqlType?: string }
+  | { boolVal: boolean; isNull: false; cqlType?: string }
+  | { bytesVal: Uint8Array; isNull: false; cqlType?: string }
+  | { isNull: true; cqlType?: string };
 
 export interface Row {
   cells: Record<string, CellValue>;
@@ -133,6 +133,36 @@ export interface FilterRowsResponse {
   rows: Row[];
   cursorId: string;
   hasMore: boolean;
+}
+
+export interface ExecuteQueryRequest {
+  cql: string;
+  pageSize: number;
+}
+
+export interface ExecuteQueryResponse {
+  rows: Row[];
+  cursorId: string;
+  hasMore: boolean;
+  totalFetched: number;
+}
+
+export interface QueryHistoryEntry {
+  cql: string;
+  executedAt: number;
+}
+
+export interface SavedQuery {
+  name: string;
+  cql: string;
+  createdAt: number;
+}
+
+export interface TableStats {
+  rowCount: number;
+  meanPartitionSizeBytes: number;
+  maxPartitionSizeBytes: number;
+  estimateAvailable: boolean;
 }
 
 export interface ApiError {

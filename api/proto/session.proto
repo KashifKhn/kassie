@@ -33,6 +33,12 @@ service SessionService {
       get: "/api/v1/profiles"
     };
   }
+
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/metrics"
+    };
+  }
 }
 
 message LoginRequest {
@@ -71,4 +77,98 @@ message ProfileInfo {
   int32 port = 3;
   string keyspace = 4;
   bool ssl_enabled = 5;
+}
+
+service HistoryService {
+  rpc ListQueryHistory(ListQueryHistoryRequest) returns (ListQueryHistoryResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/history/queries"
+    };
+  }
+
+  rpc ClearQueryHistory(ClearQueryHistoryRequest) returns (ClearQueryHistoryResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/history/queries/clear"
+      body: "*"
+    };
+  }
+
+  rpc SaveQuery(SaveQueryRequest) returns (SaveQueryResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/history/saved"
+      body: "*"
+    };
+  }
+
+  rpc ListSavedQueries(ListSavedQueriesRequest) returns (ListSavedQueriesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/history/saved"
+    };
+  }
+
+  rpc DeleteSavedQuery(DeleteSavedQueryRequest) returns (DeleteSavedQueryResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/history/saved/{name}"
+    };
+  }
+}
+
+message SavedQuery {
+  string name = 1;
+  string cql = 2;
+  int64 created_at = 3;
+}
+
+message QueryHistoryEntry {
+  string cql = 1;
+  int64 executed_at = 2;
+}
+
+message ListQueryHistoryRequest {
+  int32 limit = 1;
+}
+
+message ListQueryHistoryResponse {
+  repeated QueryHistoryEntry entries = 1;
+}
+
+message ClearQueryHistoryRequest {}
+
+message ClearQueryHistoryResponse {
+  bool cleared = 1;
+}
+
+message SaveQueryRequest {
+  string name = 1;
+  string cql = 2;
+}
+
+message SaveQueryResponse {
+  SavedQuery query = 1;
+}
+
+message ListSavedQueriesRequest {}
+
+message ListSavedQueriesResponse {
+  repeated SavedQuery queries = 1;
+}
+
+message DeleteSavedQueryRequest {
+  string name = 1;
+}
+
+message DeleteSavedQueryResponse {
+  bool deleted = 1;
+}
+
+message GetMetricsRequest {}
+
+message Metrics {
+  int64 active_sessions = 1;
+  int64 active_cursors = 2;
+  int64 uptime_seconds = 3;
+}
+
+message GetMetricsResponse {
+  Metrics metrics = 1;
 }

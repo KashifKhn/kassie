@@ -232,6 +232,22 @@ func ProfileToConnectionConfig(profile *config.Profile) *ConnectionConfig {
 		PoolSize:    5,
 	}
 
+	if profile.Connection != nil {
+		tuning := profile.Connection
+
+		if level, err := config.ParseConsistencyLevel(tuning.Consistency); err == nil {
+			cfg.Consistency = level
+		}
+		if tuning.Timeout != "" {
+			if d, err := time.ParseDuration(tuning.Timeout); err == nil && d > 0 {
+				cfg.Timeout = d
+			}
+		}
+		if tuning.PoolSize > 0 {
+			cfg.PoolSize = tuning.PoolSize
+		}
+	}
+
 	if profile.Auth != nil {
 		cfg.Username = profile.Auth.Username
 		cfg.Password = profile.Auth.Password

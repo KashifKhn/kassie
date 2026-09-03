@@ -8,10 +8,14 @@ import (
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"github.com/KashifKhn/kassie/internal/server/service"
+	"github.com/KashifKhn/kassie/internal/server/state"
 	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/encoding/gzip"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 type ServerConfig struct {
@@ -26,14 +30,44 @@ type Server struct {
 	sessionService *service.SessionService
 	schemaService  *service.SchemaService
 	dataService    *service.DataService
+	historyService *service.HistoryService
 	listener       net.Listener
 	logger         *logger.Logger
 }
 
 type ServerDeps struct {
-	Config service.ProfileProvider
-	Pool   service.ConnectionPool
-	Store  service.SessionStore
+	Config   service.ProfileProvider
+	Pool     service.ConnectionPool
+	Store    service.SessionStore
+	Queries  *state.QueryStore
+}
+
+func ServerOptions(interceptor grpc.UnaryServerInterceptor, streamInterceptor grpc.StreamServerInterceptor) []grpc.ServerOption {
+	interceptors := []grpc.UnaryServerInterceptor{compressResponseInterceptor()}
+	if interceptor != nil {
+		interceptors = append(interceptors, interceptor)
+	}
+
+	opts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(interceptors...),
+		grpc.MaxRecvMsgSize(config.MaxMessageSize),
+		grpc.MaxSendMsgSize(config.MaxMessageSize),
+	}
+
+	if streamInterceptor != nil {
+		opts = append(opts, grpc.ChainStreamInterceptor(streamInterceptor))
+	}
+
+	return opts
+}
+
+func compressResponseInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		if err := grpc.SetSendCompressor(ctx, gzip.Name); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to set response compressor: %v", err)
+		}
+		return handler(ctx, req)
+	}
 }
 
 func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server, error) {
@@ -43,21 +77,26 @@ func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server
 
 	auth := service.NewAuthService(cfg.JWTSecret)
 
+	queries := deps.Queries
+	if queries == nil {
+		queries = state.NewQueryStore(state.DefaultQueryStorePath())
+	}
+
 	sessionSvc := service.NewSessionService(deps.Config, deps.Pool, deps.Store, auth)
 	schemaSvc := service.NewSchemaService(deps.Store)
-	dataSvc := service.NewDataService(deps.Store)
+	dataSvc := service.NewDataService(deps.Store, queries)
+	historySvc := service.NewHistoryService(deps.Store, queries)
 
 	unaryInterceptor := NewAuthInterceptor(auth, deps.Store, log)
 
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryInterceptor),
-		grpc.MaxRecvMsgSize(config.MaxMessageSize),
-		grpc.MaxSendMsgSize(config.MaxMessageSize),
-	)
+	streamInterceptor := NewStreamAuthInterceptor(auth, deps.Store, log)
+
+	grpcServer := grpc.NewServer(ServerOptions(unaryInterceptor, streamInterceptor)...)
 
 	pb.RegisterSessionServiceServer(grpcServer, sessionSvc)
 	pb.RegisterSchemaServiceServer(grpcServer, schemaSvc)
 	pb.RegisterDataServiceServer(grpcServer, dataSvc)
+	pb.RegisterHistoryServiceServer(grpcServer, historySvc)
 
 	reflection.Register(grpcServer)
 
@@ -67,6 +106,7 @@ func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server
 		sessionService: sessionSvc,
 		schemaService:  schemaSvc,
 		dataService:    dataSvc,
+		historyService: historySvc,
 		logger:         log,
 	}
 

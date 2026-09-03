@@ -3,13 +3,12 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
 	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
-	"github.com/KashifKhn/kassie/internal/shared/config"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Client struct {
@@ -17,6 +16,7 @@ type Client struct {
 	session pb.SessionServiceClient
 	schema  pb.SchemaServiceClient
 	data    pb.DataServiceClient
+	history pb.HistoryServiceClient
 
 	mu           sync.RWMutex
 	accessToken  string
@@ -28,15 +28,7 @@ type Client struct {
 func New(addr string) (*Client, error) {
 	c := &Client{}
 
-	conn, err := grpc.NewClient(
-		addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(config.MaxMessageSize),
-			grpc.MaxCallSendMsgSize(config.MaxMessageSize),
-		),
-		grpc.WithUnaryInterceptor(c.authInterceptor()),
-	)
+	conn, err := grpc.NewClient(addr, DialOptions(c.authInterceptor(), c.streamAuthInterceptor())...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
@@ -45,6 +37,7 @@ func New(addr string) (*Client, error) {
 	c.session = pb.NewSessionServiceClient(conn)
 	c.schema = pb.NewSchemaServiceClient(conn)
 	c.data = pb.NewDataServiceClient(conn)
+	c.history = pb.NewHistoryServiceClient(conn)
 
 	return c, nil
 }
@@ -145,6 +138,17 @@ func (c *Client) GetTableSchema(ctx context.Context, keyspace, table string) (*p
 	return resp.Schema, nil
 }
 
+func (c *Client) GetTableStats(ctx context.Context, keyspace, table string) (*pb.TableStats, error) {
+	resp, err := c.schema.GetTableStats(ctx, &pb.GetTableStatsRequest{
+		Keyspace: keyspace,
+		Table:    table,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get table stats: %w", err)
+	}
+	return resp.Stats, nil
+}
+
 func (c *Client) QueryRows(ctx context.Context, keyspace, table string, pageSize int32) (*pb.QueryRowsResponse, error) {
 	resp, err := c.data.QueryRows(ctx, &pb.QueryRowsRequest{
 		Keyspace: keyspace,
@@ -176,6 +180,92 @@ func (c *Client) FilterRows(ctx context.Context, keyspace, table, where string, 
 		return nil, fmt.Errorf("failed to filter rows: %w", err)
 	}
 	return resp, nil
+}
+
+func (c *Client) ExportRows(ctx context.Context, keyspace, table, where string, format pb.ExportFormat, fetchSize int32, onChunk func(*pb.ExportChunk) error) error {
+	stream, err := c.data.ExportRows(ctx, &pb.ExportRowsRequest{
+		Keyspace:    keyspace,
+		Table:       table,
+		WhereClause: where,
+		Format:      format,
+		FetchSize:   fetchSize,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start export: %w", err)
+	}
+
+	for {
+		chunk, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("export failed: %w", err)
+		}
+		if err := onChunk(chunk); err != nil {
+			return err
+		}
+		if chunk.Done {
+			return nil
+		}
+	}
+}
+
+func (c *Client) ExecuteQuery(ctx context.Context, cql string, pageSize int32) (*pb.ExecuteQueryResponse, error) {
+	resp, err := c.data.ExecuteQuery(ctx, &pb.ExecuteQueryRequest{
+		Cql:      cql,
+		PageSize: pageSize,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	return resp, nil
+}
+
+func (c *Client) ListQueryHistory(ctx context.Context, limit int32) ([]*pb.QueryHistoryEntry, error) {
+	resp, err := c.history.ListQueryHistory(ctx, &pb.ListQueryHistoryRequest{Limit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list query history: %w", err)
+	}
+	return resp.Entries, nil
+}
+
+func (c *Client) ClearQueryHistory(ctx context.Context) error {
+	if _, err := c.history.ClearQueryHistory(ctx, &pb.ClearQueryHistoryRequest{}); err != nil {
+		return fmt.Errorf("failed to clear query history: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) SaveQuery(ctx context.Context, name, cql string) (*pb.SavedQuery, error) {
+	resp, err := c.history.SaveQuery(ctx, &pb.SaveQueryRequest{Name: name, Cql: cql})
+	if err != nil {
+		return nil, fmt.Errorf("failed to save query: %w", err)
+	}
+	return resp.Query, nil
+}
+
+func (c *Client) ListSavedQueries(ctx context.Context) ([]*pb.SavedQuery, error) {
+	resp, err := c.history.ListSavedQueries(ctx, &pb.ListSavedQueriesRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list saved queries: %w", err)
+	}
+	return resp.Queries, nil
+}
+
+func (c *Client) DeleteSavedQuery(ctx context.Context, name string) error {
+	if _, err := c.history.DeleteSavedQuery(ctx, &pb.DeleteSavedQueryRequest{Name: name}); err != nil {
+		return fmt.Errorf("failed to delete saved query: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) GetMetrics(ctx context.Context) (*pb.Metrics, error) {
+	resp, err := c.session.GetMetrics(ctx, &pb.GetMetricsRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metrics: %w", err)
+	}
+	return resp.Metrics, nil
 }
 
 func (c *Client) Profile() string {

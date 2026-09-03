@@ -28,6 +28,40 @@ service DataService {
       body: "*"
     };
   }
+
+  rpc ExportRows(ExportRowsRequest) returns (stream ExportChunk) {
+    option (google.api.http) = {
+      post: "/api/v1/data/export"
+      body: "*"
+    };
+  }
+
+  rpc ExecuteQuery(ExecuteQueryRequest) returns (ExecuteQueryResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/data/cql"
+      body: "*"
+    };
+  }
+}
+
+enum ExportFormat {
+  EXPORT_FORMAT_UNSPECIFIED = 0;
+  EXPORT_FORMAT_CSV = 1;
+  EXPORT_FORMAT_JSON = 2;
+}
+
+message ExportRowsRequest {
+  string keyspace = 1;
+  string table = 2;
+  string where_clause = 3;
+  ExportFormat format = 4;
+  int32 fetch_size = 5;
+}
+
+message ExportChunk {
+  bytes data = 1;
+  int64 rows_exported = 2;
+  bool done = 3;
 }
 
 message QueryRowsRequest {
@@ -68,4 +102,16 @@ message FilterRowsResponse {
 
 message Row {
   map<string, CellValue> cells = 1;
+}
+
+message ExecuteQueryRequest {
+  string cql = 1;
+  int32 page_size = 2;
+}
+
+message ExecuteQueryResponse {
+  repeated Row rows = 1;
+  string cursor_id = 2;
+  bool has_more = 3;
+  int64 total_fetched = 4;
 }

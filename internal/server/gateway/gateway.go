@@ -7,11 +7,10 @@ import (
 	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
+	"github.com/KashifKhn/kassie/internal/client"
 	"github.com/KashifKhn/kassie/internal/shared/config"
 	"github.com/KashifKhn/kassie/internal/shared/logger"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -56,13 +55,7 @@ func NewGateway(cfg *GatewayConfig, log *logger.Logger) (*Gateway, error) {
 }
 
 func (g *Gateway) RegisterServices(ctx context.Context) error {
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(config.MaxMessageSize),
-			grpc.MaxCallSendMsgSize(config.MaxMessageSize),
-		),
-	}
+	opts := client.DialOptions(nil, nil)
 
 	if err := pb.RegisterSessionServiceHandlerFromEndpoint(ctx, g.mux, g.cfg.GRPCAddress, opts); err != nil {
 		return fmt.Errorf("failed to register session service: %w", err)
@@ -74,6 +67,10 @@ func (g *Gateway) RegisterServices(ctx context.Context) error {
 
 	if err := pb.RegisterDataServiceHandlerFromEndpoint(ctx, g.mux, g.cfg.GRPCAddress, opts); err != nil {
 		return fmt.Errorf("failed to register data service: %w", err)
+	}
+
+	if err := pb.RegisterHistoryServiceHandlerFromEndpoint(ctx, g.mux, g.cfg.GRPCAddress, opts); err != nil {
+		return fmt.Errorf("failed to register history service: %w", err)
 	}
 
 	g.logger.With().Str("grpc_address", g.cfg.GRPCAddress).Logger().Info("registered gRPC gateway services")
