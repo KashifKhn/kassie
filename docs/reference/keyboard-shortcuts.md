@@ -51,6 +51,29 @@ Complete reference for all keyboard shortcuts in Kassie.
 | `r` | Refresh data |
 | `/` | Open filter bar |
 | `Ctrl+F` | Focus search input |
+| `Ctrl+O` | Open ad-hoc CQL query bar |
+| `Ctrl+Y` | Browse query history |
+| `Ctrl+P` | Browse saved queries |
+| `Ctrl+E` | Export loaded rows to JSON file |
+| `E` | Stream full table export to CSV file |
+
+### Query Bar (Ctrl+O)
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Run the query (SELECT-only, validated) |
+| `Esc` | Cancel and close query bar |
+
+### Query History / Saved List (Ctrl+Y / Ctrl+P)
+
+| Key | Action |
+|-----|--------|
+| `j` or `↓` | Next entry |
+| `k` or `↑` | Previous entry |
+| `g` / `G` | First / last entry |
+| `Enter` | Run selected query |
+| `d` | Delete saved query (saved list only) |
+| `Esc` | Close list |
 
 ### Filter Bar
 
@@ -268,6 +291,12 @@ Currently, keyboard shortcuts are not customizable. This feature is planned for 
 - Learn `?` to see all shortcuts
 - Use `/` to quickly filter without clicking
 - `Tab` to switch panels without mouse
+- `Ctrl/Cmd+Enter` in the CQL editor runs the query
+- Click any cell to open the cell inspector (full value, hex view for blobs)
+
+**TUI**:
+- `Ctrl+O` to run an ad-hoc SELECT without leaving the keyboard
+- `Ctrl+Y` replays a recent query; `Ctrl+P` picks a saved one
 
 ### Common Workflows
 

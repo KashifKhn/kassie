@@ -8,10 +8,10 @@ All definitions live in `api/proto/`:
 
 ```
 api/proto/
-├── common.proto    # Shared types (Column, CellValue, Error, ViewState)
-├── session.proto   # SessionService (Login, Refresh, Logout, GetProfiles)
-├── schema.proto    # SchemaService (ListKeyspaces, ListTables, GetTableSchema)
-└── data.proto      # DataService (QueryRows, GetNextPage, FilterRows)
+├── common.proto    # Shared types (Column, CellValue with cql_type, Error, ViewState)
+├── session.proto   # SessionService (Login, Refresh, Logout, GetProfiles, GetMetrics) + HistoryService
+├── schema.proto    # SchemaService (ListKeyspaces, ListTables, GetTableSchema, GetTableStats)
+└── data.proto      # DataService (QueryRows, GetNextPage, FilterRows, ExportRows, ExecuteQuery)
 ```
 
 ## Service Definitions
@@ -26,6 +26,7 @@ Manages authentication and profile access.
 | `Refresh` | `POST /api/v1/session/refresh` | Obtain new access token |
 | `Logout` | `POST /api/v1/session/logout` | End session |
 | `GetProfiles` | `GET /api/v1/profiles` | List available profiles |
+| `GetMetrics` | `GET /api/v1/metrics` | Active sessions/cursors counts |
 
 **Login Request/Response:**
 ```json
@@ -48,6 +49,18 @@ Manages authentication and profile access.
 }
 ```
 
+### HistoryService
+
+Query history and saved queries, persisted per profile.
+
+| RPC | HTTP Mapping | Description |
+|-----|-------------|-------------|
+| `ListQueryHistory` | `GET /api/v1/history/queries` | Recent ad-hoc queries |
+| `ClearQueryHistory` | `POST /api/v1/history/queries/clear` | Clear history |
+| `SaveQuery` | `POST /api/v1/history/saved` | Save/named query (upsert) |
+| `ListSavedQueries` | `GET /api/v1/history/saved` | List saved queries |
+| `DeleteSavedQuery` | `DELETE /api/v1/history/saved/{name}` | Delete saved query |
+
 ### SchemaService
 
 Introspects database schema (keyspaces, tables, columns).
@@ -57,6 +70,7 @@ Introspects database schema (keyspaces, tables, columns).
 | `ListKeyspaces` | `GET /api/v1/schema/keyspaces` | List all keyspaces |
 | `ListTables` | `GET /api/v1/schema/keyspaces/{keyspace}/tables` | List tables in a keyspace |
 | `GetTableSchema` | `GET /api/v1/schema/keyspaces/{keyspace}/tables/{table}` | Get column definitions |
+| `GetTableStats` | `POST /api/v1/schema/stats` | Row count + partition size stats |
 
 **Table Schema Response:**
 ```json
@@ -85,6 +99,19 @@ Queries and filters table data with cursor-based pagination.
 | `QueryRows` | `POST /api/v1/data/query` | Fetch initial rows |
 | `GetNextPage` | `POST /api/v1/data/next` | Fetch next page via cursor |
 | `FilterRows` | `POST /api/v1/data/filter` | Query with WHERE clause |
+| `ExportRows` | `POST /api/v1/data/export` | Server-streaming CSV/JSON export |
+| `ExecuteQuery` | `POST /api/v1/data/cql` | Run ad-hoc read-only SELECT |
+
+**Streaming export:** `ExportRows` streams the result set as ~512KB
+`ExportChunk` messages (base64 `data`, cumulative `rows_exported`,
+`done` flag) so arbitrarily large tables export without buffering.
+Streaming RPCs are guarded by the same JWT auth as unary calls via a
+stream auth interceptor.
+
+**Ad-hoc queries:** `ExecuteQuery` accepts a single SELECT statement
+(keyword blacklist, multi-statement rejection, 10KB cap) and pages
+results through the standard cursor infrastructure — `GetNextPage`
+continues ad-hoc queries via stored-CQL cursors.
 
 **Query and Pagination:**
 ```json
@@ -156,6 +183,7 @@ message CellValue {
     bytes bytes_val = 5;
   }
   bool is_null = 6;
+  string cql_type = 7;
 }
 ```
 
@@ -165,13 +193,19 @@ All Cassandra types are mapped to one of these protobuf types:
 |---------------|----------------|-------|
 | text, varchar, ascii | `string_val` | |
 | uuid, timeuuid | `string_val` | Formatted as string |
-| int, bigint, varint, counter | `int_val` | |
-| float, double, decimal | `double_val` | |
+| int, bigint, counter | `int_val` | |
+| float, double | `double_val` | |
+| decimal | `string_val` | |
 | boolean | `bool_val` | |
-| blob | `bytes_val` | |
-| timestamp | `string_val` | ISO 8601 format |
+| blob | `bytes_val` | Raw bytes; render hex client-side |
+| timestamp | `string_val` | RFC3339Nano (UTC) |
+| inet | `string_val` | |
 | list, set, map, tuple, UDT | `string_val` | JSON-serialized |
 | null | — | `is_null = true` |
+
+The `cql_type` field carries the exact CQL type signature (e.g.
+`blob`, `uuid`, `map<varchar, int>`, `list<bigint>`) so clients can
+render type-aware cell inspectors without a schema lookup.
 
 ### Row
 

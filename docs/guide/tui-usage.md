@@ -163,6 +163,44 @@ user_id = 123 AND status = 'active'
 Kassie validates your filter syntax before sending it to the database. Invalid filters will show an error.
 :::
 
+## Running Ad-hoc Queries
+
+Press `Ctrl+O` to open the query bar and run any read-only SELECT:
+
+```
+┌────────────────────────────────────────────────────────┐
+│ » SELECT id, email FROM app_data.users LIMIT 50        │
+└────────────────────────────────────────────────────────┘
+```
+
+- `Enter` runs the query; results render in the data grid with full
+  cursor paging (`n` for next page)
+- `Esc` cancels
+- Only `SELECT` statements are allowed — writes, DDL, `USE`, and
+  multi-statement input are rejected before hitting the database
+
+## Query History and Saved Queries
+
+- `Ctrl+Y` — browse recent queries (newest first, 100-entry ring per
+  profile; successful runs are recorded automatically)
+- `Ctrl+P` — browse saved queries; press `d` on an entry to delete it
+
+In both lists: `j/k` to navigate, `Enter` to run the selected query,
+`Esc` to close.
+
+::: tip
+History and saved queries persist per profile in `~/.config/kassie/queries.json`, so they survive restarts.
+:::
+
+## Exporting Data
+
+- `Ctrl+E` — export the currently loaded rows to a JSON file
+  (`~/kassie-<keyspace>-<table>-<timestamp>.json`)
+- `E` — stream a **full table** export server-side to
+  `~/kassie-<keyspace>-<table>-<timestamp>-full.csv`. The server pages
+  through Cassandra and streams chunks, so this works for tables far
+  larger than memory.
+
 ## Inspector Panel
 
 The inspector panel shows detailed row information with multiple viewing modes.
@@ -171,21 +209,27 @@ The inspector panel shows detailed row information with multiple viewing modes.
 
 Press `t` to cycle between display modes:
 
-1. **Table Mode**: Two-column layout with keys on left, values on right
+1. **Table Mode**: Type-aware layout with keys, CQL types, and values
    ```
-   id                   │ "550e8400-e29b-41d4-a716-446655440000"
-   name                 │ "John Doe"
-   email                │ "john@example.com"
-   created_at           │ "2024-01-15T10:30:00Z"
+   id          │ uuid        │ "550e8400-e29b-41d4-a716-446655440000"
+   name        │ text        │ "John Doe"
+   attrs       │ map<varchar, int> │ {"a": 1}
+   payload     │ blob        │ 00000000  de ad be ef  |....|
    ```
 
-2. **JSON Mode**: Pretty-printed JSON with syntax highlighting
+   Blobs render as a hex dump with an ascii gutter; collections
+   (maps/lists/sets/tuples) pretty-print as JSON. The type column is
+   hidden on narrow panels.
+
+2. **JSON Mode**: Pretty-printed JSON with syntax highlighting;
+   collection cells are unwrapped into real JSON objects
    ```json
    {
      "id": "550e8400-e29b-41d4-a716-446655440000",
      "name": "John Doe",
      "email": "john@example.com",
-     "created_at": "2024-01-15T10:30:00Z"
+     "created_at": "2024-01-15T10:30:00Z",
+     "attrs": { "a": 1 }
    }
    ```
 

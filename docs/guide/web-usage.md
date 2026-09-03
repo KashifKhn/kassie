@@ -177,6 +177,48 @@ user_id = 123 AND status = 'active'
 - Partition key filters recommended for performance
 - Filter persists during session
 
+## Running CQL Queries
+
+The collapsible **CQL Query** editor sits above the data grid:
+
+- Type any read-only SELECT and press **Run** (or `Ctrl/Cmd+Enter`)
+- Results render in a result table with **Load more** cursor paging
+- Server-side guardrails: SELECT-only, no multi-statements, 10KB cap
+- Inline error display shows exactly why a query was rejected
+
+**History and saved queries**:
+- The **History** dropdown lists your 20 most recent successful
+  queries — click one to load it into the editor
+- The **Saved** dropdown lists named queries; click to load, or use
+  the trash icon to delete
+
+## Exporting Data
+
+Next to the filter bar, **CSV** and **JSON** buttons export the
+current view (respecting any active filter):
+
+- The browser streams chunks from the server — large tables export
+  without buffering the whole response
+- Progress feedback arrives via toasts; the file downloads as
+  `kassie-<keyspace>-<table>-<timestamp>.csv` (or `.json`,
+  newline-delimited)
+
+## Cell Inspector
+
+Click any cell in the data grid to open the cell inspector modal:
+
+- **Type badge** — the cell's exact CQL type (e.g. `map<varchar, int>`)
+- **Blobs** — full hex dump with byte offsets and ascii gutter
+- **Collections** — parsed, collapsible JSON view
+- **Copy** — copies the raw value; `Esc` or backdrop click closes
+
+## Table Stats
+
+The Inspector sidebar shows a stats card for the selected table:
+row count (marked *estimate* from `system.size_estimates` or *exact
+count* from `COUNT(*)` fallback), plus average and maximum partition
+sizes in human-readable units.
+
 ## Pagination
 
 Navigate large datasets with smart cursor-based pagination.
