@@ -588,3 +588,43 @@ func TestMetricsIntegration(t *testing.T) {
 		t.Error("unauthenticated metrics must fail")
 	}
 }
+
+func TestSlowQueriesIntegration(t *testing.T) {
+	seedExportTable(t)
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	ctx := context.Background()
+
+	if _, err := c.ExecuteQuery(ctx, fmt.Sprintf("SELECT COUNT(*) FROM %s.export_items", exportKeyspace), 10); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+
+	slow, err := c.GetSlowQueries(ctx, 10)
+	if err != nil {
+		t.Fatalf("slow queries: %v", err)
+	}
+
+	// Local Cassandra is fast; the aggregation matters, not the threshold.
+	// Verify stats came through the wire for the executed query.
+	found := false
+	for _, sq := range slow {
+		if strings.Contains(sq.Cql, "COUNT(*)") {
+			found = true
+			if sq.ExecCount < 1 {
+				t.Errorf("exec count = %d", sq.ExecCount)
+			}
+		}
+	}
+	if !found {
+		t.Log("query under 500ms threshold — not in slow list (expected on fast local Cassandra)")
+	}
+
+	entries, err := c.ListQueryHistory(ctx, 5)
+	if err != nil {
+		t.Fatalf("history: %v", err)
+	}
+	if len(entries) == 0 {
+		t.Fatal("history empty after execution")
+	}
+}

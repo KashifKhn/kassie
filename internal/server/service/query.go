@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 	"fmt"
 	"regexp"
 	"strings"
@@ -36,13 +37,16 @@ func (d *DataService) ExecuteQuery(ctx context.Context, req *pb.ExecuteQueryRequ
 		pageSize = maxQueryPageSize
 	}
 
+	start := time.Now()
 	page, err := session.Connection.FetchPage(ctx, cql, pageSize, nil)
+	elapsed := time.Since(start)
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
 	if d.queries != nil {
-		d.queries.Record(session.Profile.Name, cql)
+		d.queries.RecordLatency(session.Profile.Name, cql, elapsed.Milliseconds())
 	}
 
 	pbRows := convertTypedRows(page)

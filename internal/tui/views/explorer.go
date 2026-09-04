@@ -481,6 +481,12 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd, c *client.Clien
 			v.queryList, activateCmd = v.queryList.Activate(components.QueryListSaved)
 			return v, activateCmd
 		}
+	case "ctrl+s":
+		if !v.queryList.IsActive() && !v.queryBar.IsActive() {
+			var activateCmd tea.Cmd
+			v.queryList, activateCmd = v.queryList.Activate(components.QueryListSlow)
+			return v, activateCmd
+		}
 	case "/":
 		if v.active == paneSidebar && v.viewMode == viewModeFull {
 			v.sidebar, cmd = v.sidebar.ActivateSearch()

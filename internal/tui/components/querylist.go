@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ type QueryListMode int
 const (
 	QueryListHistory QueryListMode = iota
 	QueryListSaved
+	QueryListSlow
 )
 
 type QueryPickedMsg struct {
@@ -26,8 +28,9 @@ type QueryPickedMsg struct {
 type QueryListClosedMsg struct{}
 
 type queryListItem struct {
-	name string
-	cql  string
+	name   string
+	cql    string
+	detail string
 }
 
 type QueryList struct {
@@ -107,6 +110,12 @@ func (q QueryList) Update(msg tea.Msg, c *client.Client) (QueryList, tea.Cmd) {
 			item := q.items[q.selected]
 			return q, deleteSavedQueryCmd(c, item.name)
 		}
+	case "ctrl+s":
+		if q.mode != QueryListSlow {
+			return q, nil
+		}
+		q = q.Deactivate()
+		return q, func() tea.Msg { return QueryListClosedMsg{} }
 	case "enter":
 		if q.selected < len(q.items) {
 			cql := q.items[q.selected].cql
@@ -127,8 +136,11 @@ func (q QueryList) View(width int) string {
 	}
 
 	title := "Query History"
-	if q.mode == QueryListSaved {
+	switch q.mode {
+	case QueryListSaved:
 		title = "Saved Queries"
+	case QueryListSlow:
+		title = "Slow Queries (>500ms)"
 	}
 
 	borderColor := "51"
@@ -153,6 +165,9 @@ func (q QueryList) View(width int) string {
 		label := item.cql
 		if q.mode == QueryListSaved && item.name != "" {
 			label = item.name + ": " + item.cql
+		}
+		if item.detail != "" {
+			label = label + "  " + item.detail
 		}
 		if len(label) > maxWidth {
 			label = label[:maxWidth-3] + "..."
@@ -206,6 +221,20 @@ func fetchQueryListCmd(c *client.Client, mode QueryListMode) tea.Cmd {
 			return queryListLoadedMsg{items: items}
 		}
 
+		if mode == QueryListSlow {
+			slow, err := c.GetSlowQueries(ctx, 20)
+			if err != nil {
+				return dataErrMsg{Err: err}
+			}
+			items := make([]queryListItem, 0, len(slow))
+			for _, sq := range slow {
+				detail := fmt.Sprintf("last %dms  avg %dms  max %dms  ×%d",
+					sq.LastLatencyMs, sq.AvgLatencyMs, sq.MaxLatencyMs, sq.ExecCount)
+				items = append(items, queryListItem{cql: sq.Cql, detail: detail})
+			}
+			return queryListLoadedMsg{items: items}
+		}
+
 		saved, err := c.ListSavedQueries(ctx)
 		if err != nil {
 			return dataErrMsg{Err: err}
@@ -241,9 +270,8 @@ func deleteSavedQueryCmd(c *client.Client, name string) tea.Cmd {
 		}
 		return queryListLoadedMsg{items: items}
 	}
+
 }
-
-
 
 func (q *QueryList) SetItems(mode QueryListMode, items []queryListItem) {
 	q.mode = mode

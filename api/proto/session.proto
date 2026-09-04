@@ -111,6 +111,12 @@ service HistoryService {
       delete: "/api/v1/history/saved/{name}"
     };
   }
+
+  rpc GetSlowQueries(GetSlowQueriesRequest) returns (GetSlowQueriesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/history/slow"
+    };
+  }
 }
 
 message SavedQuery {
@@ -122,6 +128,7 @@ message SavedQuery {
 message QueryHistoryEntry {
   string cql = 1;
   int64 executed_at = 2;
+  int64 latency_ms = 3;
 }
 
 message ListQueryHistoryRequest {
@@ -155,6 +162,23 @@ message ListSavedQueriesResponse {
 
 message DeleteSavedQueryRequest {
   string name = 1;
+}
+
+message SlowQuery {
+  string cql = 1;
+  int64 last_latency_ms = 2;
+  int64 avg_latency_ms = 3;
+  int64 max_latency_ms = 4;
+  int64 exec_count = 5;
+  int64 last_executed_at = 6;
+}
+
+message GetSlowQueriesRequest {
+  int32 limit = 1;
+}
+
+message GetSlowQueriesResponse {
+  repeated SlowQuery queries = 1;
 }
 
 message DeleteSavedQueryResponse {
