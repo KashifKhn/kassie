@@ -67,3 +67,14 @@ coverage.html
 # Web assets (keep directory structure)
 internal/server/web/dist/*
 !internal/server/web/dist/.gitkeep
+
+# local tooling / session artifacts
+.claude/
+.opencode/
+.playwright-cli/
+*.local.yaml
+explorer1.yaml
+ks-expanded.yaml
+login-state.yaml
+orders-view.yaml
+login-dark.png
