@@ -95,7 +95,9 @@ func runExec(cmd *cobra.Command, args []string) error {
 		if err := embedded.Start(); err != nil {
 			return fmt.Errorf("failed to start embedded server: %w", err)
 		}
-		defer embedded.Stop()
+		defer func() {
+			_ = embedded.Stop()
+		}()
 		grpcAddr = embedded.GRPCAddress()
 	}
 
@@ -266,9 +268,7 @@ func writeStatementOutput(out io.Writer, index int, stmt string, resp *pb.Execut
 		var header []string
 		for _, row := range resp.Rows {
 			if header == nil && len(row.Cells) > 0 {
-				for _, col := range columnOrder(row) {
-					header = append(header, col)
-				}
+				header = append(header, columnOrder(row)...)
 				if err := w.Write(header); err != nil {
 					return err
 				}
