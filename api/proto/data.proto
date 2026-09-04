@@ -42,6 +42,13 @@ service DataService {
       body: "*"
     };
   }
+
+  rpc GetTrace(GetTraceRequest) returns (GetTraceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/data/trace"
+      body: "*"
+    };
+  }
 }
 
 enum ExportFormat {
@@ -107,6 +114,7 @@ message Row {
 message ExecuteQueryRequest {
   string cql = 1;
   int32 page_size = 2;
+  bool trace = 3;
 }
 
 message ExecuteQueryResponse {
@@ -114,4 +122,24 @@ message ExecuteQueryResponse {
   string cursor_id = 2;
   bool has_more = 3;
   int64 total_fetched = 4;
+  string trace_id = 5;
+}
+
+message TraceEvent {
+  string activity = 1;
+  string source = 2;
+  int64 elapsed_us = 3;
+  int64 started_at = 4;
+  string thread = 5;
+}
+
+message GetTraceRequest {
+  string trace_id = 1;
+}
+
+message GetTraceResponse {
+  repeated TraceEvent events = 1;
+  int64 duration_us = 2;
+  string coordinator = 3;
+  bool ready = 4;
 }

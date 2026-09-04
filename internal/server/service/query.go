@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
-	"time"
+
 	"fmt"
+	"github.com/KashifKhn/kassie/internal/server/db"
 	"regexp"
 	"strings"
+	"time"
 
 	pb "github.com/KashifKhn/kassie/api/gen/go"
 	"google.golang.org/grpc/codes"
@@ -38,7 +40,13 @@ func (d *DataService) ExecuteQuery(ctx context.Context, req *pb.ExecuteQueryRequ
 	}
 
 	start := time.Now()
-	page, err := session.Connection.FetchPage(ctx, cql, pageSize, nil)
+	var page *db.Page
+	var traceID string
+	if req.Trace {
+		page, traceID, err = session.Connection.FetchTracedPage(ctx, cql, pageSize, nil)
+	} else {
+		page, err = session.Connection.FetchPage(ctx, cql, pageSize, nil)
+	}
 	elapsed := time.Since(start)
 
 	if err != nil {
@@ -64,7 +72,40 @@ func (d *DataService) ExecuteQuery(ctx context.Context, req *pb.ExecuteQueryRequ
 		CursorId:     cursorID,
 		HasMore:      hasMore,
 		TotalFetched: int64(len(page.Rows)),
+		TraceId:      traceID,
 	}, nil
+}
+
+func (d *DataService) GetTrace(ctx context.Context, req *pb.GetTraceRequest) (*pb.GetTraceResponse, error) {
+	if req.TraceId == "" {
+		return nil, status.Error(codes.InvalidArgument, "trace id is required")
+	}
+
+	session, err := GetSessionFromContext(ctx, d.store)
+	if err != nil {
+		return nil, err
+	}
+
+	trace, err := session.Connection.GetTrace(ctx, req.TraceId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to load trace: %v", err)
+	}
+
+	resp := &pb.GetTraceResponse{
+		Ready:       trace.Ready,
+		DurationUs:  trace.DurationUs,
+		Coordinator: trace.Coordinator,
+	}
+	for _, e := range trace.Events {
+		resp.Events = append(resp.Events, &pb.TraceEvent{
+			Activity:  e.Activity,
+			Source:    e.Source,
+			ElapsedUs: e.ElapsedUs,
+			Thread:    e.Thread,
+		})
+	}
+
+	return resp, nil
 }
 
 func normalizeAdhocCQL(cql string) (string, error) {

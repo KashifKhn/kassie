@@ -41,6 +41,8 @@ type DataGrid struct {
 	schemaCache     *cache.SchemaCache
 	schema          *pb.TableSchema
 
+	lastTraceID  string
+
 	searchActive bool
 	searchInput  textinput.Model
 	searchQuery  string
@@ -75,6 +77,24 @@ type rowsMsg struct {
 	CursorID string
 	HasMore  bool
 	Filter   string
+	TraceID  string
+}
+
+type TraceLoadedMsg struct {
+	Trace *pb.GetTraceResponse
+}
+
+func fetchTraceCmd(c *client.Client, traceID string) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		trace, err := c.GetTrace(ctx, traceID)
+		if err != nil {
+			return dataErrMsg{Err: err}
+		}
+		return TraceLoadedMsg{Trace: trace}
+	}
 }
 
 type rowData struct {
@@ -168,11 +188,11 @@ func (g DataGrid) executeQueryCmd(c *client.Client, cql string, pageSize int32) 
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 
-		resp, err := c.ExecuteQuery(ctx, cql, pageSize)
+		resp, err := c.ExecuteQueryTraced(ctx, cql, pageSize, true)
 		if err != nil {
 			return dataErrMsg{Err: err}
 		}
-		return rowsMsg{Rows: resp.Rows, CursorID: resp.CursorId, HasMore: resp.HasMore, Filter: ""}
+		return rowsMsg{Rows: resp.Rows, CursorID: resp.CursorId, HasMore: resp.HasMore, Filter: "", TraceID: resp.TraceId}
 	}
 }
 
@@ -284,6 +304,10 @@ func (g DataGrid) Update(msg tea.Msg, c *client.Client) (DataGrid, tea.Cmd) {
 		g.cursorID = m.CursorID
 		g.hasMore = m.HasMore
 		g.filter = m.Filter
+		g.lastTraceID = m.TraceID
+		if g.lastTraceID != "" {
+			g.status = fmt.Sprintf("%s (traced: %s)", g.status, g.lastTraceID[:8])
+		}
 		g.rows = convertRows(m.Rows)
 		g.cachedColWidths = nil
 		g.searchQuery = ""
@@ -957,4 +981,11 @@ func (g DataGrid) serverExportCmd(c *client.Client, format string) tea.Cmd {
 func ServerExportFilePath(dir, keyspace, table, format string) string {
 	timestamp := time.Now().Format("20060102-150405")
 	return filepath.Join(dir, fmt.Sprintf("kassie-%s-%s-%s-full.%s", keyspace, table, timestamp, format))
+}
+
+func (g DataGrid) ReloadTrace(c *client.Client) (DataGrid, tea.Cmd) {
+	if g.lastTraceID == "" {
+		return g, nil
+	}
+	return g, fetchTraceCmd(c, g.lastTraceID)
 }

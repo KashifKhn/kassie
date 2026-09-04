@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Play, Loader2, AlertCircle, ChevronDown, ChevronUp, Clock, Bookmark, Trash2, Gauge } from 'lucide-react';
+import { TracePanel } from '@/components/queryeditor/TracePanel';
 import { complete } from '@/lib/completion';
 import type { Suggestion } from '@/lib/completion';
 import { dataApi, historyApi, queryClient, queryKeys, schemaApi } from '@/api/queries';
@@ -26,6 +27,8 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [suggestSel, setSuggestSel] = useState(0);
   const [suggestActive, setSuggestActive] = useState(false);
+  const [traceMode, setTraceMode] = useState(false);
+  const [traceId, setTraceId] = useState<string | null>(null);
 
   const { selectedKeyspace, selectedTable } = useUiStore();
 
@@ -47,10 +50,12 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
   });
 
   const executeMutation = useMutation({
-    mutationFn: dataApi.executeQuery,
+    mutationFn: (input: { cql: string; trace: boolean }) =>
+      dataApi.executeQuery({ cql: input.cql, pageSize: 200, trace: input.trace }),
     onSuccess: (data) => {
       setResults(data);
       setAllRows(data.rows);
+      setTraceId(data.traceId || null);
       onResults?.({ rows: data.rows, cursorId: data.cursorId, hasMore: data.hasMore });
     },
   });
@@ -89,7 +94,7 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
 
   const handleExecute = () => {
     if (!cql.trim()) return;
-    executeMutation.mutate({ cql: cql.trim(), pageSize: 200 });
+    executeMutation.mutate({ cql: cql.trim(), trace: traceMode });
   };
 
   const handleNextPage = () => {
@@ -204,6 +209,19 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
               )}
               Run
             </button>
+            <button
+              onClick={() => setTraceMode((prev) => !prev)}
+              className="flex items-center gap-1.5 px-3 self-stretch text-xs font-mono rounded-lg transition-all"
+              style={{
+                background: traceMode ? 'var(--accent-primary)' : 'var(--bg-primary)',
+                color: traceMode ? 'var(--text-inverse)' : 'var(--text-tertiary)',
+                border: '1px solid var(--border-primary)',
+              }}
+              title="Trace query execution (Cassandra session tracing)"
+            >
+              <Gauge className="w-3.5 h-3.5" />
+              Trace
+            </button>
               {suggestActive && suggestions.length > 0 && (
                 <SuggestionList
                   suggestions={suggestions}
@@ -241,6 +259,8 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
               {error.message}
             </div>
           )}
+
+          {traceMode && traceId && <TracePanel traceId={traceId} />}
 
           {results && (
             <QueryResultTable
