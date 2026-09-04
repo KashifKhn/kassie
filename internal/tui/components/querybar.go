@@ -282,6 +282,8 @@ func (q QueryBar) View(width int) string {
 }
 
 func (q QueryBar) renderSuggestions(maxWidth int) string {
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+
 	kindColor := map[completion.SuggestionKind]string{
 		completion.KindKeyword:  "240",
 		completion.KindKeyspace: "51",
@@ -297,28 +299,35 @@ func (q QueryBar) renderSuggestions(maxWidth int) string {
 
 	parts := make([]string, 0, len(shown)+1)
 	for i, s := range shown {
-		label := s.Label
 		detail := ""
 		if s.Detail != "" {
 			detail = " " + s.Detail
 		}
-		entry := label + detail + " (" + s.Kind.String() + ")"
-		if len(entry) > maxWidth {
-			entry = entry[:maxWidth-1] + "…"
+		detailSuffix := detail + " (" + s.Kind.String() + ")"
+
+		label := s.Label
+		if len(label)+len(detailSuffix) > maxWidth-3 {
+			over := len(label) + len(detailSuffix) - (maxWidth - 3)
+			if len(detailSuffix) > over {
+				detailSuffix = detailSuffix[:maxInt(0, len(detailSuffix)-over-1)] + "…"
+			} else {
+				label = label[:maxInt(0, len(label)-over-1)] + "…"
+			}
 		}
 
 		if i == q.suggestSel {
 			parts = append(parts, lipgloss.NewStyle().
 				Foreground(lipgloss.Color("226")).
 				Bold(true).
-				Render("▸ "+entry))
+				Render("▸ "+label)+
+				dimStyle.Render(detailSuffix))
 		} else {
 			style := lipgloss.NewStyle().Foreground(lipgloss.Color(kindColor[s.Kind]))
-			parts = append(parts, style.Render("  "+entry))
+			parts = append(parts, style.Render("  "+label)+dimStyle.Render(detailSuffix))
 		}
 	}
 	if len(q.suggestions) > maxShown {
-		parts = append(parts, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).
+		parts = append(parts, dimStyle.
 			Render(fmt.Sprintf("  … %d more (Tab cycle)", len(q.suggestions)-maxShown)))
 	}
 
