@@ -1,11 +1,12 @@
 package components
 
 import (
+	"github.com/KashifKhn/kassie/internal/tui/completion"
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/KashifKhn/kassie/internal/tui/styles"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestValidateQueryCQL(t *testing.T) {
@@ -162,4 +163,40 @@ func TestQueryBarViewShowsSuggestions(t *testing.T) {
 
 func teaKey(key tea.KeyType) tea.KeyMsg {
 	return tea.KeyMsg{Type: key}
+}
+
+func TestQueryBarViewDimsDetail(t *testing.T) {
+	bar := NewQueryBar(styles.DefaultTheme())
+	bar.SetSources(nil, nil, nil)
+	bar = bar.Activate()
+	bar.SetSources([]string{"app_data"}, func(ks string) []string {
+		return []string{"users"}
+	}, func(ks, tbl string) []completion.Column {
+		return []completion.Column{{Name: "email", CqlType: "text"}}
+	})
+	bar.SetDefaultTable("app_data", "users")
+	bar, _ = bar.Update(teabt("SELECT id FROM app_data.users WHERE e"))
+
+	out := bar.View(80)
+	if !strings.Contains(out, "email") {
+		t.Fatalf("suggestion missing: %q", out)
+	}
+
+	lines := strings.Split(out, "\n")
+	var suggestionLine string
+	for _, ln := range lines {
+		if strings.Contains(ln, "email") {
+			suggestionLine = ln
+			break
+		}
+	}
+	if suggestionLine == "" {
+		t.Fatal("no suggestion line with email")
+	}
+	if !strings.Contains(suggestionLine, "text") {
+		t.Errorf("detail (cql type) not shown: %q", suggestionLine)
+	}
+	if !strings.Contains(suggestionLine, "(column)") {
+		t.Errorf("kind not shown: %q", suggestionLine)
+	}
 }
