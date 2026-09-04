@@ -294,10 +294,19 @@ function SuggestionList({
           onClick={() => onSelect(i)}
           onMouseEnter={() => onHover(i)}
         >
-          <span style={{ color: i === selected ? 'var(--text-primary)' : kindColor[s.kind] }}>
+          <span
+            style={{
+              color: kindColor[s.kind],
+              fontWeight: i === selected ? 700 : 400,
+            }}
+          >
+            {i === selected ? '▸ ' : '  '}
             {s.label}
           </span>
-          <span className="flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
+          <span
+            className="flex items-center gap-2"
+            style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}
+          >
             {s.detail && <span>{s.detail}</span>}
             <span className="text-[10px] italic">{s.kind}</span>
           </span>
