@@ -134,7 +134,7 @@ Complete reference for all keyboard shortcuts in Kassie.
 | `?` | Show keyboard shortcuts help |
 | `/` | Focus filter bar |
 | `Esc` | Cancel/close current action |
-| `Ctrl+K` or `Cmd+K` | Focus search |
+| `Ctrl+K` or `Cmd+K` | Open command palette (keyspaces, saved queries, actions) |
 
 ### Navigation
 

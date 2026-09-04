@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Database, ArrowRight } from 'lucide-react';
@@ -10,6 +10,7 @@ import { DataGrid } from '@/components/datagrid/DataGrid';
 import { Inspector } from '@/components/inspector/Inspector';
 import { CellDetailModal } from '@/components/celldetail/CellDetailModal';
 import { QueryEditor } from '@/components/queryeditor/QueryEditor';
+import { CommandPalette } from '@/components/palette/CommandPalette';
 import { ExportButton } from '@/components/export/ExportButton';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,6 +29,18 @@ export function ExplorerPage() {
     columnName: string;
     cell: CellValue;
   } | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   const logoutMutation = useMutation({
     mutationFn: sessionApi.logout,
@@ -151,6 +164,10 @@ export function ExplorerPage() {
         </div>
       }
       inspector={<Inspector row={selectedRow} />}
+      />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
       />
       {inspectedCell && (
         <CellDetailModal
