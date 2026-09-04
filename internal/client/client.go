@@ -253,6 +253,14 @@ func (c *Client) ListSavedQueries(ctx context.Context) ([]*pb.SavedQuery, error)
 	return resp.Queries, nil
 }
 
+func (c *Client) GetSlowQueries(ctx context.Context, limit int32) ([]*pb.SlowQuery, error) {
+	resp, err := c.history.GetSlowQueries(ctx, &pb.GetSlowQueriesRequest{Limit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get slow queries: %w", err)
+	}
+	return resp.Queries, nil
+}
+
 func (c *Client) DeleteSavedQuery(ctx context.Context, name string) error {
 	if _, err := c.history.DeleteSavedQuery(ctx, &pb.DeleteSavedQueryRequest{Name: name}); err != nil {
 		return fmt.Errorf("failed to delete saved query: %w", err)

@@ -13,18 +13,38 @@ import (
 )
 
 const MaxHistoryEntries = 100
+const MaxStatsSamples = 50
+const SlowQueryThresholdMs = 500
 
 var ErrQueryNameInvalid = errors.New("query name must be 1-100 characters: letters, digits, spaces, dash, underscore, dot")
 
 type HistoryEntry struct {
 	CQL        string `json:"cql"`
 	ExecutedAt int64  `json:"executed_at"`
+	LatencyMs  int64  `json:"latency_ms,omitempty"`
 }
 
 type SavedQuery struct {
 	Name      string `json:"name"`
 	CQL       string `json:"cql"`
 	CreatedAt int64  `json:"created_at"`
+}
+
+type queryStats struct {
+	ExecCount   int64   `json:"exec_count"`
+	LastMs      int64   `json:"last_ms"`
+	MaxMs       int64   `json:"max_ms"`
+	RecentMs    []int64 `json:"recent_ms"`
+	LastAt      int64   `json:"last_at"`
+}
+
+type SlowQueryStats struct {
+	CQL       string
+	LastMs    int64
+	AvgMs     int64
+	MaxMs     int64
+	ExecCount int64
+	LastAt    int64
 }
 
 type queryFile struct {
@@ -35,6 +55,7 @@ type queryFile struct {
 type profileData struct {
 	History []HistoryEntry `json:"history"`
 	Saved   []SavedQuery   `json:"saved"`
+	Stats   map[string]*queryStats `json:"stats,omitempty"`
 }
 
 type QueryStore struct {
@@ -68,6 +89,10 @@ func (q *QueryStore) profile(name string) *profileData {
 }
 
 func (q *QueryStore) Record(profile, cql string) {
+	q.RecordLatency(profile, cql, 0)
+}
+
+func (q *QueryStore) RecordLatency(profile, cql string, latencyMs int64) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -75,8 +100,13 @@ func (q *QueryStore) Record(profile, cql string) {
 		return
 	}
 
+	if latencyMs < 0 {
+		latencyMs = 0
+	}
+
 	pd := q.profile(profile)
-	entry := HistoryEntry{CQL: cql, ExecutedAt: time.Now().Unix()}
+	now := time.Now().Unix()
+	entry := HistoryEntry{CQL: cql, ExecutedAt: now, LatencyMs: latencyMs}
 
 	if len(pd.History) > 0 && pd.History[len(pd.History)-1].CQL == cql {
 		pd.History[len(pd.History)-1] = entry
@@ -87,6 +117,26 @@ func (q *QueryStore) Record(profile, cql string) {
 	if len(pd.History) > MaxHistoryEntries {
 		pd.History = pd.History[len(pd.History)-MaxHistoryEntries:]
 	}
+
+	if pd.Stats == nil {
+		pd.Stats = make(map[string]*queryStats)
+	}
+	stats, ok := pd.Stats[cql]
+	if !ok {
+		stats = &queryStats{}
+		pd.Stats[cql] = stats
+	}
+	stats.ExecCount++
+	stats.LastMs = latencyMs
+	stats.LastAt = now
+	if latencyMs > stats.MaxMs {
+		stats.MaxMs = latencyMs
+	}
+	stats.RecentMs = append(stats.RecentMs, latencyMs)
+	if len(stats.RecentMs) > MaxStatsSamples {
+		stats.RecentMs = stats.RecentMs[len(stats.RecentMs)-MaxStatsSamples:]
+	}
+
 	q.dirty = true
 }
 
@@ -107,6 +157,49 @@ func (q *QueryStore) History(profile string, limit int) []HistoryEntry {
 		result = result[:limit]
 	}
 	return result
+}
+
+func (q *QueryStore) SlowQueries(profile string, limit int) []SlowQueryStats {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
+
+	pd, ok := q.profiles[profile]
+	if !ok || len(pd.Stats) == 0 {
+		return nil
+	}
+
+	out := make([]SlowQueryStats, 0, len(pd.Stats))
+	for cql, stats := range pd.Stats {
+		if stats.MaxMs < SlowQueryThresholdMs {
+			continue
+		}
+		out = append(out, SlowQueryStats{
+			CQL:       cql,
+			LastMs:    stats.LastMs,
+			AvgMs:     avgInt64(stats.RecentMs),
+			MaxMs:     stats.MaxMs,
+			ExecCount: stats.ExecCount,
+			LastAt:    stats.LastAt,
+		})
+	}
+
+	sort.Slice(out, func(i, j int) bool { return out[i].MaxMs > out[j].MaxMs })
+
+	if limit > 0 && len(out) > limit {
+		out = out[:limit]
+	}
+	return out
+}
+
+func avgInt64(values []int64) int64 {
+	if len(values) == 0 {
+		return 0
+	}
+	var sum int64
+	for _, v := range values {
+		sum += v
+	}
+	return sum / int64(len(values))
 }
 
 func (q *QueryStore) ClearHistory(profile string) int {

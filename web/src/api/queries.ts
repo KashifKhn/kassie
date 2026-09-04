@@ -21,6 +21,7 @@ import type {
   ExecuteQueryResponse,
   QueryHistoryEntry,
   SavedQuery,
+  SlowQuery,
 } from './types';
 
 export const queryClient = new QueryClient({
@@ -50,6 +51,7 @@ export const queryKeys = {
   history: {
     queries: () => ['history', 'queries'] as const,
     saved: () => ['history', 'saved'] as const,
+    slow: () => ['history', 'slow'] as const,
   },
   stats: (keyspace: string, table: string) => ['stats', keyspace, table] as const,
   data: {
@@ -256,6 +258,18 @@ export const historyApi = {
   deleteSavedQuery: async (name: string): Promise<void> => {
     try {
       await apiClient.delete(`/history/saved/${encodeURIComponent(name)}`);
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  getSlowQueries: async (limit: number): Promise<SlowQuery[]> => {
+    try {
+      const response = await apiClient.get<{ queries: SlowQuery[] }>(
+        '/history/slow',
+        { params: { limit } }
+      );
+      return response.data.queries ?? [];
     } catch (error) {
       throw handleApiError(error);
     }

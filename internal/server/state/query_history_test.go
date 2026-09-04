@@ -2,6 +2,7 @@ package state
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -186,5 +187,93 @@ func TestQueryStore_PersistSkipsWhenClean(t *testing.T) {
 
 	if !info1.ModTime().Equal(info2.ModTime()) {
 		t.Error("second persist rewrote unchanged file")
+	}
+}
+
+func TestQueryStoreLatencyAggregation(t *testing.T) {
+	store := testQueryStore(t)
+
+	store.RecordLatency("p", "SELECT a", 100)
+	store.RecordLatency("p", "SELECT a", 300)
+	store.RecordLatency("p", "SELECT a", 200)
+
+	slow := store.SlowQueries("p", 10)
+	if len(slow) != 0 {
+		t.Fatalf("fast query in slow list: %+v", slow)
+	}
+
+	hist := store.History("p", 10)
+	if len(hist) != 1 {
+		t.Fatalf("consecutive duplicate runs collapse: got %d", len(hist))
+	}
+	if hist[0].LatencyMs != 200 {
+		t.Errorf("latest latency kept: %+v", hist[0])
+	}
+}
+
+func TestQueryStoreSlowQueries(t *testing.T) {
+	store := testQueryStore(t)
+
+	store.RecordLatency("p", "SELECT fast", 50)
+	store.RecordLatency("p", "SELECT slow1", 600)
+	store.RecordLatency("p", "SELECT slow1", 900)
+	store.RecordLatency("p", "SELECT slow1", 300)
+	store.RecordLatency("p", "SELECT slow2", 2000)
+	store.RecordLatency("other", "SELECT other", 5000)
+
+	slow := store.SlowQueries("p", 10)
+	if len(slow) != 2 {
+		t.Fatalf("slow = %d, want 2 (fast excluded, per-profile)", len(slow))
+	}
+
+	if slow[0].CQL != "SELECT slow2" {
+		t.Errorf("sorted by max latency: first = %+v", slow[0])
+	}
+	if slow[1].CQL != "SELECT slow1" {
+		t.Errorf("second = %+v", slow[1])
+	}
+
+	s1 := slow[1]
+	if s1.LastMs != 300 || s1.MaxMs != 900 || s1.ExecCount != 3 {
+		t.Errorf("slow1 stats = %+v", s1)
+	}
+	if s1.AvgMs != 600 {
+		t.Errorf("avg from recent samples = %d, want 600", s1.AvgMs)
+	}
+}
+
+func TestQueryStoreSlowQueriesLimit(t *testing.T) {
+	store := testQueryStore(t)
+
+	for i := range 10 {
+		store.RecordLatency("p", fmt.Sprintf("SELECT q%d", i), int64(600+i))
+	}
+
+	slow := store.SlowQueries("p", 3)
+	if len(slow) != 3 {
+		t.Fatalf("limit = %d, want 3", len(slow))
+	}
+	if slow[0].CQL != "SELECT q9" {
+		t.Errorf("highest last latency first: %+v", slow[0])
+	}
+}
+
+func TestQueryStoreSlowStatsPersist(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "queries.json")
+
+	store1 := NewQueryStore(path)
+	store1.RecordLatency("p", "SELECT slow", 800)
+	store1.RecordLatency("p", "SELECT slow", 400)
+	if err := store1.Persist(); err != nil {
+		t.Fatalf("persist: %v", err)
+	}
+
+	store2 := NewQueryStore(path)
+	slow := store2.SlowQueries("p", 10)
+	if len(slow) != 1 {
+		t.Fatalf("slow stats lost after reload: %+v", slow)
+	}
+	if slow[0].ExecCount != 2 || slow[0].MaxMs != 800 || slow[0].LastMs != 400 {
+		t.Errorf("reloaded stats = %+v", slow[0])
 	}
 }

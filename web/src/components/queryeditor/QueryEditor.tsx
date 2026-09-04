@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Play, Loader2, AlertCircle, ChevronDown, ChevronUp, Clock, Bookmark, Trash2 } from 'lucide-react';
+import { Play, Loader2, AlertCircle, ChevronDown, ChevronUp, Clock, Bookmark, Trash2, Gauge } from 'lucide-react';
 import { complete } from '@/lib/completion';
 import type { Suggestion } from '@/lib/completion';
 import { dataApi, historyApi, queryClient, queryKeys, schemaApi } from '@/api/queries';
@@ -330,7 +330,14 @@ interface QueryPickersProps {
 function QueryPickers({ history, saved, onPick }: QueryPickersProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
+  const [showSlow, setShowSlow] = useState(false);
   const deleteMutation = useMutation({ mutationFn: historyApi.deleteSavedQuery });
+
+  const slowQuery = useQuery({
+    queryKey: queryKeys.history.slow(),
+    queryFn: () => historyApi.getSlowQueries(20),
+    enabled: showSlow,
+  });
 
   if (history.length === 0 && saved.length === 0) {
     return null;
@@ -386,6 +393,30 @@ function QueryPickers({ history, saved, onPick }: QueryPickersProps) {
           )}
         </div>
       )}
+      <div className="relative">
+        <PickerToggle
+          icon={<Gauge className="w-3.5 h-3.5" />}
+          label="Slow"
+          active={showSlow}
+          onClick={() => {
+            setShowSlow((prev) => !prev);
+            setShowHistory(false);
+            setShowSaved(false);
+          }}
+        />
+        {showSlow && (
+          <PickerList
+            items={(slowQuery.data ?? []).map((sq) => ({
+              key: sq.cql,
+              label: `${sq.cql}  ·  max ${sq.maxLatencyMs}ms · avg ${sq.avgLatencyMs}ms · ×${sq.execCount}`,
+            }))}
+            onPick={(cql) => {
+              onPick(cql.split('  ·  ')[0] ?? cql);
+              setShowSlow(false);
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -437,7 +468,7 @@ function PickerList({ items, onPick }: { items: PickerItem[]; onPick: (cql: stri
           key={item.key}
           className="flex items-center justify-between gap-2 px-3 py-2 text-xs font-mono cursor-pointer transition-all"
           style={{ borderBottom: '1px solid var(--border-primary)' }}
-          onClick={() => onPick(item.label.includes(': ') ? item.label.split(': ').slice(1).join(': ') : item.label)}
+          onClick={() => onPick(item.label.includes(': ') && !item.label.includes('  ·  ') ? item.label.split(': ').slice(1).join(': ') : item.label)}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--bg-secondary)';
           }}

@@ -1,0 +1,1037 @@
+- generic [ref=e42]:
+  - banner [ref=e43]:
+    - generic [ref=e44]:
+      - generic [ref=e45]:
+        - button "Toggle Sidebar" [ref=e46]:
+          - img [ref=e47]
+        - generic [ref=e48]:
+          - img [ref=e49]
+          - heading "KASSIE" [level=1] [ref=e53]
+          - generic [ref=e55]: local
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]: 127.0.0.1
+          - generic [ref=e59]: ":"
+          - generic [ref=e60]: "9042"
+        - 'button "Theme: system" [ref=e61]':
+          - img [ref=e62]
+        - button "Toggle Inspector" [ref=e64]:
+          - img [ref=e65]
+        - button "Logout" [ref=e67]:
+          - img [ref=e68]
+  - generic [ref=e72]:
+    - generic [ref=e75]:
+      - heading "Schema Explorer" [level=2] [ref=e77]
+      - generic [ref=e78]:
+        - button "analytics" [ref=e80]:
+          - img [ref=e81]
+          - img [ref=e83]
+          - generic [ref=e87]: analytics
+        - generic [ref=e88]:
+          - button "commerce" [ref=e89]:
+            - img [ref=e187]
+            - img [ref=e92]
+            - generic [ref=e96]: commerce
+          - generic [ref=e189]:
+            - button "customers" [ref=e190]:
+              - img [ref=e191]
+              - generic [ref=e193]: customers
+            - button "order_events" [ref=e194]:
+              - img [ref=e195]
+              - generic [ref=e197]: order_events
+            - button "orders" [active] [ref=e198]:
+              - img [ref=e199]
+              - generic [ref=e201]: orders
+            - button "product_catalog" [ref=e202]:
+              - img [ref=e203]
+              - generic [ref=e205]: product_catalog
+        - button "system" [ref=e98]:
+          - img [ref=e99]
+          - img [ref=e101]
+          - generic [ref=e105]: system
+        - button "system_auth" [ref=e107]:
+          - img [ref=e108]
+          - img [ref=e110]
+          - generic [ref=e114]: system_auth
+        - button "system_distributed" [ref=e116]:
+          - img [ref=e117]
+          - img [ref=e119]
+          - generic [ref=e123]: system_distributed
+        - button "system_schema" [ref=e125]:
+          - img [ref=e126]
+          - img [ref=e128]
+          - generic [ref=e132]: system_schema
+        - button "system_traces" [ref=e134]:
+          - img [ref=e135]
+          - img [ref=e137]
+          - generic [ref=e141]: system_traces
+    - separator [ref=e142]
+    - generic [ref=e145]:
+      - generic [ref=e207] [cursor=pointer]:
+        - generic [ref=e208]:
+          - img [ref=e209]
+          - text: CQL Query
+          - img [ref=e211]
+        - generic [ref=e213]: read-only SELECT
+      - generic [ref=e214]:
+        - generic [ref=e217]:
+          - generic [ref=e218]:
+            - generic [ref=e219]:
+              - generic:
+                - img
+                - generic: WHERE
+              - textbox "id = 123 AND status = 'active'" [ref=e220]
+            - button "Filter" [disabled] [ref=e221]:
+              - img [ref=e222]
+              - generic [ref=e225]: Filter
+          - generic [ref=e226]:
+            - generic [ref=e227]: ▸
+            - generic [ref=e228]: Enter a CQL WHERE clause to filter rows
+            - generic [ref=e229]: •
+            - generic [ref=e230]: "Example: user_id = 123"
+        - generic [ref=e231]:
+          - button "CSV" [ref=e232] [cursor=pointer]:
+            - img [ref=e233]
+            - text: CSV
+          - button "JSON" [ref=e236] [cursor=pointer]:
+            - img [ref=e237]
+            - text: JSON
+      - generic [ref=e242]:
+        - generic [ref=e244]:
+          - generic [ref=e246]:
+            - generic [ref=e247]: currency
+            - generic [ref=e248]: text
+          - generic [ref=e250]:
+            - generic [ref=e251]: customer_id
+            - generic [ref=e252]: uuid
+          - generic [ref=e254]:
+            - generic [ref=e255]: items
+            - generic [ref=e256]: list<text>
+          - generic [ref=e258]:
+            - generic [ref=e259]: status
+            - generic [ref=e260]: text
+          - generic [ref=e262]:
+            - generic [ref=e263]: tags
+            - generic [ref=e264]: set<text>
+          - generic [ref=e266]:
+            - generic [ref=e267]: total
+            - generic [ref=e268]: decimal
+          - generic [ref=e270]:
+            - generic [ref=e271]: created_at
+            - generic [ref=e272]: timestamp
+            - generic [ref=e273]: CK
+          - generic [ref=e275]:
+            - generic [ref=e276]: order_id
+            - generic [ref=e277]: uuid
+            - generic [ref=e278]: PK
+        - list [ref=e280]:
+          - generic [ref=e281] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e282]: GBP
+            - generic "Click to inspect cell" [ref=e283]: 58d5563d-ab2c-d31e-e315-128862c33a4f
+            - generic "Click to inspect cell" [ref=e284]: "[\"Ceramic Planter Set\",\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e285]: pending
+            - generic "Click to inspect cell" [ref=e286]: "[\"priority\"]"
+            - generic "Click to inspect cell" [ref=e287]: "\"106.83\""
+            - generic "Click to inspect cell" [ref=e288]: 2025-02-14T00:00:00Z
+            - generic "Click to inspect cell" [ref=e289]: 461d8db6-c2e3-3943-7ed7-cc99bb18f1be
+          - generic [ref=e290] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e291]: GBP
+            - generic "Click to inspect cell" [ref=e292]: d23f0824-128b-2f33-0c5c-7fd0a6a3a450
+            - generic "Click to inspect cell" [ref=e293]: "[\"Aurora Wireless Headphones\",\"Smart Home Hub v3\",\"Nano Drone X2\",\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e294]: delivered
+            - generic "Click to inspect cell" [ref=e295]: "[\"gift\",\"priority\"]"
+            - generic "Click to inspect cell" [ref=e296]: "\"236.31\""
+            - generic "Click to inspect cell" [ref=e297]: 2025-01-27T00:00:00Z
+            - generic "Click to inspect cell" [ref=e298]: 64e50cad-6623-7a04-65e7-e4236472f1a3
+          - generic [ref=e299] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e300]: EUR
+            - generic "Click to inspect cell" [ref=e301]: 9531985d-5d9d-c9f8-1818-e811892f902b
+            - generic "Click to inspect cell" [ref=e302]: "[\"Alpine Running Vest\",\"Bamboo Cutting Board\"]"
+            - generic "Click to inspect cell" [ref=e303]: refunded
+            - generic "Click to inspect cell" [ref=e304]: "[\"priority\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e305]: "\"103.67\""
+            - generic "Click to inspect cell" [ref=e306]: 2025-07-12T00:00:00Z
+            - generic "Click to inspect cell" [ref=e307]: b6246771-c845-0070-6377-1407e8e72789
+          - generic [ref=e308] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e309]: EUR
+            - generic "Click to inspect cell" [ref=e310]: 57ee05cd-e009-02c7-7ebf-f20686734721
+            - generic "Click to inspect cell" [ref=e311]: "[\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e312]: delivered
+            - generic "Click to inspect cell" [ref=e313]: "[\"gift\"]"
+            - generic "Click to inspect cell" [ref=e314]: "\"145.05\""
+            - generic "Click to inspect cell" [ref=e315]: 2025-06-11T00:00:00Z
+            - generic "Click to inspect cell" [ref=e316]: a1ac6036-c05d-7b62-d337-264b16646a40
+          - generic [ref=e317] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e318]: EUR
+            - generic "Click to inspect cell" [ref=e319]: 6b0d549b-6f03-675a-1600-a35a099950d8
+            - generic "Click to inspect cell" [ref=e320]: "[\"Espresso Tamper Pro\",\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e321]: shipped
+            - generic "Click to inspect cell" [ref=e322]: "[\"bundle\",\"gift\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e323]: "\"378.45\""
+            - generic "Click to inspect cell" [ref=e324]: 2025-03-19T00:00:00Z
+            - generic "Click to inspect cell" [ref=e325]: ab6286cd-3672-d6ae-12b8-0aed6da79a87
+          - generic [ref=e326] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e327]: USD
+            - generic "Click to inspect cell" [ref=e328]: 6bf46c69-7d2c-af82-eeea-cbe226e87555
+            - generic "Click to inspect cell" [ref=e329]: "[\"Linen Throw Blanket\",\"Cast Iron Skillet 12in\",\"Cast Iron Skillet 12in\",\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e330]: refunded
+            - generic "Click to inspect cell" [ref=e331]: "[\"gift\",\"priority\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e332]: "\"19.23\""
+            - generic "Click to inspect cell" [ref=e333]: 2025-04-27T00:00:00Z
+            - generic "Click to inspect cell" [ref=e334]: 7b951593-6c6f-ba96-d974-fec54003ff33
+          - generic [ref=e335] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e336]: USD
+            - generic "Click to inspect cell" [ref=e337]: 18f135d2-5f55-7203-3018-50c5a38fd547
+            - generic "Click to inspect cell" [ref=e338]: "[\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e339]: refunded
+            - generic "Click to inspect cell" [ref=e340]: "[\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e341]: "\"63.2\""
+            - generic "Click to inspect cell" [ref=e342]: 2025-07-07T00:00:00Z
+            - generic "Click to inspect cell" [ref=e343]: 506f68ac-e232-8994-b647-e8a8e5ee4c91
+          - generic [ref=e344] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e345]: GBP
+            - generic "Click to inspect cell" [ref=e346]: 3f98e277-4cbd-87ad-5c90-a9587403e430
+            - generic "Click to inspect cell" [ref=e347]: "[\"Nano Drone X2\",\"Linen Throw Blanket\",\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e348]: delivered
+            - generic "Click to inspect cell" [ref=e349]: "[\"bundle\",\"gift\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e350]: "\"276.54\""
+            - generic "Click to inspect cell" [ref=e351]: 2025-01-01T00:00:00Z
+            - generic "Click to inspect cell" [ref=e352]: 0decb3b5-05b4-c425-0bab-5f9fa7321d31
+          - generic [ref=e353] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e354]: GBP
+            - generic "Click to inspect cell" [ref=e355]: 119a72d1-74c9-df6a-cc01-1cdd9474031b
+            - generic "Click to inspect cell" [ref=e356]: "[\"Merino Trail Jacket\",\"Bamboo Cutting Board\",\"Bamboo Cutting Board\",\"Ceramic Planter Set\"]"
+            - generic "Click to inspect cell" [ref=e357]: pending
+            - generic "Click to inspect cell" [ref=e358]: "[\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e359]: "\"375.7\""
+            - generic "Click to inspect cell" [ref=e360]: 2025-04-09T00:00:00Z
+            - generic "Click to inspect cell" [ref=e361]: 7a1a3293-6aff-bc9a-cd45-f31aa13475fe
+          - generic [ref=e362] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e363]: USD
+            - generic "Click to inspect cell" [ref=e364]: 3f98e277-4cbd-87ad-5c90-a9587403e430
+            - generic "Click to inspect cell" [ref=e365]: "[\"4K Action Camera Pro\",\"Cast Iron Skillet 12in\",\"Merino Trail Jacket\",\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e366]: delivered
+            - generic "Click to inspect cell" [ref=e367]: "[\"bundle\",\"gift\"]"
+            - generic "Click to inspect cell" [ref=e368]: "\"103.49\""
+            - generic "Click to inspect cell" [ref=e369]: 2025-01-10T00:00:00Z
+            - generic "Click to inspect cell" [ref=e370]: 5f4ce302-51af-1074-3cc6-31418189ac45
+          - generic [ref=e371] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e372]: USD
+            - generic "Click to inspect cell" [ref=e373]: 13deef86-ab10-31d0-f646-e1f40a097c97
+            - generic "Click to inspect cell" [ref=e374]: "[\"Canvas Weekender Bag\",\"Stainless Pour-Over Kit\",\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e375]: delivered
+            - generic "Click to inspect cell" [ref=e376]: "[\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e377]: "\"125.13\""
+            - generic "Click to inspect cell" [ref=e378]: 2025-04-02T00:00:00Z
+            - generic "Click to inspect cell" [ref=e379]: 47fd7d46-cc85-8ee3-b8c7-30cdce311752
+          - generic [ref=e380] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e381]: USD
+            - generic "Click to inspect cell" [ref=e382]: 6b4cb242-4a23-d596-2217-beaddbc496cb
+            - generic "Click to inspect cell" [ref=e383]: "[\"Ceramic Planter Set\",\"Canvas Weekender Bag\",\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e384]: delivered
+            - generic "Click to inspect cell" [ref=e385]: "[\"gift\",\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e386]: "\"39.16\""
+            - generic "Click to inspect cell" [ref=e387]: 2025-07-12T00:00:00Z
+            - generic "Click to inspect cell" [ref=e388]: 56947a7a-452e-704d-607a-473235c2e229
+          - generic [ref=e389] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e390]: EUR
+            - generic "Click to inspect cell" [ref=e391]: 0cb1e29c-658c-da14-95e6-0af593bd04cf
+            - generic "Click to inspect cell" [ref=e392]: "[\"Smart Home Hub v3\",\"Smart Home Hub v3\",\"Nano Drone X2\",\"Ceramic Planter Set\"]"
+            - generic "Click to inspect cell" [ref=e393]: delivered
+            - generic "Click to inspect cell" [ref=e394]: "[\"gift\"]"
+            - generic "Click to inspect cell" [ref=e395]: "\"477.16\""
+            - generic "Click to inspect cell" [ref=e396]: 2025-04-26T00:00:00Z
+            - generic "Click to inspect cell" [ref=e397]: fe9eb4ad-f7d5-f124-81b1-c025d1e4d0a3
+          - generic [ref=e398] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e399]: GBP
+            - generic "Click to inspect cell" [ref=e400]: 4cdd2055-930d-6eaf-14f4-733f3e7d1bfb
+            - generic "Click to inspect cell" [ref=e401]: "[\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e402]: pending
+            - generic "Click to inspect cell" [ref=e403]: "[\"gift\"]"
+            - generic "Click to inspect cell" [ref=e404]: "\"469.38\""
+            - generic "Click to inspect cell" [ref=e405]: 2025-03-30T00:00:00Z
+            - generic "Click to inspect cell" [ref=e406]: 296c764d-edcf-975c-9f39-5ef11b4f463f
+          - generic [ref=e407] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e408]: EUR
+            - generic "Click to inspect cell" [ref=e409]: 451abd81-f1d6-9ed6-17f5-e837d70820fe
+            - generic "Click to inspect cell" [ref=e410]: "[\"Alpine Running Vest\",\"Nano Drone X2\",\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e411]: pending
+            - generic "Click to inspect cell" [ref=e412]: "[\"bundle\",\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e413]: "\"444.98\""
+            - generic "Click to inspect cell" [ref=e414]: 2025-03-08T00:00:00Z
+            - generic "Click to inspect cell" [ref=e415]: 36ad61dd-9132-f7ad-9632-b0917c7f2cba
+          - generic [ref=e416] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e417]: EUR
+            - generic "Click to inspect cell" [ref=e418]: ae658f33-fe3b-890b-93f4-48b3a5aa3c81
+            - generic "Click to inspect cell" [ref=e419]: "[\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e420]: shipped
+            - generic "Click to inspect cell" [ref=e421]: "[\"bundle\",\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e422]: "\"166.02\""
+            - generic "Click to inspect cell" [ref=e423]: 2025-02-06T00:00:00Z
+            - generic "Click to inspect cell" [ref=e424]: 5db44741-a0d0-9c62-1d98-a4747a3ff311
+          - generic [ref=e425] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e426]: USD
+            - generic "Click to inspect cell" [ref=e427]: 119a72d1-74c9-df6a-cc01-1cdd9474031b
+            - generic "Click to inspect cell" [ref=e428]: "[\"Ceramic Planter Set\",\"Aurora Wireless Headphones\",\"Canvas Weekender Bag\",\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e429]: shipped
+            - generic "Click to inspect cell" [ref=e430]: "[\"bundle\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e431]: "\"460.12\""
+            - generic "Click to inspect cell" [ref=e432]: 2025-02-12T00:00:00Z
+            - generic "Click to inspect cell" [ref=e433]: 99a16b9e-babc-b4aa-4fff-a8e14fa1cc6f
+          - generic [ref=e434] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e435]: GBP
+            - generic "Click to inspect cell" [ref=e436]: d23f0824-128b-2f33-0c5c-7fd0a6a3a450
+            - generic "Click to inspect cell" [ref=e437]: "[\"Ceramic Planter Set\",\"Alpine Running Vest\"]"
+            - generic "Click to inspect cell" [ref=e438]: delivered
+            - generic "Click to inspect cell" [ref=e439]: "[\"sale\"]"
+            - generic "Click to inspect cell" [ref=e440]: "\"21.98\""
+            - generic "Click to inspect cell" [ref=e441]: 2025-06-07T00:00:00Z
+            - generic "Click to inspect cell" [ref=e442]: 5d158a2f-f2ee-4e45-19f9-919c895fd7b3
+          - generic [ref=e443] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e444]: EUR
+            - generic "Click to inspect cell" [ref=e445]: 57ee05cd-e009-02c7-7ebf-f20686734721
+            - generic "Click to inspect cell" [ref=e446]: "[\"Bamboo Cutting Board\"]"
+            - generic "Click to inspect cell" [ref=e447]: pending
+            - generic "Click to inspect cell" [ref=e448]: "[\"bundle\",\"priority\"]"
+            - generic "Click to inspect cell" [ref=e449]: "\"410.15\""
+            - generic "Click to inspect cell" [ref=e450]: 2025-05-02T00:00:00Z
+            - generic "Click to inspect cell" [ref=e451]: 80f4edd8-9a1d-3876-f6c8-a64ac4ecbfa2
+          - generic [ref=e452] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e453]: GBP
+            - generic "Click to inspect cell" [ref=e454]: 9be4bcfc-49b6-4a08-72e6-cc3ababced20
+            - generic "Click to inspect cell" [ref=e455]: "[\"Alpine Running Vest\",\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e456]: shipped
+            - generic "Click to inspect cell" [ref=e457]: "[\"bundle\"]"
+            - generic "Click to inspect cell" [ref=e458]: "\"433.57\""
+            - generic "Click to inspect cell" [ref=e459]: 2025-04-20T00:00:00Z
+            - generic "Click to inspect cell" [ref=e460]: 4360c66a-4d9a-a696-34c4-11c35f381d79
+          - generic [ref=e461] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e462]: EUR
+            - generic "Click to inspect cell" [ref=e463]: d23f0824-128b-2f33-0c5c-7fd0a6a3a450
+            - generic "Click to inspect cell" [ref=e464]: "[\"Bamboo Cutting Board\",\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e465]: refunded
+            - generic "Click to inspect cell" [ref=e466]: "[\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e467]: "\"114.82\""
+            - generic "Click to inspect cell" [ref=e468]: 2025-06-12T00:00:00Z
+            - generic "Click to inspect cell" [ref=e469]: 5464ecc2-80b0-c08b-c770-24208aa4248c
+          - generic [ref=e470] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e471]: USD
+            - generic "Click to inspect cell" [ref=e472]: 5affb229-7631-a992-f0ce-583505c6af07
+            - generic "Click to inspect cell" [ref=e473]: "[\"Canvas Weekender Bag\",\"Cast Iron Skillet 12in\",\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e474]: delivered
+            - generic "Click to inspect cell" [ref=e475]: "[\"priority\"]"
+            - generic "Click to inspect cell" [ref=e476]: "\"145.13\""
+            - generic "Click to inspect cell" [ref=e477]: 2025-01-11T00:00:00Z
+            - generic "Click to inspect cell" [ref=e478]: 3c953f5d-6f06-6429-037f-b23b8532b56c
+          - generic [ref=e479] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e480]: USD
+            - generic "Click to inspect cell" [ref=e481]: 36f675cc-81e7-4ef5-e8e2-5d940ed90475
+            - generic "Click to inspect cell" [ref=e482]: "[\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e483]: shipped
+            - generic "Click to inspect cell" [ref=e484]: "[\"bundle\",\"gift\",\"priority\"]"
+            - generic "Click to inspect cell" [ref=e485]: "\"267.69\""
+            - generic "Click to inspect cell" [ref=e486]: 2025-05-21T00:00:00Z
+            - generic "Click to inspect cell" [ref=e487]: 27e9e06f-59b4-4e92-effd-deeaa842bc19
+          - generic [ref=e488] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e489]: USD
+            - generic "Click to inspect cell" [ref=e490]: 57124242-5051-c1cc-d17f-9acae01f5057
+            - generic "Click to inspect cell" [ref=e491]: "[\"Nano Drone X2\",\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e492]: refunded
+            - generic "Click to inspect cell" [ref=e493]: "[\"priority\"]"
+            - generic "Click to inspect cell" [ref=e494]: "\"303.88\""
+            - generic "Click to inspect cell" [ref=e495]: 2025-04-28T00:00:00Z
+            - generic "Click to inspect cell" [ref=e496]: a2330a67-aac0-a780-0a1a-faea36667dc9
+          - generic [ref=e497] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e498]: GBP
+            - generic "Click to inspect cell" [ref=e499]: c7a2ea20-b2f1-4c94-2e05-319acb5c7427
+            - generic "Click to inspect cell" [ref=e500]: "[\"4K Action Camera Pro\",\"Alpine Running Vest\"]"
+            - generic "Click to inspect cell" [ref=e501]: refunded
+            - generic "Click to inspect cell" [ref=e502]: "[\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e503]: "\"297.94\""
+            - generic "Click to inspect cell" [ref=e504]: 2025-01-04T00:00:00Z
+            - generic "Click to inspect cell" [ref=e505]: 1adbe533-c764-2bde-e967-ebdb0ef1f012
+          - generic [ref=e506] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e507]: GBP
+            - generic "Click to inspect cell" [ref=e508]: 58d5563d-ab2c-d31e-e315-128862c33a4f
+            - generic "Click to inspect cell" [ref=e509]: "[\"Aurora Wireless Headphones\",\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e510]: refunded
+            - generic "Click to inspect cell" [ref=e511]: "[\"bundle\"]"
+            - generic "Click to inspect cell" [ref=e512]: "\"418.68\""
+            - generic "Click to inspect cell" [ref=e513]: 2025-03-31T00:00:00Z
+            - generic "Click to inspect cell" [ref=e514]: 1a555522-71b7-e67c-b3e0-90aa3d05a4cb
+          - generic [ref=e515] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e516]: USD
+            - generic "Click to inspect cell" [ref=e517]: ca02135e-92b1-d3f2-8ede-0d7ac3baea9e
+            - generic "Click to inspect cell" [ref=e518]: "[\"Linen Throw Blanket\"]"
+            - generic "Click to inspect cell" [ref=e519]: pending
+            - generic "Click to inspect cell" [ref=e520]: "[\"bundle\",\"gift\"]"
+            - generic "Click to inspect cell" [ref=e521]: "\"479.52\""
+            - generic "Click to inspect cell" [ref=e522]: 2025-08-27T00:00:00Z
+            - generic "Click to inspect cell" [ref=e523]: bc8df872-aebe-1773-0bbe-27a89c13aef3
+          - generic [ref=e524] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e525]: GBP
+            - generic "Click to inspect cell" [ref=e526]: 13deef86-ab10-31d0-f646-e1f40a097c97
+            - generic "Click to inspect cell" [ref=e527]: "[\"Ceramic Planter Set\",\"Merino Trail Jacket\",\"Nano Drone X2\"]"
+            - generic "Click to inspect cell" [ref=e528]: refunded
+            - generic "Click to inspect cell" [ref=e529]: "[\"sale\"]"
+            - generic "Click to inspect cell" [ref=e530]: "\"207.65\""
+            - generic "Click to inspect cell" [ref=e531]: 2025-08-23T00:00:00Z
+            - generic "Click to inspect cell" [ref=e532]: 6b2838e0-133f-5243-0368-2cec0fbeb716
+          - generic [ref=e533] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e534]: GBP
+            - generic "Click to inspect cell" [ref=e535]: 92276658-1e27-a1c0-8a6a-63ec24ede6a4
+            - generic "Click to inspect cell" [ref=e536]: "[\"Stainless Pour-Over Kit\",\"Smart Home Hub v3\",\"Bamboo Cutting Board\",\"Nano Drone X2\"]"
+            - generic "Click to inspect cell" [ref=e537]: shipped
+            - generic "Click to inspect cell" [ref=e538]: "[\"gift\"]"
+            - generic "Click to inspect cell" [ref=e539]: "\"398.03\""
+            - generic "Click to inspect cell" [ref=e540]: 2025-08-26T00:00:00Z
+            - generic "Click to inspect cell" [ref=e541]: ed448d4e-ee24-1c43-643a-b9e212b92a01
+          - generic [ref=e542] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e543]: GBP
+            - generic "Click to inspect cell" [ref=e544]: 5790f82e-c1d3-fcff-2a3a-f4d46b0a18e8
+            - generic "Click to inspect cell" [ref=e545]: "[\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e546]: pending
+            - generic "Click to inspect cell" [ref=e547]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e548]: "\"149.21\""
+            - generic "Click to inspect cell" [ref=e549]: 2025-06-11T00:00:00Z
+            - generic "Click to inspect cell" [ref=e550]: fb1b0902-801f-e30b-38f2-a031b1853dc0
+          - generic [ref=e551] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e552]: USD
+            - generic "Click to inspect cell" [ref=e553]: ca02135e-92b1-d3f2-8ede-0d7ac3baea9e
+            - generic "Click to inspect cell" [ref=e554]: "[\"Alpine Running Vest\"]"
+            - generic "Click to inspect cell" [ref=e555]: pending
+            - generic "Click to inspect cell" [ref=e556]: "[\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e557]: "\"266.33\""
+            - generic "Click to inspect cell" [ref=e558]: 2025-04-14T00:00:00Z
+            - generic "Click to inspect cell" [ref=e559]: e2b6c50c-8de6-3750-b901-5459661ce41c
+          - generic [ref=e560] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e561]: GBP
+            - generic "Click to inspect cell" [ref=e562]: 119a72d1-74c9-df6a-cc01-1cdd9474031b
+            - generic "Click to inspect cell" [ref=e563]: "[\"Smart Home Hub v3\",\"Bamboo Cutting Board\",\"Bamboo Cutting Board\",\"Espresso Tamper Pro\"]"
+            - generic "Click to inspect cell" [ref=e564]: pending
+            - generic "Click to inspect cell" [ref=e565]: "[\"sale\"]"
+            - generic "Click to inspect cell" [ref=e566]: "\"237.83\""
+            - generic "Click to inspect cell" [ref=e567]: 2025-05-22T00:00:00Z
+            - generic "Click to inspect cell" [ref=e568]: 8a3c3502-15c6-b9a6-88d8-c0a558cb5fde
+          - generic [ref=e569] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e570]: EUR
+            - generic "Click to inspect cell" [ref=e571]: 6b0d549b-6f03-675a-1600-a35a099950d8
+            - generic "Click to inspect cell" [ref=e572]: "[\"Canvas Weekender Bag\",\"Alpine Running Vest\",\"Smart Home Hub v3\",\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e573]: pending
+            - generic "Click to inspect cell" [ref=e574]: "[\"priority\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e575]: "\"477.21\""
+            - generic "Click to inspect cell" [ref=e576]: 2025-04-21T00:00:00Z
+            - generic "Click to inspect cell" [ref=e577]: b4d19ec1-2955-d6f0-3945-336bd51b1815
+          - generic [ref=e578] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e579]: GBP
+            - generic "Click to inspect cell" [ref=e580]: 907a70c3-1012-f037-b64c-e4228c38fb29
+            - generic "Click to inspect cell" [ref=e581]: "[\"Nano Drone X2\",\"Alpine Running Vest\",\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e582]: shipped
+            - generic "Click to inspect cell" [ref=e583]: "[\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e584]: "\"281.79\""
+            - generic "Click to inspect cell" [ref=e585]: 2025-08-21T00:00:00Z
+            - generic "Click to inspect cell" [ref=e586]: e258d268-4806-d26f-2740-1fa03c49fdbd
+          - generic [ref=e587] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e588]: GBP
+            - generic "Click to inspect cell" [ref=e589]: ae97ba94-d0ed-a82f-8f6d-05584ef8aa38
+            - generic "Click to inspect cell" [ref=e590]: "[\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e591]: delivered
+            - generic "Click to inspect cell" [ref=e592]: "[\"gift\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e593]: "\"69.05\""
+            - generic "Click to inspect cell" [ref=e594]: 2025-07-20T00:00:00Z
+            - generic "Click to inspect cell" [ref=e595]: 0059865a-0a1f-b43b-c6e0-673a8d2f29e7
+          - generic [ref=e596] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e597]: GBP
+            - generic "Click to inspect cell" [ref=e598]: 18f135d2-5f55-7203-3018-50c5a38fd547
+            - generic "Click to inspect cell" [ref=e599]: "[\"Alpine Running Vest\",\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e600]: pending
+            - generic "Click to inspect cell" [ref=e601]: "[\"bundle\",\"priority\"]"
+            - generic "Click to inspect cell" [ref=e602]: "\"273.73\""
+            - generic "Click to inspect cell" [ref=e603]: 2025-02-01T00:00:00Z
+            - generic "Click to inspect cell" [ref=e604]: e29aacea-f49c-9eba-6b91-1f9759f9bb79
+          - generic [ref=e605] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e606]: EUR
+            - generic "Click to inspect cell" [ref=e607]: 13deef86-ab10-31d0-f646-e1f40a097c97
+            - generic "Click to inspect cell" [ref=e608]: "[\"Merino Trail Jacket\",\"Ceramic Planter Set\",\"Nano Drone X2\"]"
+            - generic "Click to inspect cell" [ref=e609]: refunded
+            - generic "Click to inspect cell" [ref=e610]: "[\"gift\",\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e611]: "\"457.33\""
+            - generic "Click to inspect cell" [ref=e612]: 2025-02-23T00:00:00Z
+            - generic "Click to inspect cell" [ref=e613]: 02f04abf-a845-063a-03d6-1cbf951bcb26
+          - generic [ref=e614] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e615]: USD
+            - generic "Click to inspect cell" [ref=e616]: 4cdd2055-930d-6eaf-14f4-733f3e7d1bfb
+            - generic "Click to inspect cell" [ref=e617]: "[\"Merino Trail Jacket\",\"Cast Iron Skillet 12in\",\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e618]: pending
+            - generic "Click to inspect cell" [ref=e619]: "[\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e620]: "\"329.24\""
+            - generic "Click to inspect cell" [ref=e621]: 2025-05-22T00:00:00Z
+            - generic "Click to inspect cell" [ref=e622]: a2c81c32-4417-c530-0d72-cb97b630f005
+          - generic [ref=e623] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e624]: GBP
+            - generic "Click to inspect cell" [ref=e625]: 13deef86-ab10-31d0-f646-e1f40a097c97
+            - generic "Click to inspect cell" [ref=e626]: "[\"Alpine Running Vest\",\"Linen Throw Blanket\"]"
+            - generic "Click to inspect cell" [ref=e627]: delivered
+            - generic "Click to inspect cell" [ref=e628]: "[\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e629]: "\"108.73\""
+            - generic "Click to inspect cell" [ref=e630]: 2025-04-27T00:00:00Z
+            - generic "Click to inspect cell" [ref=e631]: f2ae556f-bdfa-ea88-690c-9bf857c52302
+          - generic [ref=e632] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e633]: EUR
+            - generic "Click to inspect cell" [ref=e634]: 0cb1e29c-658c-da14-95e6-0af593bd04cf
+            - generic "Click to inspect cell" [ref=e635]: "[\"Bamboo Cutting Board\",\"Aurora Wireless Headphones\",\"Ceramic Planter Set\"]"
+            - generic "Click to inspect cell" [ref=e636]: shipped
+            - generic "Click to inspect cell" [ref=e637]: "[\"gift\",\"priority\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e638]: "\"437.92\""
+            - generic "Click to inspect cell" [ref=e639]: 2025-05-03T00:00:00Z
+            - generic "Click to inspect cell" [ref=e640]: 13a5397f-61ef-7bd1-d874-bc797e736d5f
+          - generic [ref=e641] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e642]: USD
+            - generic "Click to inspect cell" [ref=e643]: b774eb52-48db-40af-7215-8370d269a9a5
+            - generic "Click to inspect cell" [ref=e644]: "[\"Bamboo Cutting Board\"]"
+            - generic "Click to inspect cell" [ref=e645]: refunded
+            - generic "Click to inspect cell" [ref=e646]: "[\"bundle\",\"gift\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e647]: "\"75.86\""
+            - generic "Click to inspect cell" [ref=e648]: 2025-05-11T00:00:00Z
+            - generic "Click to inspect cell" [ref=e649]: 57459cec-81fe-af2b-ce99-106f712e17f6
+          - generic [ref=e650] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e651]: USD
+            - generic "Click to inspect cell" [ref=e652]: 6b4cb242-4a23-d596-2217-beaddbc496cb
+            - generic "Click to inspect cell" [ref=e653]: "[\"Nano Drone X2\",\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e654]: delivered
+            - generic "Click to inspect cell" [ref=e655]: "[\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e656]: "\"267.45\""
+            - generic "Click to inspect cell" [ref=e657]: 2025-02-05T00:00:00Z
+            - generic "Click to inspect cell" [ref=e658]: 6d6b987a-7330-9b95-c25e-114fff18fe33
+          - generic [ref=e659] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e660]: EUR
+            - generic "Click to inspect cell" [ref=e661]: 907a70c3-1012-f037-b64c-e4228c38fb29
+            - generic "Click to inspect cell" [ref=e662]: "[\"Smart Home Hub v3\",\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e663]: pending
+            - generic "Click to inspect cell" [ref=e664]: "[\"bundle\",\"gift\"]"
+            - generic "Click to inspect cell" [ref=e665]: "\"466.89\""
+            - generic "Click to inspect cell" [ref=e666]: 2025-07-01T00:00:00Z
+            - generic "Click to inspect cell" [ref=e667]: fd09e37c-7f9c-1321-6bca-9b3f18af266c
+          - generic [ref=e668] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e669]: EUR
+            - generic "Click to inspect cell" [ref=e670]: c6f87718-6d76-b07e-881e-d162ae2eb154
+            - generic "Click to inspect cell" [ref=e671]: "[\"Cast Iron Skillet 12in\",\"Alpine Running Vest\",\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e672]: delivered
+            - generic "Click to inspect cell" [ref=e673]: "[\"bundle\",\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e674]: "\"409.03\""
+            - generic "Click to inspect cell" [ref=e675]: 2025-05-21T00:00:00Z
+            - generic "Click to inspect cell" [ref=e676]: 74aaf340-997a-20be-63cc-537b1e239eb4
+          - generic [ref=e677] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e678]: GBP
+            - generic "Click to inspect cell" [ref=e679]: ec66a787-95e7-61d1-7731-af10506bf2ef
+            - generic "Click to inspect cell" [ref=e680]: "[\"Linen Throw Blanket\",\"Linen Throw Blanket\",\"Cast Iron Skillet 12in\",\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e681]: pending
+            - generic "Click to inspect cell" [ref=e682]: "[\"gift\"]"
+            - generic "Click to inspect cell" [ref=e683]: "\"53.1\""
+            - generic "Click to inspect cell" [ref=e684]: 2025-04-04T00:00:00Z
+            - generic "Click to inspect cell" [ref=e685]: 6e3bbc97-5bcb-9370-20e2-7c17112ed1df
+          - generic [ref=e686] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e687]: EUR
+            - generic "Click to inspect cell" [ref=e688]: 5affb229-7631-a992-f0ce-583505c6af07
+            - generic "Click to inspect cell" [ref=e689]: "[\"Espresso Tamper Pro\",\"Alpine Running Vest\",\"Ceramic Planter Set\",\"Ceramic Planter Set\"]"
+            - generic "Click to inspect cell" [ref=e690]: delivered
+            - generic "Click to inspect cell" [ref=e691]: "[\"bundle\",\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e692]: "\"18.69\""
+            - generic "Click to inspect cell" [ref=e693]: 2025-07-31T00:00:00Z
+            - generic "Click to inspect cell" [ref=e694]: f2bcde3d-2a11-131c-6588-6209bf1fc521
+          - generic [ref=e695] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e696]: USD
+            - generic "Click to inspect cell" [ref=e697]: 36f675cc-81e7-4ef5-e8e2-5d940ed90475
+            - generic "Click to inspect cell" [ref=e698]: "[\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e699]: pending
+            - generic "Click to inspect cell" [ref=e700]: "[\"bundle\",\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e701]: "\"66.55\""
+            - generic "Click to inspect cell" [ref=e702]: 2025-07-05T00:00:00Z
+            - generic "Click to inspect cell" [ref=e703]: 9e7d6b37-7936-d536-243d-35702c1eea1f
+          - generic [ref=e704] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e705]: GBP
+            - generic "Click to inspect cell" [ref=e706]: c6f87718-6d76-b07e-881e-d162ae2eb154
+            - generic "Click to inspect cell" [ref=e707]: "[\"Bamboo Cutting Board\",\"4K Action Camera Pro\",\"4K Action Camera Pro\",\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e708]: shipped
+            - generic "Click to inspect cell" [ref=e709]: "[\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e710]: "\"424.93\""
+            - generic "Click to inspect cell" [ref=e711]: 2025-05-28T00:00:00Z
+            - generic "Click to inspect cell" [ref=e712]: 67fde1c3-172a-390a-d203-acfe1d10e931
+          - generic [ref=e713] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e714]: GBP
+            - generic "Click to inspect cell" [ref=e715]: 3f98e277-4cbd-87ad-5c90-a9587403e430
+            - generic "Click to inspect cell" [ref=e716]: "[\"Linen Throw Blanket\",\"Cast Iron Skillet 12in\",\"Alpine Running Vest\"]"
+            - generic "Click to inspect cell" [ref=e717]: delivered
+            - generic "Click to inspect cell" [ref=e718]: "[\"gift\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e719]: "\"431.17\""
+            - generic "Click to inspect cell" [ref=e720]: 2025-08-14T00:00:00Z
+            - generic "Click to inspect cell" [ref=e721]: b050864e-947d-be2d-857d-e96d8e2048dc
+          - generic [ref=e722] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e723]: EUR
+            - generic "Click to inspect cell" [ref=e724]: 8e81973e-0bec-d7b0-3898-d190f9ebdacc
+            - generic "Click to inspect cell" [ref=e725]: "[\"Alpine Running Vest\"]"
+            - generic "Click to inspect cell" [ref=e726]: delivered
+            - generic "Click to inspect cell" [ref=e727]: "[\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e728]: "\"129.0\""
+            - generic "Click to inspect cell" [ref=e729]: 2025-03-16T00:00:00Z
+            - generic "Click to inspect cell" [ref=e730]: bd6a996d-e6cd-10f1-0300-3005b688b661
+          - generic [ref=e731] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e732]: GBP
+            - generic "Click to inspect cell" [ref=e733]: 451abd81-f1d6-9ed6-17f5-e837d70820fe
+            - generic "Click to inspect cell" [ref=e734]: "[\"Smart Home Hub v3\",\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e735]: delivered
+            - generic "Click to inspect cell" [ref=e736]: "[\"priority\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e737]: "\"376.43\""
+            - generic "Click to inspect cell" [ref=e738]: 2025-04-14T00:00:00Z
+            - generic "Click to inspect cell" [ref=e739]: 5be04057-907e-897c-93ef-07045ce22657
+          - generic [ref=e740] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e741]: USD
+            - generic "Click to inspect cell" [ref=e742]: 0fd630f1-f29d-0da9-953f-48f1a09f76b5
+            - generic "Click to inspect cell" [ref=e743]: "[\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e744]: pending
+            - generic "Click to inspect cell" [ref=e745]: "[\"bundle\",\"priority\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e746]: "\"71.01\""
+            - generic "Click to inspect cell" [ref=e747]: 2025-08-03T00:00:00Z
+            - generic "Click to inspect cell" [ref=e748]: 0dec6823-fb5c-9d56-58f9-2deafd4bd030
+          - generic [ref=e749] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e750]: GBP
+            - generic "Click to inspect cell" [ref=e751]: 6bf46c69-7d2c-af82-eeea-cbe226e87555
+            - generic "Click to inspect cell" [ref=e752]: "[\"Ceramic Planter Set\"]"
+            - generic "Click to inspect cell" [ref=e753]: refunded
+            - generic "Click to inspect cell" [ref=e754]: "[\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e755]: "\"254.03\""
+            - generic "Click to inspect cell" [ref=e756]: 2025-02-21T00:00:00Z
+            - generic "Click to inspect cell" [ref=e757]: f0ca5b41-f38a-1e14-c823-802fb759efcf
+          - generic [ref=e758] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e759]: USD
+            - generic "Click to inspect cell" [ref=e760]: 923a7369-94e3-bf91-1a61-dbe22e44158b
+            - generic "Click to inspect cell" [ref=e761]: "[\"Stainless Pour-Over Kit\",\"Linen Throw Blanket\"]"
+            - generic "Click to inspect cell" [ref=e762]: shipped
+            - generic "Click to inspect cell" [ref=e763]: "[\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e764]: "\"312.95\""
+            - generic "Click to inspect cell" [ref=e765]: 2025-03-22T00:00:00Z
+            - generic "Click to inspect cell" [ref=e766]: f57d1709-4752-9194-75ef-d233ff125eb4
+          - generic [ref=e767] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e768]: EUR
+            - generic "Click to inspect cell" [ref=e769]: 7f26144b-9828-9fcd-59a5-4a7bb1fee08f
+            - generic "Click to inspect cell" [ref=e770]: "[\"Aurora Wireless Headphones\",\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e771]: refunded
+            - generic "Click to inspect cell" [ref=e772]: "[\"gift\",\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e773]: "\"123.86\""
+            - generic "Click to inspect cell" [ref=e774]: 2025-05-26T00:00:00Z
+            - generic "Click to inspect cell" [ref=e775]: b82763ba-4683-9f5b-048d-09c878eabc3a
+          - generic [ref=e776] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e777]: GBP
+            - generic "Click to inspect cell" [ref=e778]: 36f675cc-81e7-4ef5-e8e2-5d940ed90475
+            - generic "Click to inspect cell" [ref=e779]: "[\"Aurora Wireless Headphones\",\"Espresso Tamper Pro\"]"
+            - generic "Click to inspect cell" [ref=e780]: shipped
+            - generic "Click to inspect cell" [ref=e781]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e782]: "\"265.84\""
+            - generic "Click to inspect cell" [ref=e783]: 2025-03-08T00:00:00Z
+            - generic "Click to inspect cell" [ref=e784]: 53740902-9620-bf0d-c380-84a03d93fd4c
+          - generic [ref=e785] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e786]: EUR
+            - generic "Click to inspect cell" [ref=e787]: ca02135e-92b1-d3f2-8ede-0d7ac3baea9e
+            - generic "Click to inspect cell" [ref=e788]: "[\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e789]: delivered
+            - generic "Click to inspect cell" [ref=e790]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e791]: "\"263.58\""
+            - generic "Click to inspect cell" [ref=e792]: 2025-02-12T00:00:00Z
+            - generic "Click to inspect cell" [ref=e793]: 7f8870a9-3f1e-fd5b-7dca-9202b34ed4fa
+          - generic [ref=e794] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e795]: USD
+            - generic "Click to inspect cell" [ref=e796]: 8e81973e-0bec-d7b0-3898-d190f9ebdacc
+            - generic "Click to inspect cell" [ref=e797]: "[\"Aurora Wireless Headphones\",\"Bamboo Cutting Board\",\"Bamboo Cutting Board\",\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e798]: pending
+            - generic "Click to inspect cell" [ref=e799]: "[\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e800]: "\"379.01\""
+            - generic "Click to inspect cell" [ref=e801]: 2025-04-06T00:00:00Z
+            - generic "Click to inspect cell" [ref=e802]: c5ef5cfb-3099-f271-50cb-407a82ce786f
+          - generic [ref=e803] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e804]: USD
+            - generic "Click to inspect cell" [ref=e805]: 6513270e-269e-0d37-f2a7-4de452e6b438
+            - generic "Click to inspect cell" [ref=e806]: "[\"Espresso Tamper Pro\",\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e807]: pending
+            - generic "Click to inspect cell" [ref=e808]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e809]: "\"371.07\""
+            - generic "Click to inspect cell" [ref=e810]: 2025-02-25T00:00:00Z
+            - generic "Click to inspect cell" [ref=e811]: 0f17a300-7e62-aa0a-1df9-fd789c653938
+          - generic [ref=e812] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e813]: USD
+            - generic "Click to inspect cell" [ref=e814]: 6513270e-269e-0d37-f2a7-4de452e6b438
+            - generic "Click to inspect cell" [ref=e815]: "[\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e816]: pending
+            - generic "Click to inspect cell" [ref=e817]: "[\"gift\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e818]: "\"319.5\""
+            - generic "Click to inspect cell" [ref=e819]: 2025-03-01T00:00:00Z
+            - generic "Click to inspect cell" [ref=e820]: 26bb7dbd-2d1c-9af0-153e-7c2a26a2c0bd
+          - generic [ref=e821] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e822]: USD
+            - generic "Click to inspect cell" [ref=e823]: 830e07bc-1e39-8f10-12bd-4acefaecbd38
+            - generic "Click to inspect cell" [ref=e824]: "[\"4K Action Camera Pro\",\"Smart Home Hub v3\",\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e825]: pending
+            - generic "Click to inspect cell" [ref=e826]: "[\"sale\"]"
+            - generic "Click to inspect cell" [ref=e827]: "\"349.88\""
+            - generic "Click to inspect cell" [ref=e828]: 2025-03-05T00:00:00Z
+            - generic "Click to inspect cell" [ref=e829]: f98a5a34-27ee-ae0a-b92c-8dec27937e85
+          - generic [ref=e830] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e831]: EUR
+            - generic "Click to inspect cell" [ref=e832]: 7f26144b-9828-9fcd-59a5-4a7bb1fee08f
+            - generic "Click to inspect cell" [ref=e833]: "[\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e834]: pending
+            - generic "Click to inspect cell" [ref=e835]: "[\"bundle\"]"
+            - generic "Click to inspect cell" [ref=e836]: "\"96.84\""
+            - generic "Click to inspect cell" [ref=e837]: 2025-03-19T00:00:00Z
+            - generic "Click to inspect cell" [ref=e838]: dcc98e43-420c-7738-b5cb-42f68fe5e1ab
+          - generic [ref=e839] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e840]: GBP
+            - generic "Click to inspect cell" [ref=e841]: 8d116ece-1738-f7d9-3d9c-172411e20b8f
+            - generic "Click to inspect cell" [ref=e842]: "[\"Alpine Running Vest\",\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e843]: refunded
+            - generic "Click to inspect cell" [ref=e844]: "[\"bundle\",\"gift\"]"
+            - generic "Click to inspect cell" [ref=e845]: "\"95.32\""
+            - generic "Click to inspect cell" [ref=e846]: 2025-07-19T00:00:00Z
+            - generic "Click to inspect cell" [ref=e847]: e7e8f9f6-0a22-7385-459c-945c43fc0527
+          - generic [ref=e848] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e849]: USD
+            - generic "Click to inspect cell" [ref=e850]: 5affb229-7631-a992-f0ce-583505c6af07
+            - generic "Click to inspect cell" [ref=e851]: "[\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e852]: shipped
+            - generic "Click to inspect cell" [ref=e853]: "[\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e854]: "\"419.13\""
+            - generic "Click to inspect cell" [ref=e855]: 2025-03-05T00:00:00Z
+            - generic "Click to inspect cell" [ref=e856]: 5a79b902-ef30-7307-ae1f-39d7f53660b9
+          - generic [ref=e857] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e858]: USD
+            - generic "Click to inspect cell" [ref=e859]: 5790f82e-c1d3-fcff-2a3a-f4d46b0a18e8
+            - generic "Click to inspect cell" [ref=e860]: "[\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e861]: refunded
+            - generic "Click to inspect cell" [ref=e862]: "[\"bundle\"]"
+            - generic "Click to inspect cell" [ref=e863]: "\"61.35\""
+            - generic "Click to inspect cell" [ref=e864]: 2025-02-20T00:00:00Z
+            - generic "Click to inspect cell" [ref=e865]: 46191aa0-6f57-1d36-4c22-b1f4bbb91047
+          - generic [ref=e866] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e867]: GBP
+            - generic "Click to inspect cell" [ref=e868]: 58d5563d-ab2c-d31e-e315-128862c33a4f
+            - generic "Click to inspect cell" [ref=e869]: "[\"Ceramic Planter Set\",\"Bamboo Cutting Board\",\"Aurora Wireless Headphones\",\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e870]: refunded
+            - generic "Click to inspect cell" [ref=e871]: "[\"bundle\"]"
+            - generic "Click to inspect cell" [ref=e872]: "\"376.19\""
+            - generic "Click to inspect cell" [ref=e873]: 2025-03-24T00:00:00Z
+            - generic "Click to inspect cell" [ref=e874]: e99c7e50-dd8f-90d5-d47d-d7c2d10878d0
+          - generic [ref=e875] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e876]: GBP
+            - generic "Click to inspect cell" [ref=e877]: 907a70c3-1012-f037-b64c-e4228c38fb29
+            - generic "Click to inspect cell" [ref=e878]: "[\"Canvas Weekender Bag\",\"Aurora Wireless Headphones\",\"Merino Trail Jacket\",\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e879]: shipped
+            - generic "Click to inspect cell" [ref=e880]: "[\"priority\"]"
+            - generic "Click to inspect cell" [ref=e881]: "\"118.62\""
+            - generic "Click to inspect cell" [ref=e882]: 2025-07-29T00:00:00Z
+            - generic "Click to inspect cell" [ref=e883]: e200d218-798a-0d59-0126-64f61a327537
+          - generic [ref=e884] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e885]: EUR
+            - generic "Click to inspect cell" [ref=e886]: 907a70c3-1012-f037-b64c-e4228c38fb29
+            - generic "Click to inspect cell" [ref=e887]: "[\"Smart Home Hub v3\",\"Aurora Wireless Headphones\",\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e888]: shipped
+            - generic "Click to inspect cell" [ref=e889]: "[\"gift\",\"priority\"]"
+            - generic "Click to inspect cell" [ref=e890]: "\"343.56\""
+            - generic "Click to inspect cell" [ref=e891]: 2025-06-02T00:00:00Z
+            - generic "Click to inspect cell" [ref=e892]: a33066bd-1b14-66f6-019f-7781f2198825
+          - generic [ref=e893] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e894]: GBP
+            - generic "Click to inspect cell" [ref=e895]: 0fd630f1-f29d-0da9-953f-48f1a09f76b5
+            - generic "Click to inspect cell" [ref=e896]: "[\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e897]: refunded
+            - generic "Click to inspect cell" [ref=e898]: "[\"bundle\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e899]: "\"449.28\""
+            - generic "Click to inspect cell" [ref=e900]: 2025-03-04T00:00:00Z
+            - generic "Click to inspect cell" [ref=e901]: 7989e9d0-83a4-e629-3080-3889fa619774
+          - generic [ref=e902] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e903]: USD
+            - generic "Click to inspect cell" [ref=e904]: 6b4cb242-4a23-d596-2217-beaddbc496cb
+            - generic "Click to inspect cell" [ref=e905]: "[\"Alpine Running Vest\",\"Cast Iron Skillet 12in\",\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e906]: pending
+            - generic "Click to inspect cell" [ref=e907]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e908]: "\"468.86\""
+            - generic "Click to inspect cell" [ref=e909]: 2025-07-09T00:00:00Z
+            - generic "Click to inspect cell" [ref=e910]: bd313bee-4178-5bc6-4c3a-c6fc48208231
+          - generic [ref=e911] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e912]: USD
+            - generic "Click to inspect cell" [ref=e913]: 10a3d6b2-aa05-e11a-b271-5945795e8229
+            - generic "Click to inspect cell" [ref=e914]: "[\"Bamboo Cutting Board\",\"Cast Iron Skillet 12in\",\"Nano Drone X2\",\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e915]: refunded
+            - generic "Click to inspect cell" [ref=e916]: "[\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e917]: "\"287.2\""
+            - generic "Click to inspect cell" [ref=e918]: 2025-03-18T00:00:00Z
+            - generic "Click to inspect cell" [ref=e919]: bf8b90fa-ad48-9bce-32ee-7f64f07b3e87
+          - generic [ref=e920] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e921]: USD
+            - generic "Click to inspect cell" [ref=e922]: 3f98e277-4cbd-87ad-5c90-a9587403e430
+            - generic "Click to inspect cell" [ref=e923]: "[\"Cast Iron Skillet 12in\",\"Ceramic Planter Set\",\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e924]: shipped
+            - generic "Click to inspect cell" [ref=e925]: "[\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e926]: "\"252.57\""
+            - generic "Click to inspect cell" [ref=e927]: 2025-07-29T00:00:00Z
+            - generic "Click to inspect cell" [ref=e928]: 4bdfc851-0c5c-d43b-f53e-2c38be5c3931
+          - generic [ref=e929] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e930]: USD
+            - generic "Click to inspect cell" [ref=e931]: 923a7369-94e3-bf91-1a61-dbe22e44158b
+            - generic "Click to inspect cell" [ref=e932]: "[\"Cast Iron Skillet 12in\",\"Alpine Running Vest\",\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e933]: pending
+            - generic "Click to inspect cell" [ref=e934]: "[\"sale\"]"
+            - generic "Click to inspect cell" [ref=e935]: "\"347.61\""
+            - generic "Click to inspect cell" [ref=e936]: 2025-03-28T00:00:00Z
+            - generic "Click to inspect cell" [ref=e937]: b2217139-08ba-9bd9-7e31-8ad63a0ea6e1
+          - generic [ref=e938] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e939]: GBP
+            - generic "Click to inspect cell" [ref=e940]: 9be4bcfc-49b6-4a08-72e6-cc3ababced20
+            - generic "Click to inspect cell" [ref=e941]: "[\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e942]: delivered
+            - generic "Click to inspect cell" [ref=e943]: "[\"bundle\",\"gift\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e944]: "\"173.46\""
+            - generic "Click to inspect cell" [ref=e945]: 2025-01-02T00:00:00Z
+            - generic "Click to inspect cell" [ref=e946]: 0dd09e51-fa55-6835-c021-fa1bc31e4b97
+          - generic [ref=e947] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e948]: EUR
+            - generic "Click to inspect cell" [ref=e949]: 923a7369-94e3-bf91-1a61-dbe22e44158b
+            - generic "Click to inspect cell" [ref=e950]: "[\"Alpine Running Vest\",\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e951]: shipped
+            - generic "Click to inspect cell" [ref=e952]: "[\"priority\"]"
+            - generic "Click to inspect cell" [ref=e953]: "\"455.92\""
+            - generic "Click to inspect cell" [ref=e954]: 2025-01-15T00:00:00Z
+            - generic "Click to inspect cell" [ref=e955]: aa50b96f-e90f-b651-6ac2-6ae07c2c6a87
+          - generic [ref=e956] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e957]: USD
+            - generic "Click to inspect cell" [ref=e958]: 57ee05cd-e009-02c7-7ebf-f20686734721
+            - generic "Click to inspect cell" [ref=e959]: "[\"Bamboo Cutting Board\"]"
+            - generic "Click to inspect cell" [ref=e960]: shipped
+            - generic "Click to inspect cell" [ref=e961]: "[\"bundle\",\"priority\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e962]: "\"428.9\""
+            - generic "Click to inspect cell" [ref=e963]: 2025-05-17T00:00:00Z
+            - generic "Click to inspect cell" [ref=e964]: d1cee715-f45e-af1c-d14b-b7f533061fbc
+          - generic [ref=e965] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e966]: EUR
+            - generic "Click to inspect cell" [ref=e967]: 5790f82e-c1d3-fcff-2a3a-f4d46b0a18e8
+            - generic "Click to inspect cell" [ref=e968]: "[\"Cast Iron Skillet 12in\",\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e969]: delivered
+            - generic "Click to inspect cell" [ref=e970]: "[\"bundle\",\"gift\",\"priority\"]"
+            - generic "Click to inspect cell" [ref=e971]: "\"373.8\""
+            - generic "Click to inspect cell" [ref=e972]: 2025-08-13T00:00:00Z
+            - generic "Click to inspect cell" [ref=e973]: e14cbde5-a709-4548-b8e3-621baafb3717
+          - generic [ref=e974] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e975]: EUR
+            - generic "Click to inspect cell" [ref=e976]: c6f87718-6d76-b07e-881e-d162ae2eb154
+            - generic "Click to inspect cell" [ref=e977]: "[\"Cast Iron Skillet 12in\",\"Merino Trail Jacket\",\"Alpine Running Vest\"]"
+            - generic "Click to inspect cell" [ref=e978]: delivered
+            - generic "Click to inspect cell" [ref=e979]: "[\"sale\"]"
+            - generic "Click to inspect cell" [ref=e980]: "\"137.44\""
+            - generic "Click to inspect cell" [ref=e981]: 2025-06-28T00:00:00Z
+            - generic "Click to inspect cell" [ref=e982]: 65d464fd-29e7-8b06-a72e-d5081755c6de
+          - generic [ref=e983] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e984]: EUR
+            - generic "Click to inspect cell" [ref=e985]: 7f150524-34b9-b5df-9e77-69b10f4205b4
+            - generic "Click to inspect cell" [ref=e986]: "[\"Nano Drone X2\",\"Smart Home Hub v3\",\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e987]: pending
+            - generic "Click to inspect cell" [ref=e988]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e989]: "\"97.01\""
+            - generic "Click to inspect cell" [ref=e990]: 2025-04-06T00:00:00Z
+            - generic "Click to inspect cell" [ref=e991]: ada65cc4-68b3-e3aa-53c6-9b0ad19f0be9
+          - generic [ref=e992] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e993]: USD
+            - generic "Click to inspect cell" [ref=e994]: ca02135e-92b1-d3f2-8ede-0d7ac3baea9e
+            - generic "Click to inspect cell" [ref=e995]: "[\"Alpine Running Vest\",\"Canvas Weekender Bag\",\"Linen Throw Blanket\",\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e996]: refunded
+            - generic "Click to inspect cell" [ref=e997]: "[\"gift\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e998]: "\"147.65\""
+            - generic "Click to inspect cell" [ref=e999]: 2025-03-16T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1000]: d3a43d90-0d7f-139b-8dd4-c0f740670507
+          - generic [ref=e1001] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1002]: EUR
+            - generic "Click to inspect cell" [ref=e1003]: 18f135d2-5f55-7203-3018-50c5a38fd547
+            - generic "Click to inspect cell" [ref=e1004]: "[\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e1005]: delivered
+            - generic "Click to inspect cell" [ref=e1006]: "[\"priority\"]"
+            - generic "Click to inspect cell" [ref=e1007]: "\"387.57\""
+            - generic "Click to inspect cell" [ref=e1008]: 2025-01-17T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1009]: 76cc0573-08ec-379a-6025-33dc0a68013d
+          - generic [ref=e1010] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1011]: EUR
+            - generic "Click to inspect cell" [ref=e1012]: a170b338-3926-3059-f28c-105d1fb17c23
+            - generic "Click to inspect cell" [ref=e1013]: "[\"Merino Trail Jacket\",\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e1014]: pending
+            - generic "Click to inspect cell" [ref=e1015]: "[\"gift\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1016]: "\"153.35\""
+            - generic "Click to inspect cell" [ref=e1017]: 2025-06-10T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1018]: 4fdebbec-eea7-bb64-33a7-15682e5f950c
+          - generic [ref=e1019] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1020]: GBP
+            - generic "Click to inspect cell" [ref=e1021]: ca02135e-92b1-d3f2-8ede-0d7ac3baea9e
+            - generic "Click to inspect cell" [ref=e1022]: "[\"Smart Home Hub v3\",\"Stainless Pour-Over Kit\",\"Espresso Tamper Pro\"]"
+            - generic "Click to inspect cell" [ref=e1023]: pending
+            - generic "Click to inspect cell" [ref=e1024]: "[\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1025]: "\"430.14\""
+            - generic "Click to inspect cell" [ref=e1026]: 2025-08-19T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1027]: ab200eff-1724-d5b3-c802-0ffdfa281648
+          - generic [ref=e1028] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1029]: USD
+            - generic "Click to inspect cell" [ref=e1030]: 0fd630f1-f29d-0da9-953f-48f1a09f76b5
+            - generic "Click to inspect cell" [ref=e1031]: "[\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e1032]: shipped
+            - generic "Click to inspect cell" [ref=e1033]: "[\"sale\"]"
+            - generic "Click to inspect cell" [ref=e1034]: "\"162.05\""
+            - generic "Click to inspect cell" [ref=e1035]: 2025-05-21T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1036]: f8fdd208-5434-8156-f637-a4685d385e06
+          - generic [ref=e1037] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1038]: GBP
+            - generic "Click to inspect cell" [ref=e1039]: 36f675cc-81e7-4ef5-e8e2-5d940ed90475
+            - generic "Click to inspect cell" [ref=e1040]: "[\"Espresso Tamper Pro\",\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e1041]: shipped
+            - generic "Click to inspect cell" [ref=e1042]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1043]: "\"163.03\""
+            - generic "Click to inspect cell" [ref=e1044]: 2025-04-24T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1045]: 1038f0b5-e998-d0ee-e4dd-f9b9c28ee907
+          - generic [ref=e1046] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1047]: EUR
+            - generic "Click to inspect cell" [ref=e1048]: 119a72d1-74c9-df6a-cc01-1cdd9474031b
+            - generic "Click to inspect cell" [ref=e1049]: "[\"Bamboo Cutting Board\",\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e1050]: delivered
+            - generic "Click to inspect cell" [ref=e1051]: "[\"priority\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e1052]: "\"372.58\""
+            - generic "Click to inspect cell" [ref=e1053]: 2025-06-04T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1054]: 604ea2ff-af50-7de3-6329-cfd3606de4eb
+          - generic [ref=e1055] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1056]: GBP
+            - generic "Click to inspect cell" [ref=e1057]: 90c192cf-d3ac-94af-0f21-ddb66cad4a26
+            - generic "Click to inspect cell" [ref=e1058]: "[\"Nano Drone X2\",\"Stainless Pour-Over Kit\",\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e1059]: delivered
+            - generic "Click to inspect cell" [ref=e1060]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1061]: "\"114.52\""
+            - generic "Click to inspect cell" [ref=e1062]: 2025-08-08T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1063]: 9bb183e1-1570-266b-42b3-8755cd37880e
+          - generic [ref=e1064] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1065]: USD
+            - generic "Click to inspect cell" [ref=e1066]: 451abd81-f1d6-9ed6-17f5-e837d70820fe
+            - generic "Click to inspect cell" [ref=e1067]: "[\"Stainless Pour-Over Kit\",\"Linen Throw Blanket\",\"Ceramic Planter Set\"]"
+            - generic "Click to inspect cell" [ref=e1068]: shipped
+            - generic "Click to inspect cell" [ref=e1069]: "[\"gift\"]"
+            - generic "Click to inspect cell" [ref=e1070]: "\"401.66\""
+            - generic "Click to inspect cell" [ref=e1071]: 2025-08-15T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1072]: 42715046-e59d-2552-8562-da19946009c1
+          - generic [ref=e1073] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1074]: EUR
+            - generic "Click to inspect cell" [ref=e1075]: 8e81973e-0bec-d7b0-3898-d190f9ebdacc
+            - generic "Click to inspect cell" [ref=e1076]: "[\"Aurora Wireless Headphones\",\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e1077]: shipped
+            - generic "Click to inspect cell" [ref=e1078]: "[\"bundle\",\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1079]: "\"195.21\""
+            - generic "Click to inspect cell" [ref=e1080]: 2025-05-05T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1081]: e04b0dce-e5d0-0a4d-7f75-95b53b3bf4bf
+          - generic [ref=e1082] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1083]: GBP
+            - generic "Click to inspect cell" [ref=e1084]: 18f135d2-5f55-7203-3018-50c5a38fd547
+            - generic "Click to inspect cell" [ref=e1085]: "[\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e1086]: refunded
+            - generic "Click to inspect cell" [ref=e1087]: "[\"priority\"]"
+            - generic "Click to inspect cell" [ref=e1088]: "\"440.74\""
+            - generic "Click to inspect cell" [ref=e1089]: 2025-06-02T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1090]: c1726f06-b8b8-f270-00f7-2d3c4c22cab7
+          - generic [ref=e1091] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1092]: EUR
+            - generic "Click to inspect cell" [ref=e1093]: 13deef86-ab10-31d0-f646-e1f40a097c97
+            - generic "Click to inspect cell" [ref=e1094]: "[\"4K Action Camera Pro\",\"Canvas Weekender Bag\"]"
+            - generic "Click to inspect cell" [ref=e1095]: shipped
+            - generic "Click to inspect cell" [ref=e1096]: "[\"bundle\",\"gift\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1097]: "\"311.83\""
+            - generic "Click to inspect cell" [ref=e1098]: 2025-05-01T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1099]: 3173b8d9-a261-621f-cc63-858acf402339
+          - generic [ref=e1100] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1101]: GBP
+            - generic "Click to inspect cell" [ref=e1102]: 4cdd2055-930d-6eaf-14f4-733f3e7d1bfb
+            - generic "Click to inspect cell" [ref=e1103]: "[\"Stainless Pour-Over Kit\",\"Linen Throw Blanket\",\"Espresso Tamper Pro\",\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e1104]: shipped
+            - generic "Click to inspect cell" [ref=e1105]: "[\"bundle\"]"
+            - generic "Click to inspect cell" [ref=e1106]: "\"306.42\""
+            - generic "Click to inspect cell" [ref=e1107]: 2025-08-07T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1108]: e85666f3-6123-90ba-3d3a-190299ea4514
+          - generic [ref=e1109] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1110]: EUR
+            - generic "Click to inspect cell" [ref=e1111]: ae658f33-fe3b-890b-93f4-48b3a5aa3c81
+            - generic "Click to inspect cell" [ref=e1112]: "[\"Linen Throw Blanket\",\"Stainless Pour-Over Kit\"]"
+            - generic "Click to inspect cell" [ref=e1113]: shipped
+            - generic "Click to inspect cell" [ref=e1114]: "[\"priority\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e1115]: "\"36.71\""
+            - generic "Click to inspect cell" [ref=e1116]: 2025-05-12T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1117]: 2743314b-1d3a-2005-7b80-f213e7360861
+          - generic [ref=e1118] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1119]: EUR
+            - generic "Click to inspect cell" [ref=e1120]: 0cb1e29c-658c-da14-95e6-0af593bd04cf
+            - generic "Click to inspect cell" [ref=e1121]: "[\"Cast Iron Skillet 12in\"]"
+            - generic "Click to inspect cell" [ref=e1122]: pending
+            - generic "Click to inspect cell" [ref=e1123]: "[\"bundle\",\"gift\",\"priority\"]"
+            - generic "Click to inspect cell" [ref=e1124]: "\"361.68\""
+            - generic "Click to inspect cell" [ref=e1125]: 2025-01-18T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1126]: cc35e834-74fa-9412-00d9-35344387ee7b
+          - generic [ref=e1127] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1128]: GBP
+            - generic "Click to inspect cell" [ref=e1129]: d23f0824-128b-2f33-0c5c-7fd0a6a3a450
+            - generic "Click to inspect cell" [ref=e1130]: "[\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e1131]: pending
+            - generic "Click to inspect cell" [ref=e1132]: "[\"gift\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1133]: "\"335.26\""
+            - generic "Click to inspect cell" [ref=e1134]: 2025-08-01T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1135]: 7a86f7a2-43c7-1b9a-bd87-a86557b6fb7e
+          - generic [ref=e1136] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1137]: GBP
+            - generic "Click to inspect cell" [ref=e1138]: 5affb229-7631-a992-f0ce-583505c6af07
+            - generic "Click to inspect cell" [ref=e1139]: "[\"Aurora Wireless Headphones\"]"
+            - generic "Click to inspect cell" [ref=e1140]: delivered
+            - generic "Click to inspect cell" [ref=e1141]: "[\"bundle\",\"sale\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1142]: "\"467.45\""
+            - generic "Click to inspect cell" [ref=e1143]: 2025-08-15T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1144]: faedbed1-cf2c-39e4-0bf8-95d7a21a2672
+          - generic [ref=e1145] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1146]: USD
+            - generic "Click to inspect cell" [ref=e1147]: 907a70c3-1012-f037-b64c-e4228c38fb29
+            - generic "Click to inspect cell" [ref=e1148]: "[\"Linen Throw Blanket\"]"
+            - generic "Click to inspect cell" [ref=e1149]: shipped
+            - generic "Click to inspect cell" [ref=e1150]: "[\"bundle\"]"
+            - generic "Click to inspect cell" [ref=e1151]: "\"180.07\""
+            - generic "Click to inspect cell" [ref=e1152]: 2025-04-28T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1153]: 51cdf2f9-dc7a-615d-53ea-b0313c73d5f4
+          - generic [ref=e1154] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1155]: GBP
+            - generic "Click to inspect cell" [ref=e1156]: 58d5563d-ab2c-d31e-e315-128862c33a4f
+            - generic "Click to inspect cell" [ref=e1157]: "[\"4K Action Camera Pro\"]"
+            - generic "Click to inspect cell" [ref=e1158]: refunded
+            - generic "Click to inspect cell" [ref=e1159]: "[\"gift\",\"priority\",\"sale\"]"
+            - generic "Click to inspect cell" [ref=e1160]: "\"473.29\""
+            - generic "Click to inspect cell" [ref=e1161]: 2025-08-01T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1162]: 90292165-2fa1-1d65-3f93-3587442995fa
+          - generic [ref=e1163] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1164]: GBP
+            - generic "Click to inspect cell" [ref=e1165]: 0cb1e29c-658c-da14-95e6-0af593bd04cf
+            - generic "Click to inspect cell" [ref=e1166]: "[\"Espresso Tamper Pro\",\"Linen Throw Blanket\",\"Merino Trail Jacket\"]"
+            - generic "Click to inspect cell" [ref=e1167]: pending
+            - generic "Click to inspect cell" [ref=e1168]: "[\"bundle\",\"wholesale\"]"
+            - generic "Click to inspect cell" [ref=e1169]: "\"327.58\""
+            - generic "Click to inspect cell" [ref=e1170]: 2025-02-25T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1171]: b1330c3f-197a-14e2-ac08-4ba5f8f659ac
+          - generic [ref=e1172] [cursor=pointer]:
+            - generic "Click to inspect cell" [ref=e1173]: USD
+            - generic "Click to inspect cell" [ref=e1174]: d23f0824-128b-2f33-0c5c-7fd0a6a3a450
+            - generic "Click to inspect cell" [ref=e1175]: "[\"Canvas Weekender Bag\",\"Nano Drone X2\",\"Smart Home Hub v3\"]"
+            - generic "Click to inspect cell" [ref=e1176]: refunded
+            - generic "Click to inspect cell" [ref=e1177]: "[\"gift\"]"
+            - generic "Click to inspect cell" [ref=e1178]: "\"220.19\""
+            - generic "Click to inspect cell" [ref=e1179]: 2025-03-30T00:00:00Z
+            - generic "Click to inspect cell" [ref=e1180]: 9aea6429-b149-1e24-3192-b70442594052
+        - generic [ref=e1183]:
+          - generic [ref=e1184]: Showing 100 rows
+          - button "Next" [ref=e1186] [cursor=pointer]:
+            - text: Next
+            - img [ref=e1187]
+    - separator [ref=e165]
+    - generic [ref=e169]:
+      - img [ref=e170]
+      - paragraph [ref=e175]: No row selected
+      - paragraph [ref=e176]: Click a row in the table to inspect

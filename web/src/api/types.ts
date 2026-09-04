@@ -150,6 +150,16 @@ export interface ExecuteQueryResponse {
 export interface QueryHistoryEntry {
   cql: string;
   executedAt: number;
+  latencyMs?: number;
+}
+
+export interface SlowQuery {
+  cql: string;
+  lastLatencyMs: number;
+  avgLatencyMs: number;
+  maxLatencyMs: number;
+  execCount: number;
+  lastExecutedAt: number;
 }
 
 export interface SavedQuery {

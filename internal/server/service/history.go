@@ -40,6 +40,7 @@ func (h *HistoryService) ListQueryHistory(ctx context.Context, req *pb.ListQuery
 		out = append(out, &pb.QueryHistoryEntry{
 			Cql:        e.CQL,
 			ExecutedAt: e.ExecutedAt,
+			LatencyMs:  e.LatencyMs,
 		})
 	}
 
@@ -117,4 +118,32 @@ func (h *HistoryService) DeleteSavedQuery(ctx context.Context, req *pb.DeleteSav
 	}
 
 	return &pb.DeleteSavedQueryResponse{Deleted: true}, nil
+}
+
+func (h *HistoryService) GetSlowQueries(ctx context.Context, req *pb.GetSlowQueriesRequest) (*pb.GetSlowQueriesResponse, error) {
+	session, err := GetSessionFromContext(ctx, h.store)
+	if err != nil {
+		return nil, err
+	}
+
+	limit := int(req.Limit)
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+
+	slow := h.queries.SlowQueries(session.Profile.Name, limit)
+
+	out := make([]*pb.SlowQuery, 0, len(slow))
+	for _, sq := range slow {
+		out = append(out, &pb.SlowQuery{
+			Cql:            sq.CQL,
+			LastLatencyMs:  sq.LastMs,
+			AvgLatencyMs:   sq.AvgMs,
+			MaxLatencyMs:   sq.MaxMs,
+			ExecCount:      sq.ExecCount,
+			LastExecutedAt: sq.LastAt,
+		})
+	}
+
+	return &pb.GetSlowQueriesResponse{Queries: out}, nil
 }

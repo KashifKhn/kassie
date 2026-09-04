@@ -1,0 +1,18 @@
+- generic [ref=e10]:
+  - generic [ref=e11]:
+    - img [ref=e15]
+    - generic [ref=e19]:
+      - heading "KASSIE" [level=1] [ref=e20]
+      - paragraph [ref=e23]: Database Explorer
+      - paragraph [ref=e25]: Select a connection profile to continue
+  - 'button "local 127.0.0.1:9042 ▸ keyspace: system" [ref=e27]':
+    - generic [ref=e30]:
+      - img [ref=e32]
+      - generic [ref=e35]:
+        - heading "local" [level=3] [ref=e36]
+        - generic [ref=e37]:
+          - paragraph [ref=e38]: 127.0.0.1:9042
+          - paragraph [ref=e39]:
+            - generic [ref=e40]: ▸
+            - text: "keyspace: system"
+  - paragraph [ref=e41]: ">_ Cassandra & ScyllaDB Explorer"

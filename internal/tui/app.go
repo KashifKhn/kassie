@@ -155,6 +155,7 @@ func (a *App) updateHelp() {
 		"  " + keyStyle.Render("Ctrl+O") + "              Run an ad-hoc read-only SELECT query",
 		"  " + keyStyle.Render("Tab / Ctrl+Space") + "       Autocomplete query (in query bar)",
 		"  " + keyStyle.Render("Ctrl+Y / Ctrl+P") + "       Browse query history / saved queries",
+		"  " + keyStyle.Render("Ctrl+S") + "               Browse slow queries (>500ms)",
 		"  " + keyStyle.Render("E") + "                   Stream full table export to ~/kassie-*.csv",
 		"  " + keyStyle.Render("/") + "                   Open WHERE filter (grid) or search (sidebar)",
 		"  " + keyStyle.Render("s") + "                   Toggle system keyspaces visibility",
