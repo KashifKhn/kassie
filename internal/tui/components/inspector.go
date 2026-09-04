@@ -24,6 +24,7 @@ type Inspector struct {
 	maxLineWidth  int
 	displayMode   displayMode
 	stats         *pb.TableStats
+	trace         *pb.GetTraceResponse
 	contentWidth  int
 	contentHeight int
 	isFullscreen  bool
@@ -34,6 +35,7 @@ type displayMode int
 const (
 	displayModeTable displayMode = iota
 	displayModePrettyJSON
+	displayModeTrace
 )
 
 func NewInspector(theme styles.Theme) Inspector {
@@ -53,6 +55,18 @@ func (i *Inspector) CycleDisplayMode() {
 
 func (i *Inspector) SetRow(row *pb.Row) {
 	i.row = row
+	i.trace = nil
+	i.displayMode = displayModeTable
+	i.scrollPos = 0
+	if i.contentWidth > 0 {
+		i.updateContent()
+	}
+}
+
+func (i *Inspector) SetTrace(trace *pb.GetTraceResponse) {
+	i.row = nil
+	i.trace = trace
+	i.displayMode = displayModeTrace
 	i.scrollPos = 0
 	if i.contentWidth > 0 {
 		i.updateContent()
@@ -66,6 +80,8 @@ func (i *Inspector) updateContent() {
 	case displayModePrettyJSON:
 		rawJSON := formatRowJSON(i.row)
 		i.json = wrapJSON(rawJSON, i.contentWidth, i.horizontalPos)
+	case displayModeTrace:
+		i.json = formatTrace(i.trace, i.contentWidth)
 	}
 	i.totalLines = strings.Count(i.json, "\n") + 1
 
@@ -169,6 +185,30 @@ func (i *Inspector) View(width, height int) string {
 	}
 
 	if i.row == nil {
+		if i.trace != nil {
+			i.contentWidth = width
+			i.contentHeight = height
+			i.updateContent()
+
+			lines := strings.Split(i.json, "\n")
+			header := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("51")).
+				Render("Query Trace [waterfall]")
+			footer := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).
+				Render("j/k: scroll • t: toggle • i: close")
+
+			visible := height - 4
+			if visible < 1 {
+				visible = 1
+			}
+			if i.scrollPos > len(lines)-visible {
+				i.scrollPos = maxInt(0, len(lines)-visible)
+			}
+			end := minInt(i.scrollPos+visible, len(lines))
+			body := strings.Join(lines[i.scrollPos:end], "\n")
+
+			content := lipgloss.JoinVertical(lipgloss.Left, header, "", body, "", footer)
+			return lipgloss.NewStyle().Width(width).Height(height).Render(content)
+		}
 		if i.stats != nil {
 			content := lipgloss.JoinVertical(
 				lipgloss.Left,
@@ -351,13 +391,13 @@ func formatRowTable(row *pb.Row, theme styles.Theme, maxWidth int, horizontalOff
 	sort.Strings(keys)
 
 	type rowData struct {
-		key         string
-		cqlType     string
-		valueLines  []string
-		isNull      bool
-		isNumber    bool
-		isBool      bool
-		isString    bool
+		key        string
+		cqlType    string
+		valueLines []string
+		isNull     bool
+		isNumber   bool
+		isBool     bool
+		isString   bool
 	}
 
 	rows := make([]rowData, 0, len(keys))
@@ -654,4 +694,80 @@ func formatStatBytes(n int64) string {
 		return fmt.Sprintf("%d B", n)
 	}
 	return fmt.Sprintf("%.1f %s", value, units[unit])
+}
+
+func formatTrace(trace *pb.GetTraceResponse, maxWidth int) string {
+	if trace == nil {
+		return "no trace loaded"
+	}
+	if !trace.Ready {
+		return "trace not ready yet — Cassandra writes traces asynchronously; press t to retry"
+	}
+
+	totalUs := trace.DurationUs
+	if totalUs <= 0 {
+		for _, e := range trace.Events {
+			if e.ElapsedUs > totalUs {
+				totalUs = e.ElapsedUs
+			}
+		}
+	}
+	if totalUs <= 0 {
+		totalUs = 1
+	}
+
+	barWidth := maxInt(10, maxWidth-58)
+	elapsedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
+	activityStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
+	sourceStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
+
+	lines := []string{
+		lipgloss.NewStyle().Bold(true).
+			Render(fmt.Sprintf("total %s on %s", formatMicros(totalUs), trace.Coordinator)),
+		"",
+	}
+
+	for _, e := range trace.Events {
+		filled := int(float64(e.ElapsedUs) / float64(totalUs) * float64(barWidth))
+		if filled < 1 {
+			filled = 1
+		}
+		bar := barStyle.Render(strings.Repeat("█", filled))
+
+		activity := e.Activity
+		if len(activity) > 34 {
+			activity = activity[:31] + "..."
+		}
+		source := e.Source
+		if len(source) > 14 {
+			source = source[:11] + "..."
+		}
+
+		lines = append(lines,
+			elapsedStyle.Render(padRight(formatMicros(e.ElapsedUs), 10))+
+				bar+" "+
+				activityStyle.Render(padRight(activity, 35))+
+				sourceStyle.Render(source),
+		)
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func formatMicros(us int64) string {
+	if us < 0 {
+		return "?"
+	}
+	if us < 1000 {
+		return fmt.Sprintf("%dµs", us)
+	}
+	if us < 1000000 {
+		return fmt.Sprintf("%.1fms", float64(us)/1000)
+	}
+	return fmt.Sprintf("%.2fs", float64(us)/1000000)
+}
+
+func (i *Inspector) HasTrace() bool {
+	return i.trace != nil
 }

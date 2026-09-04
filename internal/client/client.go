@@ -212,9 +212,14 @@ func (c *Client) ExportRows(ctx context.Context, keyspace, table, where string, 
 }
 
 func (c *Client) ExecuteQuery(ctx context.Context, cql string, pageSize int32) (*pb.ExecuteQueryResponse, error) {
+	return c.ExecuteQueryTraced(ctx, cql, pageSize, false)
+}
+
+func (c *Client) ExecuteQueryTraced(ctx context.Context, cql string, pageSize int32, trace bool) (*pb.ExecuteQueryResponse, error) {
 	resp, err := c.data.ExecuteQuery(ctx, &pb.ExecuteQueryRequest{
 		Cql:      cql,
 		PageSize: pageSize,
+		Trace:    trace,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
@@ -251,6 +256,14 @@ func (c *Client) ListSavedQueries(ctx context.Context) ([]*pb.SavedQuery, error)
 		return nil, fmt.Errorf("failed to list saved queries: %w", err)
 	}
 	return resp.Queries, nil
+}
+
+func (c *Client) GetTrace(ctx context.Context, traceID string) (*pb.GetTraceResponse, error) {
+	resp, err := c.data.GetTrace(ctx, &pb.GetTraceRequest{TraceId: traceID})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trace: %w", err)
+	}
+	return resp, nil
 }
 
 func (c *Client) GetSlowQueries(ctx context.Context, limit int32) ([]*pb.SlowQuery, error) {

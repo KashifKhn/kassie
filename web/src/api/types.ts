@@ -138,6 +138,7 @@ export interface FilterRowsResponse {
 export interface ExecuteQueryRequest {
   cql: string;
   pageSize: number;
+  trace?: boolean;
 }
 
 export interface ExecuteQueryResponse {
@@ -145,6 +146,7 @@ export interface ExecuteQueryResponse {
   cursorId: string;
   hasMore: boolean;
   totalFetched: number;
+  traceId?: string;
 }
 
 export interface QueryHistoryEntry {
@@ -173,6 +175,20 @@ export interface TableStats {
   meanPartitionSizeBytes: number;
   maxPartitionSizeBytes: number;
   estimateAvailable: boolean;
+}
+
+export interface TraceEvent {
+  activity: string;
+  source: string;
+  elapsedUs: number;
+  thread: string;
+}
+
+export interface TraceData {
+  events: TraceEvent[];
+  durationUs: number;
+  coordinator: string;
+  ready: boolean;
 }
 
 export interface ApiError {

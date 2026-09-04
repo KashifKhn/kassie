@@ -628,3 +628,53 @@ func TestSlowQueriesIntegration(t *testing.T) {
 		t.Fatal("history empty after execution")
 	}
 }
+
+func TestQueryTraceIntegration(t *testing.T) {
+	seedExportTable(t)
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	ctx := context.Background()
+
+	resp, err := c.ExecuteQueryTraced(ctx,
+		fmt.Sprintf("SELECT id, label FROM %s.export_items LIMIT 10", exportKeyspace), 10, true)
+	if err != nil {
+		t.Fatalf("traced execute: %v", err)
+	}
+	if resp.TraceId == "" {
+		t.Fatal("traced query must return a trace id")
+	}
+
+	var trace *pb.GetTraceResponse
+	for range 10 {
+		trace, err = c.GetTrace(ctx, resp.TraceId)
+		if err != nil {
+			t.Fatalf("get trace: %v", err)
+		}
+		if trace.Ready {
+			break
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+	if !trace.Ready {
+		t.Fatal("trace never became ready")
+	}
+	if len(trace.Events) == 0 {
+		t.Fatal("trace has no events")
+	}
+	if trace.DurationUs <= 0 {
+		t.Errorf("duration = %d, want > 0", trace.DurationUs)
+	}
+	if trace.Coordinator == "" {
+		t.Error("coordinator missing")
+	}
+
+	plain, err := c.ExecuteQuery(ctx,
+		fmt.Sprintf("SELECT id FROM %s.export_items LIMIT 5", exportKeyspace), 5)
+	if err != nil {
+		t.Fatalf("plain execute: %v", err)
+	}
+	if plain.TraceId != "" {
+		t.Error("untraced query must not return a trace id")
+	}
+}

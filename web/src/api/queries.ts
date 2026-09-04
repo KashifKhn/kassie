@@ -22,6 +22,8 @@ import type {
   QueryHistoryEntry,
   SavedQuery,
   SlowQuery,
+  TraceData,
+  TraceEvent,
 } from './types';
 
 export const queryClient = new QueryClient({
@@ -191,6 +193,25 @@ export const dataApi = {
         request
       );
       return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  getTrace: async (traceId: string): Promise<TraceData> => {
+    try {
+      const response = await apiClient.post<{
+        events: TraceEvent[] | null;
+        durationUs: number;
+        coordinator: string;
+        ready: boolean;
+      }>('/data/trace', { trace_id: traceId });
+      return {
+        events: response.data.events ?? [],
+        durationUs: response.data.durationUs ?? 0,
+        coordinator: response.data.coordinator ?? '',
+        ready: response.data.ready ?? false,
+      };
     } catch (error) {
       throw handleApiError(error);
     }

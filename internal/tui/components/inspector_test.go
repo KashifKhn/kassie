@@ -155,3 +155,74 @@ func TestInspectorShowsStatsWithoutRow(t *testing.T) {
 		t.Errorf("stats not rendered when no row selected: %q", view)
 	}
 }
+
+func TestFormatTraceWaterfall(t *testing.T) {
+	trace := &pb.GetTraceResponse{
+		Ready:       true,
+		DurationUs:  10000,
+		Coordinator: "127.0.0.1",
+		Events: []*pb.TraceEvent{
+			{Activity: "Parsing statement", Source: "127.0.0.1", ElapsedUs: 100},
+			{Activity: "Executing single-partition query on users", Source: "127.0.0.1", ElapsedUs: 9000},
+		},
+	}
+
+	out := formatTrace(trace, 100)
+	if !strings.Contains(out, "total") {
+		t.Errorf("total line missing: %q", out)
+	}
+	if !strings.Contains(out, "9.0ms") {
+		t.Errorf("event elapsed formatting missing: %q", out)
+	}
+	if !strings.Contains(out, "█") {
+		t.Errorf("waterfall bars missing: %q", out)
+	}
+	if !strings.Contains(out, "Parsing statement") {
+		t.Errorf("activity missing: %q", out)
+	}
+}
+
+func TestFormatTraceNotReady(t *testing.T) {
+	out := formatTrace(&pb.GetTraceResponse{Ready: false}, 100)
+	if !strings.Contains(out, "not ready") {
+		t.Errorf("not-ready hint missing: %q", out)
+	}
+}
+
+func TestFormatMicros(t *testing.T) {
+	tests := []struct {
+		us   int64
+		want string
+	}{
+		{500, "500µs"},
+		{1500, "1.5ms"},
+		{2500000, "2.50s"},
+		{-1, "?"},
+	}
+	for _, tt := range tests {
+		if got := formatMicros(tt.us); got != tt.want {
+			t.Errorf("formatMicros(%d) = %q, want %q", tt.us, got, tt.want)
+		}
+	}
+}
+
+func TestInspectorTraceMode(t *testing.T) {
+	insp := NewInspector(styles.DefaultTheme())
+	insp.SetTrace(&pb.GetTraceResponse{
+		Ready:      true,
+		DurationUs: 5000,
+		Coordinator: "node1",
+		Events: []*pb.TraceEvent{{Activity: "exec", ElapsedUs: 4000}},
+	})
+
+	view := insp.View(80, 24)
+	if !strings.Contains(view, "Query Trace") {
+		t.Errorf("trace header missing: %q", view)
+	}
+	if !strings.Contains(view, "█") {
+		t.Errorf("waterfall bars missing: %q", view)
+	}
+	if !insp.HasTrace() {
+		t.Error("HasTrace false after SetTrace")
+	}
+}
