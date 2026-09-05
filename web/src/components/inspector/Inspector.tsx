@@ -3,6 +3,7 @@ import JsonView from '@uiw/react-json-view';
 import { Copy, Check, FileJson } from 'lucide-react';
 import { TableStatsCard } from '@/components/stats/TableStatsCard';
 import { ClusterPanel } from '@/components/cluster/ClusterPanel';
+import { AdvisorPanel } from '@/components/advisor/AdvisorPanel';
 import { useUiStore } from '@/stores/uiStore';
 import type { Row, CellValue } from '@/api/types';
 
@@ -106,6 +107,7 @@ export function Inspector({ row }: InspectorProps) {
           {selectedKeyspace && selectedTable && (
             <TableStatsCard keyspace={selectedKeyspace} table={selectedTable} />
           )}
+          {selectedKeyspace && <AdvisorPanel keyspace={selectedKeyspace} />}
           <div>
             <h4 
               className="text-xs font-mono font-bold tracking-wider uppercase mb-3"

@@ -89,6 +89,10 @@ func asNonNegativeInt64(v interface{}) int64 {
 		if n > 0 {
 			return int64(n)
 		}
+	case int32:
+		if n > 0 {
+			return int64(n)
+		}
 	}
 	return 0
 }

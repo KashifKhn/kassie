@@ -201,6 +201,14 @@ export interface ClusterNodeInfo {
   status: string;
 }
 
+export interface AdvisorFinding {
+  severity: string;
+  rule: string;
+  table: string;
+  message: string;
+  remediation: string;
+}
+
 export interface ApiError {
   code: string;
   message: string;
