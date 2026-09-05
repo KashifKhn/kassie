@@ -146,6 +146,14 @@ func (c *Client) GetClusterInfo(ctx context.Context) ([]*pb.ClusterNode, error) 
 	return resp.Nodes, nil
 }
 
+func (c *Client) AnalyzeKeyspace(ctx context.Context, keyspace string) ([]*pb.AdvisorFinding, int32, error) {
+	resp, err := c.schema.AnalyzeKeyspace(ctx, &pb.AnalyzeKeyspaceRequest{Keyspace: keyspace})
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to analyze keyspace: %w", err)
+	}
+	return resp.Findings, resp.TablesAnalyzed, nil
+}
+
 func (c *Client) GetTableStats(ctx context.Context, keyspace, table string) (*pb.TableStats, error) {
 	resp, err := c.schema.GetTableStats(ctx, &pb.GetTableStatsRequest{
 		Keyspace: keyspace,

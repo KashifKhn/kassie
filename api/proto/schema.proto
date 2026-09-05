@@ -39,6 +39,30 @@ service SchemaService {
       body: "*"
     };
   }
+
+  rpc AnalyzeKeyspace(AnalyzeKeyspaceRequest) returns (AnalyzeKeyspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schema/analyze"
+      body: "*"
+    };
+  }
+}
+
+message AnalyzeKeyspaceRequest {
+  string keyspace = 1;
+}
+
+message AdvisorFinding {
+  string severity = 1;
+  string rule = 2;
+  string table = 3;
+  string message = 4;
+  string remediation = 5;
+}
+
+message AnalyzeKeyspaceResponse {
+  repeated AdvisorFinding findings = 1;
+  int32 tables_analyzed = 2;
 }
 
 message GetClusterInfoRequest {}

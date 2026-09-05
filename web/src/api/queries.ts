@@ -25,6 +25,7 @@ import type {
   TraceData,
   TraceEvent,
   ClusterNodeInfo,
+  AdvisorFinding,
 } from './types';
 
 export const queryClient = new QueryClient({
@@ -57,6 +58,7 @@ export const queryKeys = {
     slow: () => ['history', 'slow'] as const,
   },
   stats: (keyspace: string, table: string) => ['stats', keyspace, table] as const,
+  advisor: (keyspace: string) => ['advisor', keyspace] as const,
   data: {
     rows: (keyspace: string, table: string, pageSize: number) =>
       ['rows', keyspace, table, pageSize] as const,
@@ -138,6 +140,23 @@ export const schemaApi = {
         `/schema/keyspaces/${keyspace}/tables/${table}`
       );
       return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  analyzeKeyspace: async (
+    keyspace: string
+  ): Promise<{ findings: AdvisorFinding[]; tablesAnalyzed: number }> => {
+    try {
+      const response = await apiClient.post<{
+        findings: AdvisorFinding[];
+        tablesAnalyzed: number;
+      }>('/schema/analyze', { keyspace });
+      return {
+        findings: response.data.findings ?? [],
+        tablesAnalyzed: response.data.tablesAnalyzed ?? 0,
+      };
     } catch (error) {
       throw handleApiError(error);
     }

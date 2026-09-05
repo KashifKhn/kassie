@@ -707,3 +707,32 @@ func TestClusterInfoIntegration(t *testing.T) {
 		t.Error("no node marked local")
 	}
 }
+
+func TestSchemaAdvisorIntegration(t *testing.T) {
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	findings, tables, err := c.AnalyzeKeyspace(context.Background(), "system_auth")
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if tables == 0 {
+		t.Fatal("no tables analyzed")
+	}
+	// system_auth uses STCS + no TTL — expect findings on a healthy install
+	if len(findings) == 0 {
+		t.Log("no findings for system_auth (unexpected but not fatal)")
+	}
+	for _, f := range findings {
+		if f.Severity != "warning" && f.Severity != "info" {
+			t.Errorf("unknown severity %q", f.Severity)
+		}
+		if f.Rule == "" || f.Table == "" {
+			t.Errorf("finding missing rule/table: %+v", f)
+		}
+	}
+
+	if _, _, err := c.AnalyzeKeyspace(context.Background(), "nonexistent_ks_xyz"); err == nil {
+		t.Error("unknown keyspace should error")
+	}
+}
