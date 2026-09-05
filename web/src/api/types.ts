@@ -191,6 +191,16 @@ export interface TraceData {
   ready: boolean;
 }
 
+export interface ClusterNodeInfo {
+  address: string;
+  dataCenter: string;
+  rack: string;
+  releaseVersion: string;
+  tokenCount: number;
+  local: boolean;
+  status: string;
+}
+
 export interface ApiError {
   code: string;
   message: string;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import JsonView from '@uiw/react-json-view';
 import { Copy, Check, FileJson } from 'lucide-react';
 import { TableStatsCard } from '@/components/stats/TableStatsCard';
+import { ClusterPanel } from '@/components/cluster/ClusterPanel';
 import { useUiStore } from '@/stores/uiStore';
 import type { Row, CellValue } from '@/api/types';
 
@@ -101,6 +102,7 @@ export function Inspector({ row }: InspectorProps) {
         style={{ padding: '20px' }}
       >
         <div className="space-y-6 animate-fade-in">
+          <ClusterPanel />
           {selectedKeyspace && selectedTable && (
             <TableStatsCard keyspace={selectedKeyspace} table={selectedTable} />
           )}
