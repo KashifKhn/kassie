@@ -107,7 +107,7 @@ func TestAnalyzeReplication(t *testing.T) {
 		},
 	}}}
 
-	findings := analyzeReplication(nil, simple, "ks")
+	findings := analyzeReplication(context.Background(), simple, "ks")
 	if len(findings) != 2 {
 		t.Fatalf("findings = %d, want 2 (simple strategy + rf1)", len(findings))
 	}
@@ -128,7 +128,7 @@ func TestAnalyzeReplication(t *testing.T) {
 			"datacenter1": int64(3),
 		},
 	}}}
-	if got := analyzeReplication(nil, nts, "ks"); len(got) != 0 {
+	if got := analyzeReplication(context.Background(), nts, "ks"); len(got) != 0 {
 		t.Errorf("healthy NTS should produce no findings: %+v", got)
 	}
 }
