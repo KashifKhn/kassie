@@ -30,6 +30,7 @@ type ExplorerView struct {
 	filter           components.FilterBar
 	queryBar         components.QueryBar
 	queryList        components.QueryList
+	clusterList      components.ClusterList
 	status           components.StatusBar
 	active           pane
 	profile          string
@@ -66,6 +67,7 @@ func NewExplorerView(theme styles.Theme) ExplorerView {
 		filter:      components.NewFilterBar(theme),
 		queryBar:    components.NewQueryBar(theme),
 		queryList:   components.NewQueryList(theme),
+		clusterList: components.NewClusterList(theme),
 		status:      components.NewStatusBar(theme),
 		active:      paneSidebar,
 		schemaCache: schemaCache,
@@ -161,6 +163,12 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 		if m.String() == "q" {
 			return v, nil
 		}
+	}
+
+	if v.clusterList.IsActive() {
+		var cmd tea.Cmd
+		v.clusterList, cmd = v.clusterList.Update(msg, c)
+		return v, cmd
 	}
 
 	if v.queryList.IsActive() {
@@ -286,7 +294,11 @@ func (v ExplorerView) View(width, height int) string {
 	border := v.theme.Panel
 	filterHeight := 0
 	filterView := ""
-	if v.queryList.IsActive() {
+	if v.clusterList.IsActive() {
+		listView := v.clusterList.View(width)
+		filterHeight = lipgloss.Height(listView) + 1
+		filterView = listView
+	} else if v.queryList.IsActive() {
 		listView := v.queryList.View(width)
 		filterHeight = lipgloss.Height(listView) + 1
 		filterView = listView
@@ -485,6 +497,12 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd, c *client.Clien
 		if !v.queryList.IsActive() && !v.queryBar.IsActive() {
 			var activateCmd tea.Cmd
 			v.queryList, activateCmd = v.queryList.Activate(components.QueryListSlow)
+			return v, activateCmd
+		}
+	case "ctrl+r":
+		if !v.clusterList.IsActive() && !v.queryList.IsActive() && !v.queryBar.IsActive() {
+			var activateCmd tea.Cmd
+			v.clusterList, activateCmd = v.clusterList.Activate(c)
 			return v, activateCmd
 		}
 	case "/":

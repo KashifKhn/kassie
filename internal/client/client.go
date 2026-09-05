@@ -138,6 +138,14 @@ func (c *Client) GetTableSchema(ctx context.Context, keyspace, table string) (*p
 	return resp.Schema, nil
 }
 
+func (c *Client) GetClusterInfo(ctx context.Context) ([]*pb.ClusterNode, error) {
+	resp, err := c.schema.GetClusterInfo(ctx, &pb.GetClusterInfoRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cluster info: %w", err)
+	}
+	return resp.Nodes, nil
+}
+
 func (c *Client) GetTableStats(ctx context.Context, keyspace, table string) (*pb.TableStats, error) {
 	resp, err := c.schema.GetTableStats(ctx, &pb.GetTableStatsRequest{
 		Keyspace: keyspace,

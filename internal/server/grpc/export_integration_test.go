@@ -678,3 +678,32 @@ func TestQueryTraceIntegration(t *testing.T) {
 		t.Error("untraced query must not return a trace id")
 	}
 }
+
+func TestClusterInfoIntegration(t *testing.T) {
+	addr := startRealServer(t)
+	c := loginClient(t, addr)
+
+	nodes, err := c.GetClusterInfo(context.Background())
+	if err != nil {
+		t.Fatalf("cluster info: %v", err)
+	}
+	if len(nodes) == 0 {
+		t.Fatal("no nodes returned")
+	}
+
+	var foundLocal bool
+	for _, node := range nodes {
+		if node.DataCenter == "" {
+			t.Errorf("node %s has no datacenter", node.Address)
+		}
+		if node.TokenCount <= 0 {
+			t.Errorf("node %s token count = %d", node.Address, node.TokenCount)
+		}
+		if node.Local {
+			foundLocal = true
+		}
+	}
+	if !foundLocal {
+		t.Error("no node marked local")
+	}
+}

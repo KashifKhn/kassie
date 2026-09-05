@@ -24,6 +24,7 @@ import type {
   SlowQuery,
   TraceData,
   TraceEvent,
+  ClusterNodeInfo,
 } from './types';
 
 export const queryClient = new QueryClient({
@@ -137,6 +138,17 @@ export const schemaApi = {
         `/schema/keyspaces/${keyspace}/tables/${table}`
       );
       return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  getClusterInfo: async (): Promise<ClusterNodeInfo[]> => {
+    try {
+      const response = await apiClient.post<{ nodes: ClusterNodeInfo[] }>(
+        '/schema/cluster'
+      );
+      return response.data.nodes ?? [];
     } catch (error) {
       throw handleApiError(error);
     }

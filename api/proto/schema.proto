@@ -32,6 +32,29 @@ service SchemaService {
       body: "*"
     };
   }
+
+  rpc GetClusterInfo(GetClusterInfoRequest) returns (GetClusterInfoResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schema/cluster"
+      body: "*"
+    };
+  }
+}
+
+message GetClusterInfoRequest {}
+
+message ClusterNode {
+  string address = 1;
+  string data_center = 2;
+  string rack = 3;
+  string release_version = 4;
+  int32 token_count = 5;
+  bool local = 6;
+  string status = 7;
+}
+
+message GetClusterInfoResponse {
+  repeated ClusterNode nodes = 1;
 }
 
 message GetTableStatsRequest {
