@@ -55,6 +55,7 @@ Database connection profile.
 | `keyspace` | string | No | Default keyspace to connect to | - |
 | `auth` | object | No | Authentication credentials | See `AuthConfig` |
 | `ssl` | object | No | SSL/TLS configuration | See `SSLConfig` |
+| `ai` | object | No | Natural language query settings | See `AIConfig` |
 
 **Example**:
 ```json
@@ -121,6 +122,19 @@ pool size `5`).
 | `consistency` | string | No | `QUORUM` | CQL consistency level | One of: ANY, ONE, TWO, THREE, QUORUM, LOCAL_QUORUM, EACH_QUORUM, LOCAL_ONE, ALL (case-insensitive) |
 | `timeout` | string | No | `10s` | Query timeout as a Go duration | Positive duration, max `5m` |
 | `pool_size` | integer | No | 5 | Connection pool size per host | Range: 1-100 |
+
+### AIConfig
+
+Optional per-profile settings for natural language queries. Kassie uses
+locally installed agent CLIs (opencode, claude, codex, gemini) as
+translators — no API keys required.
+
+| Field | Type | Required | Default | Description | Validation |
+|-------|------|----------|---------|-------------|------------|
+| `provider` | string | No | `auto` | Which agent CLI to use | One of: `auto`, `opencode`, `claude`, `codex`, `gemini` |
+| `model` | string | No | - | Model passed to the CLI (`--model`/`-m`); empty uses the CLI's default | - |
+| `timeout_seconds` | integer | No | 60 | Agent CLI timeout in seconds | Range: 1-600 |
+| `privacy` | string | No | `names+types` | Schema detail sent in prompts | One of: `names`, `names+types` |
 
 **Example**:
 ```json

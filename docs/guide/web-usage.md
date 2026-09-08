@@ -192,6 +192,17 @@ The collapsible **CQL Query** editor sits above the data grid:
 - The **Saved** dropdown lists named queries; click to load, or use
   the trash icon to delete
 
+**Natural language mode**:
+- Toggle **NL** next to the Run button, type a plain-English question,
+  and click **Translate** — a local agent CLI (opencode, claude, codex,
+  or gemini) generates the CQL
+- The amber panel previews the generated CQL — **Use query** loads it
+  into the editor, **Discard** throws it away
+- Accepted translations are saved as few-shot examples, improving
+  future translations. See the
+  [NL Queries guide](/guide/nl-queries) for configuration and privacy
+  details.
+
 ## Exporting Data
 
 Next to the filter bar, **CSV** and **JSON** buttons export the

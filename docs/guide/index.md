@@ -28,6 +28,7 @@ JWT-based authentication ensures your database credentials are never exposed to 
 - [Configuration](/guide/configuration) - Configure profiles and settings
 - [TUI Usage](/guide/tui-usage) - Learn the terminal interface
 - [Web Usage](/guide/web-usage) - Explore the web interface
+- [Natural Language Queries](/guide/nl-queries) - Ask in plain English via local agent CLIs
 - [Troubleshooting](/guide/troubleshooting) - Solutions to common issues
 
 ## Who is Kassie for?

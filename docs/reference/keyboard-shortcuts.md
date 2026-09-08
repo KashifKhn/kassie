@@ -52,6 +52,7 @@ Complete reference for all keyboard shortcuts in Kassie.
 | `/` | Open filter bar |
 | `Ctrl+F` | Focus search input |
 | `Ctrl+O` | Open ad-hoc CQL query bar |
+| `Ctrl+N` | Ask a natural language question (translated to CQL via local agent CLI) |
 | `Ctrl+Y` | Browse query history |
 | `Ctrl+P` | Browse saved queries |
 | `Ctrl+E` | Export loaded rows to JSON file |
@@ -63,6 +64,16 @@ Complete reference for all keyboard shortcuts in Kassie.
 |-----|--------|
 | `Enter` | Run the query (SELECT-only, validated) |
 | `Esc` | Cancel and close query bar |
+
+### Natural Language Panel (Ctrl+N)
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Translate the question to CQL (shows preview) |
+| `Enter` | Accept the AI-generated CQL and load it (preview state) |
+| `Ctrl+P` | Cycle the agent CLI provider (auto → opencode → claude → codex → gemini) |
+| `Ctrl+E` | Edit the model passed to the CLI (empty = CLI default) |
+| `Esc` | Discard the translation / close the panel |
 
 ### Query History / Saved List (Ctrl+Y / Ctrl+P)
 

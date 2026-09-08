@@ -188,6 +188,25 @@ Press `Ctrl+O` to open the query bar and run any read-only SELECT:
 In both lists: `j/k` to navigate, `Enter` to run the selected query,
 `Esc` to close.
 
+## Natural Language Queries
+
+Press `Ctrl+N` to ask a question in plain English:
+
+```
+╭──────────────────────────────────────────────────╮
+│ Ask in plain English                              │
+│ » critical events for device 123e yesterday       │
+│ enter to translate · esc to cancel                │
+╰──────────────────────────────────────────────────╯
+```
+
+After translation, the generated CQL appears in an amber preview box —
+`Enter` to load it into the data grid, `Esc` to discard. Translations
+run through a local agent CLI (opencode, claude, codex, or gemini), are
+validated SELECT-only, dry-run against the cluster, and never auto-run.
+Accepted translations are saved as few-shot examples. See the
+[NL Queries guide](/guide/nl-queries) for details.
+
 ::: tip
 History and saved queries persist per profile in `~/.config/kassie/queries.json`, so they survive restarts.
 :::

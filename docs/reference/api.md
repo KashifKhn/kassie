@@ -608,6 +608,63 @@ Active session and pagination-cursor counts.
 
 ---
 
+## AIService
+
+Natural language to CQL translation using locally installed agent CLIs.
+Generated CQL is SELECT-validated and dry-run before being returned; it is
+never auto-executed.
+
+### NL to CQL
+
+Translate a plain-English question into validated CQL.
+
+**POST** `/api/v1/ai/nl-to-cql`
+
+```json
+{
+  "question": "critical events for device 123e yesterday",
+  "keyspace": "app_data",
+  "table": "events"
+}
+```
+
+**Response:**
+```json
+{
+  "cql": "SELECT * FROM app_data.events WHERE device_id = ... AND day = '2026-09-06' AND severity = 'critical'",
+  "validated": true,
+  "explanation": "...",
+  "provider": "opencode"
+}
+```
+
+**Requires:** Authorization header, an authenticated agent CLI on the
+server host (`opencode`, `claude`, `codex`, or `gemini`), and a reachable
+Cassandra connection for the dry-run.
+
+### Accept Example
+
+Save an accepted question/CQL pair as a few-shot example (max 50 per
+profile).
+
+**POST** `/api/v1/ai/examples` (body: `{ "question": "...", "cql": "SELECT ...", "keyspace": "app_data" }`)
+
+### List Examples
+
+**GET** `/api/v1/ai/examples?keyspace=app_data` → `{ "examples": [{ "id": "nl-...", "question": "...", "cql": "...", "keyspace": "app_data" }] }`
+
+### Delete Example
+
+**DELETE** `/api/v1/ai/examples/{id}`
+
+### Detect Providers
+
+List agent CLIs found on the server host and the configured provider.
+
+**GET** `/api/v1/ai/providers` → `{ "available": ["opencode", "claude"], "configured": "auto" }`
+
+---
+
 ## Common Data Types
 
 ### CellValue
