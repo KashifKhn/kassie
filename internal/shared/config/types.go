@@ -16,6 +16,9 @@ var (
 	ErrInvalidTimeout   = errors.New("invalid timeout")
 	ErrInvalidPoolSize  = errors.New("invalid pool size")
 	ErrInvalidConsistency = errors.New("invalid consistency level")
+	ErrInvalidAIProvider  = errors.New("invalid ai provider")
+	ErrInvalidAIPrivacy   = errors.New("invalid ai privacy setting")
+	ErrInvalidAITimeout   = errors.New("invalid ai timeout")
 )
 
 type Config struct {
@@ -33,6 +36,45 @@ type Profile struct {
 	Auth       *AuthConfig      `json:"auth,omitempty"`
 	SSL        *SSLConfig       `json:"ssl,omitempty"`
 	Connection *ConnTuningConfig `json:"connection,omitempty"`
+	AI         *AIConfig        `json:"ai,omitempty"`
+}
+
+type AIConfig struct {
+	Provider       string `json:"provider,omitempty"`
+	Model          string `json:"model,omitempty"`
+	TimeoutSeconds int    `json:"timeout_seconds,omitempty"`
+	Privacy        string `json:"privacy,omitempty"`
+}
+
+var validAIProviders = map[string]bool{
+	"":         true,
+	"auto":     true,
+	"opencode": true,
+	"claude":   true,
+	"codex":    true,
+	"gemini":   true,
+}
+
+var validAIPrivacy = map[string]bool{
+	"":             true,
+	"names":        true,
+	"names+types":  true,
+}
+
+func (c *AIConfig) Validate() error {
+	if c == nil {
+		return nil
+	}
+	if !validAIProviders[c.Provider] {
+		return ErrInvalidAIProvider
+	}
+	if !validAIPrivacy[c.Privacy] {
+		return ErrInvalidAIPrivacy
+	}
+	if c.TimeoutSeconds < 0 || c.TimeoutSeconds > 600 {
+		return ErrInvalidAITimeout
+	}
+	return nil
 }
 
 type ConnTuningConfig struct {
@@ -105,6 +147,9 @@ func (p *Profile) Validate() error {
 		return ErrInvalidPort
 	}
 	if err := p.Connection.Validate(); err != nil {
+		return err
+	}
+	if err := p.AI.Validate(); err != nil {
 		return err
 	}
 	return nil
