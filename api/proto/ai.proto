@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package kassie.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/KashifKhn/kassie/api/gen/go;kassiev1";
+
+service AIService {
+  rpc NlToCql(NlToCqlRequest) returns (NlToCqlResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/nl-to-cql"
+      body: "*"
+    };
+  }
+
+  rpc AcceptExample(AcceptExampleRequest) returns (AcceptExampleResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/examples"
+      body: "*"
+    };
+  }
+
+  rpc ListExamples(ListExamplesRequest) returns (ListExamplesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/examples"
+    };
+  }
+
+  rpc DeleteExample(DeleteExampleRequest) returns (DeleteExampleResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/ai/examples/{id}"
+    };
+  }
+
+  rpc DetectProviders(DetectProvidersRequest) returns (DetectProvidersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/providers"
+    };
+  }
+}
+
+message NlToCqlRequest {
+  string question = 1;
+  string keyspace = 2;
+  string table = 3;
+  string provider = 4;
+  string model = 5;
+}
+
+message NlToCqlResponse {
+  string cql = 1;
+  bool validated = 2;
+  string explanation = 3;
+  string provider = 4;
+  string error_detail = 5;
+}
+
+message AcceptExampleRequest {
+  string question = 1;
+  string cql = 2;
+  string keyspace = 3;
+}
+
+message AcceptExampleResponse {
+  string id = 1;
+}
+
+message ListExamplesRequest {
+  string keyspace = 1;
+  int32 limit = 2;
+}
+
+message ListExamplesResponse {
+  repeated NLExample examples = 1;
+}
+
+message NLExample {
+  string id = 1;
+  string question = 2;
+  string cql = 3;
+  string keyspace = 4;
+}
+
+message DeleteExampleRequest {
+  string id = 1;
+}
+
+message DeleteExampleResponse {}
+
+message DetectProvidersRequest {}
+
+message DetectProvidersResponse {
+  repeated string available = 1;
+  string configured = 2;
+  string model = 3;
+}

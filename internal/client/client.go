@@ -17,6 +17,7 @@ type Client struct {
 	schema  pb.SchemaServiceClient
 	data    pb.DataServiceClient
 	history pb.HistoryServiceClient
+	ai      pb.AIServiceClient
 
 	mu           sync.RWMutex
 	accessToken  string
@@ -38,6 +39,7 @@ func New(addr string) (*Client, error) {
 	c.schema = pb.NewSchemaServiceClient(conn)
 	c.data = pb.NewDataServiceClient(conn)
 	c.history = pb.NewHistoryServiceClient(conn)
+	c.ai = pb.NewAIServiceClient(conn)
 
 	return c, nil
 }
@@ -303,6 +305,32 @@ func (c *Client) GetMetrics(ctx context.Context) (*pb.Metrics, error) {
 		return nil, fmt.Errorf("failed to get metrics: %w", err)
 	}
 	return resp.Metrics, nil
+}
+
+func (c *Client) NlToCql(ctx context.Context, question, keyspace, table, provider, model string) (*pb.NlToCqlResponse, error) {
+	resp, err := c.ai.NlToCql(ctx, &pb.NlToCqlRequest{
+		Question: question,
+		Keyspace: keyspace,
+		Table:    table,
+		Provider: provider,
+		Model:    model,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to translate question: %w", err)
+	}
+	return resp, nil
+}
+
+func (c *Client) AcceptNlExample(ctx context.Context, question, cql, keyspace string) error {
+	_, err := c.ai.AcceptExample(ctx, &pb.AcceptExampleRequest{
+		Question: question,
+		Cql:      cql,
+		Keyspace: keyspace,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to save example: %w", err)
+	}
+	return nil
 }
 
 func (c *Client) Profile() string {

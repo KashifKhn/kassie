@@ -40,6 +40,7 @@ type ServerDeps struct {
 	Pool     service.ConnectionPool
 	Store    service.SessionStore
 	Queries  *state.QueryStore
+	Examples *state.NLExampleStore
 }
 
 func ServerOptions(interceptor grpc.UnaryServerInterceptor, streamInterceptor grpc.StreamServerInterceptor) []grpc.ServerOption {
@@ -82,10 +83,16 @@ func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server
 		queries = state.NewQueryStore(state.DefaultQueryStorePath())
 	}
 
+	examples := deps.Examples
+	if examples == nil {
+		examples = state.NewNLExampleStore(state.DefaultNLExampleStorePath())
+	}
+
 	sessionSvc := service.NewSessionService(deps.Config, deps.Pool, deps.Store, auth)
 	schemaSvc := service.NewSchemaService(deps.Store)
 	dataSvc := service.NewDataService(deps.Store, queries)
 	historySvc := service.NewHistoryService(deps.Store, queries)
+	aiSvc := service.NewAIService(deps.Store, service.DefaultCompleter, examples)
 
 	unaryInterceptor := NewAuthInterceptor(auth, deps.Store, log)
 
@@ -97,6 +104,7 @@ func NewServer(cfg *ServerConfig, deps *ServerDeps, log *logger.Logger) (*Server
 	pb.RegisterSchemaServiceServer(grpcServer, schemaSvc)
 	pb.RegisterDataServiceServer(grpcServer, dataSvc)
 	pb.RegisterHistoryServiceServer(grpcServer, historySvc)
+	pb.RegisterAIServiceServer(grpcServer, aiSvc)
 
 	reflection.Register(grpcServer)
 
