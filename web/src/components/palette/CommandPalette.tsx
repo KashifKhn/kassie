@@ -32,8 +32,23 @@ export function CommandPalette({ open, onClose, onRunQuery }: CommandPaletteProp
 
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
+  const [prevOpen, setPrevOpen] = useState(false);
+  const [prevQuery, setPrevQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      setQuery('');
+      setSelected(0);
+    }
+  }
+
+  if (prevQuery !== query) {
+    setPrevQuery(query);
+    setSelected(0);
+  }
 
   const keyspacesQuery = useQuery({
     queryKey: queryKeys.schema.keyspaces(),
@@ -48,11 +63,11 @@ export function CommandPalette({ open, onClose, onRunQuery }: CommandPaletteProp
   });
 
   useEffect(() => {
-    if (open) {
-      setQuery('');
-      setSelected(0);
-      setTimeout(() => inputRef.current?.focus(), 0);
+    if (!open) {
+      return;
     }
+    const timer = setTimeout(() => inputRef.current?.focus(), 0);
+    return () => clearTimeout(timer);
   }, [open]);
 
   const commands = useMemo<PaletteCommand[]>(() => {
@@ -177,10 +192,6 @@ export function CommandPalette({ open, onClose, onRunQuery }: CommandPaletteProp
     scored.sort((a, b) => b.score - a.score);
     return scored.map((s) => s.cmd);
   }, [commands, query]);
-
-  useEffect(() => {
-    setSelected(0);
-  }, [query]);
 
   useEffect(() => {
     const item = listRef.current?.children[selected] as HTMLElement | undefined;
