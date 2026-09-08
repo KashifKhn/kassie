@@ -158,6 +158,7 @@ func (a *App) updateHelp() {
 		"  " + keyStyle.Render("Ctrl+S") + "               Browse slow queries (>500ms)",
 		"  " + keyStyle.Render("Ctrl+T") + "               View trace of last ad-hoc query (waterfall)",
 		"  " + keyStyle.Render("Ctrl+R / Ctrl+A") + "       Cluster nodes / keyspace advisor",
+		"  " + keyStyle.Render("Ctrl+N") + "               Ask a question in plain English (AI → CQL)",
 		"  " + keyStyle.Render("E") + "                   Stream full table export to ~/kassie-*.csv",
 		"  " + keyStyle.Render("/") + "                   Open WHERE filter (grid) or search (sidebar)",
 		"  " + keyStyle.Render("s") + "                   Toggle system keyspaces visibility",

@@ -32,6 +32,7 @@ type ExplorerView struct {
 	queryList        components.QueryList
 	clusterList      components.ClusterList
 	advisorList      components.AdvisorList
+	nlPanel          components.NlPanel
 	status           components.StatusBar
 	active           pane
 	profile          string
@@ -70,6 +71,7 @@ func NewExplorerView(theme styles.Theme) ExplorerView {
 		queryList:   components.NewQueryList(theme),
 		clusterList: components.NewClusterList(theme),
 		advisorList: components.NewAdvisorList(theme),
+		nlPanel:     components.NewNlPanel(),
 		status:      components.NewStatusBar(theme),
 		active:      paneSidebar,
 		schemaCache: schemaCache,
@@ -153,6 +155,14 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 		var cmd tea.Cmd
 		v.grid, cmd = v.grid.LoadQuery(c, m.CQL)
 		return v, cmd
+	case components.NlTranslatedMsg:
+		v.nlPanel = v.nlPanel.Deactivate()
+		var cmd tea.Cmd
+		v.grid, cmd = v.grid.LoadQuery(c, m.CQL)
+		return v, tea.Batch(cmd, acceptNlExampleCmd(c, m))
+	case components.NlCanceledMsg:
+		v.nlPanel = v.nlPanel.Deactivate()
+		return v, nil
 	case components.QueryListClosedMsg:
 		v.queryList = v.queryList.Deactivate()
 		return v, nil
@@ -182,6 +192,12 @@ func (v ExplorerView) Update(msg tea.Msg, c *client.Client) (ExplorerView, tea.C
 	if v.queryList.IsActive() {
 		var cmd tea.Cmd
 		v.queryList, cmd = v.queryList.Update(msg, c)
+		return v, cmd
+	}
+
+	if v.nlPanel.IsActive() {
+		var cmd tea.Cmd
+		v.nlPanel, cmd = v.nlPanel.Update(msg, c)
 		return v, cmd
 	}
 
@@ -314,6 +330,10 @@ func (v ExplorerView) View(width, height int) string {
 		listView := v.queryList.View(width)
 		filterHeight = lipgloss.Height(listView) + 1
 		filterView = listView
+	} else if v.nlPanel.IsActive() {
+		nlView := v.nlPanel.View(width)
+		filterHeight = lipgloss.Height(nlView) + 1
+		filterView = nlView
 	} else if v.queryBar.IsActive() {
 		queryView := v.queryBar.View(width)
 		filterHeight = lipgloss.Height(queryView) + 1
@@ -523,6 +543,12 @@ func (v ExplorerView) handleNavigation(msg tea.Msg, cmd tea.Cmd, c *client.Clien
 			v.clusterList, activateCmd = v.clusterList.Activate(c)
 			return v, activateCmd
 		}
+	case "ctrl+n":
+		if !v.queryList.IsActive() && !v.queryBar.IsActive() && !v.advisorList.IsActive() && !v.clusterList.IsActive() {
+			var activateCmd tea.Cmd
+			v.nlPanel, activateCmd = v.nlPanel.Activate(v.grid.Keyspace(), v.grid.Table())
+			return v, activateCmd
+		}
 	case "/":
 		if v.active == paneSidebar && v.viewMode == viewModeFull {
 			v.sidebar, cmd = v.sidebar.ActivateSearch()
@@ -576,5 +602,14 @@ func (v ExplorerView) copyToClipboardCmd() tea.Cmd {
 			return CopyErrorMsg{Err: err}
 		}
 		return CopySuccessMsg{}
+	}
+}
+
+func acceptNlExampleCmd(c *client.Client, m components.NlTranslatedMsg) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = c.AcceptNlExample(ctx, m.Question, m.CQL, m.Keyspace)
+		return nil
 	}
 }
