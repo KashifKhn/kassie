@@ -26,6 +26,10 @@ import type {
   TraceEvent,
   ClusterNodeInfo,
   AdvisorFinding,
+  NlToCqlRequest,
+  NlToCqlResponse,
+  NLExample,
+  DetectProvidersResponse,
 } from './types';
 
 export const queryClient = new QueryClient({
@@ -322,6 +326,59 @@ export const historyApi = {
         { params: { limit } }
       );
       return response.data.queries ?? [];
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+};
+
+export const aiApi = {
+  nlToCql: async (request: NlToCqlRequest): Promise<NlToCqlResponse> => {
+    try {
+      const response = await apiClient.post<NlToCqlResponse>(
+        '/ai/nl-to-cql',
+        request
+      );
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  acceptExample: async (request: {
+    question: string;
+    cql: string;
+    keyspace: string;
+  }): Promise<string> => {
+    try {
+      const response = await apiClient.post<{ id: string }>(
+        '/ai/examples',
+        request
+      );
+      return response.data.id;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  listExamples: async (keyspace: string): Promise<NLExample[]> => {
+    try {
+      const response = await apiClient.get<{ examples: NLExample[] }>(
+        '/ai/examples',
+        { params: keyspace ? { keyspace } : {} }
+      );
+      return response.data.examples ?? [];
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  detectProviders: async (): Promise<DetectProvidersResponse> => {
+    try {
+      const response = await apiClient.get<DetectProvidersResponse>(
+        '/ai/providers'
+      );
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }

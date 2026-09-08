@@ -209,6 +209,35 @@ export interface AdvisorFinding {
   remediation: string;
 }
 
+export interface NlToCqlRequest {
+  question: string;
+  keyspace: string;
+  table?: string;
+  provider?: string;
+  model?: string;
+}
+
+export interface NlToCqlResponse {
+  cql: string;
+  validated: boolean;
+  explanation: string;
+  provider: string;
+  errorDetail?: string;
+}
+
+export interface NLExample {
+  id: string;
+  question: string;
+  cql: string;
+  keyspace: string;
+}
+
+export interface DetectProvidersResponse {
+  available: string[];
+  configured: string;
+  model?: string;
+}
+
 export interface ApiError {
   code: string;
   message: string;

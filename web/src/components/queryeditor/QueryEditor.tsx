@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Play, Loader2, AlertCircle, ChevronDown, ChevronUp, Clock, Bookmark, Trash2, Gauge } from 'lucide-react';
+import { Play, Loader2, AlertCircle, ChevronDown, ChevronUp, Clock, Bookmark, Trash2, Gauge, Sparkles } from 'lucide-react';
 import { TracePanel } from '@/components/queryeditor/TracePanel';
+import { NlPanel } from '@/components/queryeditor/NlPanel';
 import { complete } from '@/lib/completion';
 import type { Suggestion } from '@/lib/completion';
 import { dataApi, historyApi, queryClient, queryKeys, schemaApi } from '@/api/queries';
@@ -29,6 +30,7 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
   const [suggestActive, setSuggestActive] = useState(false);
   const [traceMode, setTraceMode] = useState(false);
   const [traceId, setTraceId] = useState<string | null>(null);
+  const [nlMode, setNlMode] = useState(false);
 
   const { selectedKeyspace, selectedTable } = useUiStore();
 
@@ -222,6 +224,19 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
               <Gauge className="w-3.5 h-3.5" />
               Trace
             </button>
+            <button
+              onClick={() => setNlMode((prev) => !prev)}
+              className="flex items-center gap-1.5 px-3 self-stretch text-xs font-mono rounded-lg transition-all"
+              style={{
+                background: nlMode ? 'var(--accent-primary)' : 'var(--bg-primary)',
+                color: nlMode ? 'var(--text-inverse)' : 'var(--text-tertiary)',
+                border: '1px solid var(--border-primary)',
+              }}
+              title="Natural language to CQL via local agent CLI"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              NL
+            </button>
               {suggestActive && suggestions.length > 0 && (
                 <SuggestionList
                   suggestions={suggestions}
@@ -261,6 +276,16 @@ export function QueryEditor({ onResults }: QueryEditorProps) {
           )}
 
           {traceMode && traceId && <TracePanel traceId={traceId} />}
+
+          {nlMode && (
+            <NlPanel
+              onAccept={(acceptedCql, _question) => {
+                setCql(acceptedCql);
+                setResults(null);
+                setAllRows([]);
+              }}
+            />
+          )}
 
           {results && (
             <QueryResultTable
